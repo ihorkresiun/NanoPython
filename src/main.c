@@ -37,9 +37,10 @@ int main(int argc, char** argv)
         
         lexer = (Lexer){input, 0, input[0]};
         parser = (Parser){&lexer, lexer_next(&lexer)};
-        Ast* ast = parse_expr(&parser);
-        double result = eval(ast);
-        printf("%g\n", result);
+        Ast* tree = parse_expr(&parser);
+        double result = eval(tree);
+        printf("= %g\n", result);
+        ast_free(tree);
     }
 
     return 0;

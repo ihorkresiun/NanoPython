@@ -17,3 +17,14 @@ Ast* ast_new_expr(TokenType type, Ast* left, Ast* right) {
     n->op = type;
     return n;
 }
+
+void ast_free(Ast* node) {
+    if (node == NULL) return;
+
+    if (node->type == AST_BINARY) {
+        ast_free(node->left);
+        ast_free(node->right);
+    }
+
+    free(node);
+}

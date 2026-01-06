@@ -2,7 +2,7 @@
 
 #include "ast.h"
 #include "eval.h"
-#include "token.h"
+#include "lexer.h"
 #include "parser.h"
 
 #include "string.h"

@@ -1,6 +1,6 @@
 #include "ast.h"
 #include "parser.h"
-#include "token.h"
+#include "lexer.h"
 
 #include "stdlib.h"
 #include "stdio.h"

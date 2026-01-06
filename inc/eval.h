@@ -2,7 +2,6 @@
 #define __INC_EVAL_H__
 
 #include "ast.h"
-#include "token.h"
 
 double eval(Ast* e);
 

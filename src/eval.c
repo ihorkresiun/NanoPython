@@ -1,7 +1,7 @@
 #include "eval.h"
 
 #include "ast.h"
-#include "token.h"
+#include "lexer.h"
 
 #include "stdio.h"
 #include "stdlib.h"

@@ -3,6 +3,12 @@
 
 #include "token.h"
 
+typedef struct {
+    Lexer* lexer;
+    Token current;
+} Parser;
+
+
 Expr* parse_expr(Parser* p);
 
 #endif

@@ -5,11 +5,6 @@
 #include "stdio.h"
 
 
-typedef struct {
-    Lexer* lexer;
-    Token current;
-} Parser;
-
 void parser_eat(Parser* p, TokenType type) {
     if (p->current.type == type) {
         p->current = lexer_next(p->lexer);

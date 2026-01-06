@@ -17,7 +17,8 @@ Token lexer_next(Lexer * lexer)
     while(lexer->current != '\0') {
         if(isspace(lexer->current)) {
             lexer_advance(lexer);
-            continue;
+        } else {
+            break;
         }
     }
 
@@ -46,6 +47,8 @@ Token lexer_next(Lexer * lexer)
         case '/': return (Token){TOKEN_SLASH, 0};
         case '(': return (Token){TOKEN_LPAREN, 0};
         case ')': return (Token){TOKEN_RPAREN, 0};
+        case '\0':
+        case '\n': return (Token){TOKEN_EOF, 0};
 
         default:
             printf("Unexpected char: %c\n", c);

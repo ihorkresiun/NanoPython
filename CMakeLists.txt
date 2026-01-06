@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(my_project)
+project(NanoPython)
 
 include_directories(inc)
 
-add_executable(my_project src/main.c src/eval.c src/parser.c src/token.c)
+add_executable(NanoPython src/main.c src/eval.c src/parser.c src/token.c)

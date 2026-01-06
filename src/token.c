@@ -44,6 +44,7 @@ Token lexer_next(Lexer * lexer)
         case '/': return (Token){TOKEN_SLASH, 0};
         case '(': return (Token){TOKEN_LPAREN, 0};
         case ')': return (Token){TOKEN_RPAREN, 0};
+        case '^': return (Token){TOKEN_CARET, 0};
         case '\0':
         case '\n': return (Token){TOKEN_EOF, 0};
 

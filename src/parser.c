@@ -43,7 +43,7 @@ Ast* parse_factor(Parser* p) {
 Ast* parse_term(Parser* p) {
     Ast* node = parse_factor(p);
 
-    while (p->current.type == TOKEN_STAR || p->current.type == TOKEN_SLASH) {
+    while (p->current.type == TOKEN_STAR || p->current.type == TOKEN_SLASH || p->current.type == TOKEN_CARET) {
         TokenType op = p->current.type;
         parser_eat(p, op);
         node = ast_new_expr(op, node, parse_factor(p));

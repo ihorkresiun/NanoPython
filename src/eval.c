@@ -5,6 +5,7 @@
 
 #include "stdio.h"
 #include "stdlib.h"
+#include "math.h"
 
 double eval(Ast* node) {
     if (node->type == AST_NUMBER) {
@@ -19,6 +20,7 @@ double eval(Ast* node) {
         case TOKEN_MINUS: return left - right;
         case TOKEN_STAR:  return left * right;
         case TOKEN_SLASH: return left / right;
+        case TOKEN_CARET: return pow(left, right);
         default:
             printf("Unknown operator\n");
             exit(1);

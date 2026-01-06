@@ -13,11 +13,26 @@ typedef enum {
 
 typedef struct Ast {
     AstType type;
-    double value; // Used if type is AST_NUMBER
-    struct Ast* left;  // Used if type is AST_BINARY
-    struct Ast* right; // Used if type is AST_BINARY
-    TokenType op;          // Used if type is AST_BINARY
-    char* name;       // Used if type is AST_VARIABLE
+    union {
+        struct  {
+            double value;
+        }Number;
+
+        struct  {
+            struct Ast* left;
+            struct Ast* right;
+            TokenType op;
+        }Binary;
+
+        struct  {
+            char* name;
+        }Variable;
+
+        struct  {
+            char* name;
+            struct Ast* value;
+        }Assign;
+    };
 } Ast;
 
 Ast* ast_new_number(double value);

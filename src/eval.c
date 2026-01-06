@@ -11,28 +11,28 @@
 double eval(Ast* node) {
     switch(node->type) {
         case AST_NUMBER:
-            return node->value;
+            return node->Number.value;
         break;
         case AST_VAR: {
-            Var* v = var_find(node->name);
+            Var* v = var_find(node->Variable.name);
             if (!v) {
-                printf("Undefined variable: %s\n", node->name);
+                printf("Undefined variable: %s\n", node->Variable.name);
                 exit(1);
             }
             return v->value;
         }
         break;
         case AST_ASSIGN: {
-            double value = eval(node->left);
-            var_set(node->name, value);
+            double value = eval(node->Assign.value);
+            var_set(node->Assign.name, value);
             return value;
         }
         break;
         case AST_BINARY: {
-            double left = eval(node->left);
-            double right = eval(node->right);
+            double left = eval(node->Binary.left);
+            double right = eval(node->Binary.right);
 
-            switch (node->op) {
+            switch (node->Binary.op) {
                 case TOKEN_PLUS:  return left + right;
                 case TOKEN_MINUS: return left - right;
                 case TOKEN_STAR:  return left * right;

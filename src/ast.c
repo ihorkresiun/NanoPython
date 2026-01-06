@@ -7,31 +7,31 @@
 Ast* ast_new_number(double value) {
     Ast* n = malloc(sizeof(Ast));
     n->type = AST_NUMBER;
-    n->value = value;
+    n->Number.value = value;
     return n;
 }
 
 Ast* ast_new_expr(TokenType type, Ast* left, Ast* right) {
     Ast* n = malloc(sizeof(Ast));
     n->type = AST_BINARY;
-    n->left = left;
-    n->right = right;
-    n->op = type;
+    n->Binary.left = left;
+    n->Binary.right = right;
+    n->Binary.op = type;
     return n;
 }
 
 Ast* ast_new_var(const char* name) {
     Ast* n = malloc(sizeof(Ast));
     n->type = AST_VAR;
-    n->name = strdup(name);
+    n->Variable.name = strdup(name);
     return n;
 }
 
 Ast* ast_new_assign(const char* name, Ast* value) {
     Ast* n = malloc(sizeof(Ast));
     n->type = AST_ASSIGN;
-    n->name = strdup(name);
-    n->left = value;
+    n->Assign.name = strdup(name);
+    n->Assign.value = value;
     return n;
 }
 
@@ -39,8 +39,8 @@ void ast_free(Ast* node) {
     if (node == NULL) return;
 
     if (node->type == AST_BINARY) {
-        ast_free(node->left);
-        ast_free(node->right);
+        ast_free(node->Binary.left);
+        ast_free(node->Binary.right);
     }
 
     free(node);

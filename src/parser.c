@@ -44,10 +44,7 @@ Ast* parse_factor(Parser* p) {
             parser_eat(p, TOKEN_ASSIGN);
             Ast* value = parse_expr(p);
 
-            Ast* node = malloc(sizeof(Ast));
-            node->type = AST_ASSIGN;
-            node->name = strdup(tok.ident);
-            node->left = value;
+            Ast* node = ast_new_assign(tok.ident, value);
             return node;
         }
         

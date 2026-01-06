@@ -4,4 +4,4 @@ project(NanoPython)
 
 include_directories(inc)
 
-add_executable(NanoPython src/main.c src/eval.c src/parser.c src/token.c)
+add_executable(NanoPython src/main.c src/ast.c src/eval.c src/parser.c src/token.c)

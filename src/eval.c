@@ -1,15 +1,26 @@
 #include "eval.h"
+
+#include "ast.h"
 #include "token.h"
 
-double eval(Expr* e)
-{
-    switch(e->type) {
-        case EXPR_NUMBER: return e->value;
-        case EXPR_ADD: return eval(e->left) + eval(e->right);
-        case EXPR_SUB: return eval(e->left) - eval(e->right);
-        case EXPR_MUL: return eval(e->left) * eval(e->right);
-        case EXPR_DIV: return eval(e->left) / eval(e->right);
+#include "stdio.h"
+#include "stdlib.h"
+
+double eval(Ast* node) {
+    if (node->type == AST_NUMBER) {
+        return node->value;
     }
 
-    return 0;
+    double left = eval(node->left);
+    double right = eval(node->right);
+
+    switch (node->op) {
+        case TOKEN_PLUS:  return left + right;
+        case TOKEN_MINUS: return left - right;
+        case TOKEN_STAR:  return left * right;
+        case TOKEN_SLASH: return left / right;
+        default:
+            printf("Unknown operator\n");
+            exit(1);
+    }
 }

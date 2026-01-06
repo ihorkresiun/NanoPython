@@ -1,5 +1,6 @@
 #include "stdio.h"
 
+#include "ast.h"
 #include "eval.h"
 #include "token.h"
 #include "parser.h"
@@ -36,7 +37,7 @@ int main(int argc, char** argv)
         
         lexer = (Lexer){input, 0, input[0]};
         parser = (Parser){&lexer, lexer_next(&lexer)};
-        Expr* ast = parse_expr(&parser);
+        Ast* ast = parse_expr(&parser);
         double result = eval(ast);
         printf("%g\n", result);
     }

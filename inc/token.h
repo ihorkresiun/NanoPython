@@ -20,21 +20,6 @@ typedef struct {
     // void * for any?
 } Token;
 
-typedef enum {
-    EXPR_NUMBER,
-    EXPR_ADD,
-    EXPR_SUB,
-    EXPR_MUL,
-    EXPR_DIV
-} ExprType;
-
-typedef struct Expr {
-    ExprType type;
-    double value;
-    struct Expr * left;
-    struct Expr * right;
-} Expr;
-
 typedef struct {
     const char * input;
     size_t pos;

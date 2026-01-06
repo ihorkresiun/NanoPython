@@ -14,12 +14,9 @@ static void lexer_advance(Lexer * lexer)
 
 Token lexer_next(Lexer * lexer)
 {
-    while(lexer->current != '\0') {
-        if(isspace(lexer->current)) {
-            lexer_advance(lexer);
-        } else {
-            break;
-        }
+    // Skip whitespace
+    while(lexer->current != '\0' && lexer->current == ' ') {
+        lexer_advance(lexer);
     }
 
     if(isdigit(lexer->current) || lexer->current == '.') {

@@ -5,6 +5,7 @@
 
 typedef enum {
     TOKEN_NUMBER,
+    TOKEN_IDENT,
     TOKEN_MINUS,
     TOKEN_PLUS,
     TOKEN_STAR,
@@ -12,13 +13,15 @@ typedef enum {
     TOKEN_LPAREN,
     TOKEN_RPAREN,
     TOKEN_CARET,
+    TOKEN_ASSIGN, // =
     TOKEN_EOF
 }TokenType;
 
 typedef struct {
     TokenType type;
     double value;
-    // void * for any?
+    char * ident; // names
+    // void * for any object?
 } Token;
 
 typedef struct {

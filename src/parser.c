@@ -4,7 +4,7 @@
 
 #include "stdlib.h"
 #include "stdio.h"
-
+#include "string.h"
 
 void parser_init(Parser* p, const char* input) {
     p->lexer->input = input;
@@ -36,6 +36,24 @@ Ast* parse_factor(Parser* p) {
         return node;
     }
 
+    if (tok.type == TOKEN_IDENT) {
+        parser_eat(p, TOKEN_IDENT);
+
+        // якщо далі = → assignment
+        if (p->current.type == TOKEN_ASSIGN) {
+            parser_eat(p, TOKEN_ASSIGN);
+            Ast* value = parse_expr(p);
+
+            Ast* node = malloc(sizeof(Ast));
+            node->type = AST_ASSIGN;
+            node->name = strdup(tok.ident);
+            node->left = value;
+            return node;
+        }
+        
+        Ast* node = ast_new_var(tok.ident);
+        return node;
+    }
     printf("Invalid factor\n");
     exit(1);
 }

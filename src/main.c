@@ -30,8 +30,8 @@ int main(int argc, char** argv)
     while (1)
     {
         printf("%s", prompt);
-        scanf("%s", input);
-        if (strcmp(input, "exit") == 0 || strcmp(input, "quit") == 0) {
+        if (!fgets(input, sizeof(input), stdin)) break;
+        if (strcmp(input, "exit\n") == 0 || strcmp(input, "quit\n") == 0) {
             break;
         }
         

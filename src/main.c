@@ -15,7 +15,9 @@ void print_usage(const char* prog_name) {
 
 int main(int argc, char** argv)
 {
-    char input[256] = {0};
+    char line[128] = {0};
+    char buffer[2048] = {0};
+
     static const char* welcome_msg = 
         "NanoPython Calculator\n"
         "Type 'exit' or 'quit' to leave.\n";
@@ -24,22 +26,37 @@ int main(int argc, char** argv)
 
     static const char* prompt = ">>> ";
 
-    Lexer lexer;
-    Parser parser;
+    Lexer lexer = {0};
+    Parser parser = {&lexer, {0}};
     Scope global_scope = {"Global", NULL, NULL};
     
     while (1)
     {
+        // REPL loop
+        // Todo: handle file input from argv[1]
         printf("%s", prompt);
-        if (!fgets(input, sizeof(input), stdin)) break;
-        if (strcmp(input, "exit\n") == 0 || strcmp(input, "quit\n") == 0) {
+        if (!fgets(line, sizeof(line), stdin)) break;
+
+        if (strcmp(line, "exit\n") == 0 || strcmp(line, "quit\n") == 0) {
             break;
         }
         
-        lexer = (Lexer){input, 0, input[0]};
-        parser = (Parser){&lexer, lexer_next(&lexer)};
+        size_t len = strlen(line);
 
-        Ast* tree = parse_expr(&parser);
+        strcat(buffer, line);
+
+        if (strchr(buffer, ':')) {
+            while (1) {
+                printf("... ");
+                if (!fgets(line, sizeof(line), stdin)) break;
+                size_t l = strlen(line);
+                if (strlen(line) == 0 || line[0] == '\n' || feof(stdin)) break;
+                strcat(buffer, line);
+            }
+        }
+
+        parser_init(&parser, buffer);
+        Ast* tree = parse_statement(&parser);
         if (!tree) {
             printf("Error: Failed to parse expression.\n");
             continue;
@@ -48,11 +65,10 @@ int main(int argc, char** argv)
         Value result = eval(tree, &global_scope);
         if (result.type == VAL_NUMBER) {
             printf("= %g\n", result.value.number);
-        } else {
-            printf("= <non-number result>\n");
         }
 
         ast_free(tree);
+        buffer[0] = 0; // Clear buffer for next input
     }
 
     return 0;

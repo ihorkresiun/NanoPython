@@ -6,100 +6,170 @@
 #include "stdio.h"
 #include "ctype.h"
 
-static int indent_stack[64] = {0};
-static int indent_top = 0;
+typedef struct Keyword{
+    const char* name;
+    TokenType type;
+} Keyword;
 
-TokenType handle_new_line(Lexer* lexer) {
-    size_t start_pos = lexer->pos;
+static Keyword keywords[] = {
+    {"if", TOKEN_IF},
+    {"else", TOKEN_ELSE},
+    {"def", TOKEN_DEF},
+    {"while", TOKEN_WHILE},
+    {"print", TOKEN_PRINT},
+    {NULL, 0}
+};
 
-    // Count spaces
-    int space_count = 0;
-    while (lexer->input[lexer->pos] == ' ') {
-        space_count++;
-        lexer->pos++;
-    }
-
-    if (lexer->input[lexer->pos] == '\n' || lexer->input[lexer->pos] == '\0') {
-        // Empty line, ignore
-        return TOKEN_EMPTY;
-    }
-
-    if (space_count > indent_stack[indent_top]) {
-        // Indent
-        indent_stack[++indent_top] = space_count;
-        return TOKEN_INDENT;
-    } else {
-        while (space_count < indent_stack[indent_top]) {
-            // Dedent
-            indent_top--;
-            return TOKEN_DEDENT;
+static TokenType check_keyword(const char* ident) {
+    for (int i = 0; keywords[i].name != NULL; i++) {
+        if (strcmp(ident, keywords[i].name) == 0) {
+            return keywords[i].type;
         }
     }
-    return TOKEN_NEWLINE ;
+    return TOKEN_IDENT;
 }
 
-Token lexer_next(Lexer * lexer)
-{
-    // Skip whitespace
-    while (isspace(lexer->input[lexer->pos])) lexer->pos++;
+void lexer_init(Lexer * lexer, const char * input) {
+    lexer->input = input;
+    lexer->pos = 0;
+    lexer->line_start = 1;
+    lexer->indent_top = 0;
+    lexer->indent_stack[lexer->indent_top] = 0;
+}
 
-    // Todo: keywords dict
-    // char* keywords[] = {"if", "else", "while", "def", NULL};
-    const char* input = lexer->input + lexer->pos;
-    if (strcmp(input, "if") == 0) return (Token){TOKEN_IF, make_none()};
-    if (strcmp(input, "else") == 0) return (Token){TOKEN_ELSE, make_none()};
-    if (strcmp(input, "while") == 0) return (Token){TOKEN_WHILE, make_none()};
-    if (strcmp(input, "def") == 0) return (Token){TOKEN_FUNCDEF, make_none()};
-    const char c = lexer->input[lexer->pos];
+static int count_leading_spaces(const char * str) {
+   int count = 0;
+    while (str[count] == ' ') count++;
+    return count;
+}
 
-    if (c == '\0') return (Token){TOKEN_EOF, make_none()};
+Token lexer_next(Lexer* l) {
+    Token tok = {0};
 
-    if(isdigit(c) || c == '.') {
+    if (l->pending_indents > 0) {
+        l->pending_indents--;
+        tok.type = TOKEN_INDENT;
+        return tok;
+    }
+
+    if (l->pending_dedents > 0) {
+        l->pending_dedents--;
+        tok.type = TOKEN_DEDENT;
+        return tok;
+    }
+
+    char s = l->input[l->pos];
+
+    // EOF
+    if (s == '\0') {
+        tok.type = TOKEN_EOF;
+        return tok;
+    }
+
+    // New line and indentation handling
+    if (s == '\n') {
+        l->pos++;
+
+        // Check for indentation in the next line
+        const char* next_line = l->input + l->pos;
+        int spaces = count_leading_spaces(next_line);
+        int current_indent = l->indent_stack[l->indent_top];
+
+        if (spaces > current_indent) {
+            l->indent_stack[++l->indent_top] = spaces;
+            l->pending_indents++;
+        } else if (spaces < l->indent_stack[l->indent_top]) {
+            l->indent_top--;
+            l->pending_dedents++;
+        }
+
+        tok.type = TOKEN_NEWLINE;
+        return tok;
+    }
+
+    // Skip spaces inside a line
+    if (s == ' ' || s == '\t') { l->pos++; return lexer_next(l); }
+
+    // Numbers
+    if(isdigit(s) || s == '.') {
         // Parse number
         char buffer[64];
         size_t i = 0;
-        while(isdigit(lexer->input[lexer->pos]) || lexer->input[lexer->pos] == '.') {
-            buffer[i++] = lexer->input[lexer->pos++];
+        while(isdigit(s) || s == '.') {
+            buffer[i++] = l->input[l->pos++];
+            s = l->input[l->pos];
         }
         buffer[i] = '\0';
-        Token tok;
         tok.type = TOKEN_NUMBER;
         tok.value = make_number(atof(buffer));
         return tok;
     }
 
-    if (isalpha(c) || c == '_') {
-        char buf[64];
+    // Identifier or keyword
+    if (isalpha(s)) {
+        char buffer[64];
         size_t i = 0;
-
-        while (isalnum(lexer->input[lexer->pos]) || lexer->input[lexer->pos] == '_') {
-            buf[i++] = lexer->input[lexer->pos++];
+        while (isalpha(s) || isdigit(s) || s == '_') {
+            buffer[i++] = l->input[l->pos++];
+            s = l->input[l->pos];
         }
-        buf[i] = '\0';
-
-        Token tok;
-        tok.type = TOKEN_IDENT;
-        tok.ident = strdup(buf);   // важливо: malloc!
+        buffer[i] = 0;
+        tok.type = check_keyword(buffer);
+        tok.ident = strdup(buffer);
         return tok;
     }
 
-    lexer->pos++; // advance for single char tokens
-
-    switch(c) {
-        case '+': return (Token){TOKEN_PLUS, make_none()};
-        case '-': return (Token){TOKEN_MINUS, make_none()};
-        case '*': return (Token){TOKEN_STAR, make_none()};
-        case '/': return (Token){TOKEN_SLASH, make_none()};
-        case '(': return (Token){TOKEN_LPAREN, make_none()};
-        case ')': return (Token){TOKEN_RPAREN, make_none()};
-        case '^': return (Token){TOKEN_CARET, make_none()};
-        case '=': return (Token){TOKEN_ASSIGN, make_none()};
-        case '\0':
-        case '\n': return (Token){TOKEN_EOF, make_none()};
-        default:
-            printf("Unexpected char: %c\n", c);
-            exit(1);
+    if (s == '<') {
+        l->pos++;
+        if (l->input[l->pos] == '=') {
+            l->pos++;
+            tok.type = TOKEN_LE;
+        } else {
+            tok.type = TOKEN_LT;
+        }
+        return tok;
+    }
+    if (s == '>') {
+        l->pos++;
+        if (l->input[l->pos] == '=') {
+            l->pos++;
+            tok.type = TOKEN_GE;
+        } else {
+            tok.type = TOKEN_GT;
+        }
+        return tok;
+    }
+    if (s == '=') {
+        l->pos++;
+        if (l->input[l->pos] == '=') {
+            l->pos++;
+            tok.type = TOKEN_EQ;
+        } else {
+            tok.type = TOKEN_ASSIGN;
+        }
+        return tok;
+    }
+    if (s == '!') {
+        l->pos++;
+        if (l->input[l->pos] == '=') {
+            l->pos++;
+            tok.type = TOKEN_NE;;
+            return tok;
+        }
     }
 
-    return (Token){TOKEN_EOF, 0};
+    // Operators
+    switch (s) {
+        case '+': tok.type=TOKEN_PLUS;      l->pos++; return tok;
+        case '-': tok.type=TOKEN_MINUS;     l->pos++; return tok;
+        case '*': tok.type=TOKEN_STAR;      l->pos++; return tok;
+        case '/': tok.type=TOKEN_SLASH;     l->pos++; return tok;
+        case '^': tok.type=TOKEN_CARET;     l->pos++; return tok;
+        case '(': tok.type=TOKEN_LPAREN;    l->pos++; return tok;
+        case ')': tok.type=TOKEN_RPAREN;    l->pos++; return tok;
+        case ':': tok.type=TOKEN_COLON;     l->pos++; return tok;
+    }
+
+    printf("Unknown char: %c\n", s);
+    exit(1);
 }

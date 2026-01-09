@@ -10,6 +10,7 @@ typedef struct {
 } Parser;
 
 
-Ast * parse_expr(Parser* p);
+void parser_init(Parser* p, const char* input);
+Ast* parse_statement(Parser* p);
 
 #endif

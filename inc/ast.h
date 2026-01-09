@@ -14,7 +14,8 @@ typedef enum {
     AST_BLOCK,
     AST_FUNCDEF,
     AST_CALL,
-    AST_RETURN
+    AST_RETURN,
+    AST_PRINT
 } AstType;
 
 
@@ -72,6 +73,10 @@ typedef struct Ast {
         struct {
             struct Ast* value;
         }Return;
+
+        struct {
+            Ast* expr;
+        }Print;
     };
 } Ast;
 
@@ -79,7 +84,10 @@ Ast* ast_new_number(double value);
 Ast* ast_new_expr(TokenType type, Ast* left, Ast* right);
 Ast* ast_new_var(const char* name);
 Ast* ast_new_assign(const char* name, Ast* value);
-
+Ast* ast_new_block(Ast** statements, int count);
+Ast* ast_new_if(Ast* condition, Ast* then_block, Ast* else_block);
+Ast* ast_new_while(Ast* condition, Ast* body);
+Ast* ast_new_print(Ast* expr);
 void ast_free(Ast* node);
 
 #endif // __INC_AST_H__

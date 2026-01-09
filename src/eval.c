@@ -48,6 +48,12 @@ Value eval(Ast* node, Scope* scope) {
                 case TOKEN_STAR:  return make_number(left.value.number * right.value.number);
                 case TOKEN_SLASH: return make_number(left.value.number / right.value.number);
                 case TOKEN_CARET: return make_number(pow(left.value.number, right.value.number));
+                case TOKEN_LT:    return make_bool(left.value.number < right.value.number);
+                case TOKEN_GT:    return make_bool(left.value.number > right.value.number);
+                case TOKEN_LE:    return make_bool(left.value.number <= right.value.number);
+                case TOKEN_GE:    return make_bool(left.value.number >= right.value.number);
+                case TOKEN_EQ:    return make_bool(left.value.number == right.value.number);
+                case TOKEN_NE:    return make_bool(left.value.number != right.value.number);
                 default:
                     printf("Unknown operator\n");
                     exit(1);
@@ -66,16 +72,21 @@ Value eval(Ast* node, Scope* scope) {
         }
         break;
 
-        case AST_ELSE: {
-
-        }
-
         case AST_WHILE: {
             while (is_true(eval(node->While.condition, scope))) {
                 eval(node->While.body, scope);
             }
             return make_none();
         }
+
+        case AST_BLOCK: {
+            Value result = make_none();
+            for (int i = 0; i < node->Block.count; i++) {
+                result = eval(node->Block.statements[i], scope);
+            }
+            return result;
+        }
+        break;
 
         case AST_FUNCDEF: {
             Function* fn = malloc(sizeof(Function));
@@ -113,6 +124,29 @@ Value eval(Ast* node, Scope* scope) {
             }
 
             return eval(fn->body, &fn_scope);
+        }
+        break;
+
+        case AST_RETURN: {
+            Value ret_value = eval(node->Return.value, scope);
+            // For simplicity, we just return the value here.
+            // In a full implementation, we would need to handle this differently.
+            return ret_value;
+        }
+        break;
+
+        case AST_PRINT: {
+            Value val = eval(node->Print.expr, scope);
+            if (val.type == VAL_NUMBER) {
+                printf("%g\n", val.value.number);
+            } else if (val.type == VAL_BOOL) {
+                printf("%s\n", val.value.boolean ? "true" : "false" );
+            } else if (val.type == VAL_NONE) {
+                printf("=\n");
+            } else {
+                printf("<function>\n");
+            }
+            return make_none();
         }
         break;
 

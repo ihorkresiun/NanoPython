@@ -4,6 +4,8 @@
 #include "stddef.h"
 
 typedef enum {
+    TOKEN_EOF,
+
     TOKEN_NUMBER,
     TOKEN_IDENT,
     TOKEN_MINUS,
@@ -13,17 +15,23 @@ typedef enum {
     TOKEN_LPAREN,
     TOKEN_RPAREN,
     TOKEN_CARET,
-    TOKEN_ASSIGN, // =
+    TOKEN_ASSIGN,
     TOKEN_IF,
     TOKEN_ELSE,
     TOKEN_WHILE,
-    TOKEN_FUNCDEF,
+    TOKEN_DEF,
     TOKEN_COLON,
+    TOKEN_LT,
+    TOKEN_GT,
+    TOKEN_LE,
+    TOKEN_GE,
+    TOKEN_EQ,
+    TOKEN_NE,
     TOKEN_NEWLINE,
     TOKEN_INDENT,
     TOKEN_DEDENT,
-    TOKEN_EMPTY,
-    TOKEN_EOF
+    TOKEN_PRINT,
+    TOKEN_PRINT_DBG,
 }TokenType;
 
 typedef struct Ast Ast; // forward declaration
@@ -61,7 +69,11 @@ typedef struct {
 typedef struct {
     const char * input;
     size_t pos;
-    char current;
+    int line_start;
+    int indent_stack[64];
+    int indent_top;
+    int pending_indents;
+    int pending_dedents;
 } Lexer;
 
 Token lexer_next(Lexer * lexer);

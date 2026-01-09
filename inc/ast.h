@@ -1,7 +1,7 @@
 #ifndef __INC_AST_H__
 #define __INC_AST_H__
 
-#include "token.h"
+#include "lexer.h"
 
 typedef enum {
     AST_NUMBER,

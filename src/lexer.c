@@ -6,6 +6,37 @@
 #include "stdio.h"
 #include "ctype.h"
 
+static int indent_stack[64] = {0};
+static int indent_top = 0;
+
+TokenType handle_new_line(Lexer* lexer) {
+    size_t start_pos = lexer->pos;
+
+    // Count spaces
+    int space_count = 0;
+    while (lexer->input[lexer->pos] == ' ') {
+        space_count++;
+        lexer->pos++;
+    }
+
+    if (lexer->input[lexer->pos] == '\n' || lexer->input[lexer->pos] == '\0') {
+        // Empty line, ignore
+        return TOKEN_EMPTY;
+    }
+
+    if (space_count > indent_stack[indent_top]) {
+        // Indent
+        indent_stack[++indent_top] = space_count;
+        return TOKEN_INDENT;
+    } else {
+        while (space_count < indent_stack[indent_top]) {
+            // Dedent
+            indent_top--;
+            return TOKEN_DEDENT;
+        }
+    }
+    return TOKEN_NEWLINE ;
+}
 
 Token lexer_next(Lexer * lexer)
 {

@@ -11,6 +11,11 @@ Token lexer_next(Lexer * lexer)
     // Skip whitespace
     while (isspace(lexer->input[lexer->pos])) lexer->pos++;
 
+    // Todo: keywords dict
+    if (strcmp(input[lexer->pos], "if") == 0) return TOKEN_IF;
+    if (strcmp(input[lexer->pos], "else") == 0) return TOKEN_ELSE;
+    if (strcmp(input[lexer->pos], "while") == 0) return TOKEN_WHILE;
+    if (strcmp(input[lexer->pos], "def") == 0) return TOKEN_FUNCDEF;
     char c = lexer->input[lexer->pos];
 
     if (c == '\0') return (Token){TOKEN_EOF, 0};

@@ -7,9 +7,49 @@ typedef enum {
     AST_NUMBER,
     AST_BINARY,
     AST_VAR,
-    AST_ASSIGN
+    AST_ASSIGN,
+    AST_IF,
+    AST_WHILE,
+    AST_BLOCK,
+    AST_FUNCDEF,
+    AST_CALL,
+    AST_RETURN
 } AstType;
 
+typedef struct Ast;
+
+struct AstIf {
+    struct Ast* condition;
+    struct Ast* then_branch;
+    struct Ast* else_branch;
+}AstIf;
+
+struct AstWhile {
+    struct Ast* condition;
+    struct Ast* body;
+}AstWhile;
+
+struct AstBlock {
+    struct Ast** statements;
+    int count;
+}AstBlock;
+
+struct AstFuncDef {
+    char* name;
+    char** params;
+    int param_count;
+    struct Ast* body;
+}AstFuncDef;
+
+struct AstCall{
+    char* name;
+    struct Ast** args;
+    int arg_count;
+}AstCall;
+
+struct AstReturn{
+    struct Ast* value;
+}AstReturn;
 
 typedef struct Ast {
     AstType type;
@@ -32,6 +72,12 @@ typedef struct Ast {
             char* name;
             struct Ast* value;
         }Assign;
+
+        AstIf If;
+        AstWhile While;
+        AstBlock Block;
+        AstFuncDef Func;
+
     };
 } Ast;
 

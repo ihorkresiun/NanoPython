@@ -14,6 +14,10 @@ typedef enum {
     TOKEN_RPAREN,
     TOKEN_CARET,
     TOKEN_ASSIGN, // =
+    TOKEN_IF,
+    TOKEN_ELSE,
+    TOKEN_WHILE,
+    TOKEN_FUNCDEF,
     TOKEN_EOF
 }TokenType;
 

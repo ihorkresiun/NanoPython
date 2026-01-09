@@ -3,6 +3,8 @@
 
 #include "ast.h"
 
-double eval(Ast* e);
+#include "vars.h"
+
+Value eval(Ast* e);
 
 #endif // __INC_EVAL_H__

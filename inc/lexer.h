@@ -2,27 +2,7 @@
 #define __INC_TOKEN_H__
 
 #include "stddef.h"
-
-typedef enum {
-    TOKEN_NUMBER,
-    TOKEN_IDENT,
-    TOKEN_MINUS,
-    TOKEN_PLUS,
-    TOKEN_STAR,
-    TOKEN_SLASH,
-    TOKEN_LPAREN,
-    TOKEN_RPAREN,
-    TOKEN_CARET,
-    TOKEN_ASSIGN, // =
-    TOKEN_EOF
-}TokenType;
-
-typedef struct {
-    TokenType type;
-    double value;
-    char * ident; // names
-    // void * for any object?
-} Token;
+#include "token.h"
 
 typedef struct {
     const char * input;

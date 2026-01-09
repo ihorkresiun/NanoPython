@@ -26,7 +26,8 @@ int main(int argc, char** argv)
 
     Lexer lexer;
     Parser parser;
-
+    Scope global_scope = {"Global", NULL, NULL};
+    
     while (1)
     {
         printf("%s", prompt);
@@ -37,9 +38,20 @@ int main(int argc, char** argv)
         
         lexer = (Lexer){input, 0, input[0]};
         parser = (Parser){&lexer, lexer_next(&lexer)};
+
         Ast* tree = parse_expr(&parser);
-        double result = eval(tree);
-        printf("= %g\n", result);
+        if (!tree) {
+            printf("Error: Failed to parse expression.\n");
+            continue;
+        }
+        
+        Value result = eval(tree, &global_scope);
+        if (result.type == VAL_NUMBER) {
+            printf("= %g\n", result.value.number);
+        } else {
+            printf("= <non-number result>\n");
+        }
+
         ast_free(tree);
     }
 

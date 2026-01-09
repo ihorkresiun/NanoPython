@@ -1,14 +1,25 @@
 #ifndef __INC_VARS_H__
 #define __INC_VARS_H__
 
+#include "ast.h"
+
 typedef struct Var {
-    char* name;
-    double value;
+    const char* name;
+    Value value;
     struct Var* next;
 } Var;
 
+typedef struct Scope {
+    const char * name;
+    Var * vars;
+    struct Scope* parent;
+}Scope;
 
-Var* var_find(const char* name);
-void var_set(const char* name, double value);
+Var * scope_find(Scope* scope, const char* name);
+void scope_set(Scope* scope, const char* name, Value value);
+
+Value make_number(double x);
+Value make_bool(int b);
+Value make_none();
 
 #endif // __INC_VARS_H__

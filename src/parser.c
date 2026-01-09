@@ -1,6 +1,7 @@
 #include "ast.h"
 #include "parser.h"
 #include "lexer.h"
+#include "vars.h"
 
 #include "stdlib.h"
 #include "stdio.h"
@@ -26,7 +27,7 @@ Ast* parse_factor(Parser* p) {
 
     if (tok.type == TOKEN_NUMBER) {
         parser_eat(p, TOKEN_NUMBER);
-        return ast_new_number(tok.value);
+        return ast_new_number(tok.value.value.number);
     }
 
     if (tok.type == TOKEN_LPAREN) {
@@ -44,12 +45,10 @@ Ast* parse_factor(Parser* p) {
             parser_eat(p, TOKEN_ASSIGN);
             Ast* value = parse_expr(p);
 
-            Ast* node = ast_new_assign(tok.ident, value);
-            return node;
+            return ast_new_assign(tok.ident, value);
         }
         
-        Ast* node = ast_new_var(tok.ident);
-        return node;
+        return ast_new_var(tok.ident);
     }
     printf("Invalid factor\n");
     exit(1);

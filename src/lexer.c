@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "vars.h"
 
 #include "string.h"
 #include "stdlib.h"
@@ -11,9 +12,16 @@ Token lexer_next(Lexer * lexer)
     // Skip whitespace
     while (isspace(lexer->input[lexer->pos])) lexer->pos++;
 
-    char c = lexer->input[lexer->pos];
+    // Todo: keywords dict
+    // char* keywords[] = {"if", "else", "while", "def", NULL};
+    const char* input = lexer->input + lexer->pos;
+    if (strcmp(input, "if") == 0) return (Token){TOKEN_IF, make_none()};
+    if (strcmp(input, "else") == 0) return (Token){TOKEN_ELSE, make_none()};
+    if (strcmp(input, "while") == 0) return (Token){TOKEN_WHILE, make_none()};
+    if (strcmp(input, "def") == 0) return (Token){TOKEN_FUNCDEF, make_none()};
+    const char c = lexer->input[lexer->pos];
 
-    if (c == '\0') return (Token){TOKEN_EOF, 0};
+    if (c == '\0') return (Token){TOKEN_EOF, make_none()};
 
     if(isdigit(c) || c == '.') {
         // Parse number
@@ -25,7 +33,7 @@ Token lexer_next(Lexer * lexer)
         buffer[i] = '\0';
         Token tok;
         tok.type = TOKEN_NUMBER;
-        tok.value = atof(buffer);
+        tok.value = make_number(atof(buffer));
         return tok;
     }
 
@@ -47,17 +55,16 @@ Token lexer_next(Lexer * lexer)
     lexer->pos++; // advance for single char tokens
 
     switch(c) {
-        case '+': return (Token){TOKEN_PLUS, 0};
-        case '-': return (Token){TOKEN_MINUS, 0};
-        case '*': return (Token){TOKEN_STAR, 0};
-        case '/': return (Token){TOKEN_SLASH, 0};
-        case '(': return (Token){TOKEN_LPAREN, 0};
-        case ')': return (Token){TOKEN_RPAREN, 0};
-        case '^': return (Token){TOKEN_CARET, 0};
-        case '=': return (Token){TOKEN_ASSIGN, 0};
+        case '+': return (Token){TOKEN_PLUS, make_none()};
+        case '-': return (Token){TOKEN_MINUS, make_none()};
+        case '*': return (Token){TOKEN_STAR, make_none()};
+        case '/': return (Token){TOKEN_SLASH, make_none()};
+        case '(': return (Token){TOKEN_LPAREN, make_none()};
+        case ')': return (Token){TOKEN_RPAREN, make_none()};
+        case '^': return (Token){TOKEN_CARET, make_none()};
+        case '=': return (Token){TOKEN_ASSIGN, make_none()};
         case '\0':
-        case '\n': return (Token){TOKEN_EOF, 0};
-
+        case '\n': return (Token){TOKEN_EOF, make_none()};
         default:
             printf("Unexpected char: %c\n", c);
             exit(1);

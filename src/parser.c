@@ -160,7 +160,7 @@ Ast* parse_call(Parser* p, const char* func_name) {
 Ast* parse_print(Parser* p) {
     parser_eat(p, TOKEN_PRINT);
     parser_eat(p, TOKEN_LPAREN);
-    Ast* expr = parse_expr(p);
+    Ast* expr = parse_comparison(p);
     parser_eat(p, TOKEN_RPAREN);
     return ast_new_print(expr);
 }

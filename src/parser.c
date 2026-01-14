@@ -9,6 +9,7 @@
 
 // Forward declaration of lower-level parsing functions
 static Ast* parse_logic_or(Parser* p);
+static Ast* parse_call(Parser* p, const char* func_name);
 
 void parser_init(Parser* p, const char* input) {
     p->lexer->input = input;
@@ -35,6 +36,11 @@ static Ast* parse_factor(Parser* p) {
 
     if (tok.type == TOKEN_IDENT) {
         parser_eat(p, TOKEN_IDENT);
+
+        if (p->current.type == TOKEN_LPAREN) {
+            return parse_call(p, tok.ident);
+        }
+
         return ast_new_var(tok.ident);
     }
 
@@ -227,8 +233,8 @@ static Ast* parse_def(Parser* p) {
 }
 
 static Ast* parse_call(Parser* p, const char* func_name) {
-    parser_eat(p, TOKEN_IDENT);
     parser_eat(p, TOKEN_LPAREN);
+
     Ast** args = NULL;
     int argc = 0;
 
@@ -255,41 +261,28 @@ static Ast* parse_return(Parser* p) {
     return ast_new_return(value);
 }
 
-static Ast* parse_assignment(Parser* p, const char* var_name) {
+static Ast* parse_assignment(Parser* p) {
     Token tok = p->current;
     if (tok.type == TOKEN_IDENT) {
-        parser_eat(p, TOKEN_IDENT);
+        Token next_token = lexer_peek_next(p->lexer);
 
-        if (p->current.type == TOKEN_ASSIGN) {
+        if (next_token.type == TOKEN_ASSIGN) {
+            // a = 2 + 3
+            // Eat identifier 'a'
+            parser_eat(p, TOKEN_IDENT);
+            // Eat '='
             parser_eat(p, TOKEN_ASSIGN);
+            // Parse the expression on the right side
             Ast* value = parse_logic_or(p);
             return ast_new_assign(tok.ident, value);
+        } else if (next_token.type == TOKEN_NEWLINE) {
+            // Just a variable reference
+            return ast_new_var(tok.ident);
         }
         
-        return ast_new_var(tok.ident);
+        // Not an assignment, parse as expression, a + b, a + 1 etc.
+        return parse_logic_or(p);
     }
-}
-
-static Ast* parse_single_ident(Parser* p) {
-    Token tok = p->current;
-    parser_eat(p, TOKEN_IDENT);
-    return ast_new_var(tok.ident);
-}
-
-static Ast* parse_ident(Parser* p) {
-    Token next_tok = lexer_peek_next(p->lexer);
-    if (next_tok.type == TOKEN_LPAREN) {
-        // Function call by name
-        return parse_call(p, p->current.ident);
-    } else if (next_tok.type == TOKEN_NEWLINE) {
-        // Single identifier statement
-        return parse_single_ident(p);
-    } else if (next_tok.type == TOKEN_ASSIGN) {
-        // Assignment
-        return parse_assignment(p, p->current.ident);
-    }
-
-    return parse_logic_or(p);
 }
 
 static Ast* parse_print(Parser* p) {
@@ -311,8 +304,8 @@ Ast* parse_statement(Parser* p) {
         case TOKEN_RETURN:
             return parse_return(p);
         case TOKEN_IDENT:
-            // Function call, get identifier or assignment
-            return parse_ident(p);
+            // Identifier or assignment
+            return parse_assignment(p);
         case TOKEN_PRINT:
             return parse_print(p);
         default:

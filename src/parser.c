@@ -7,7 +7,8 @@
 #include "stdio.h"
 #include "string.h"
 
-Ast* parse_arithmetic(Parser* p);
+// Forward declaration of lower-level parsing functions
+Ast* parse_logic_or(Parser* p);
 
 void parser_init(Parser* p, const char* input) {
     p->lexer->input = input;
@@ -34,7 +35,7 @@ Ast* parse_factor(Parser* p) {
 
     if (tok.type == TOKEN_LPAREN) {
         parser_eat(p, TOKEN_LPAREN);
-        Ast* node = parse_arithmetic(p);
+        Ast* node = parse_logic_or(p);
         parser_eat(p, TOKEN_RPAREN);
         return node;
     }

@@ -31,7 +31,9 @@ typedef enum {
     TOKEN_INDENT,
     TOKEN_DEDENT,
     TOKEN_PRINT,
-    TOKEN_PRINT_DBG,
+    TOKEN_AND,
+    TOKEN_OR,
+    TOKEN_NOT
 }TokenType;
 
 typedef struct Ast Ast; // forward declaration

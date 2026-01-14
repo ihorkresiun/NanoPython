@@ -17,6 +17,10 @@ static Keyword keywords[] = {
     {"def", TOKEN_DEF},
     {"while", TOKEN_WHILE},
     {"print", TOKEN_PRINT},
+    {"and", TOKEN_AND},
+    {"or", TOKEN_OR},
+    {"not", TOKEN_NOT},
+
     {NULL, 0}
 };
 

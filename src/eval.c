@@ -22,7 +22,6 @@ Value eval(Ast* node, Scope* scope) {
             return make_number(node->Number.value);
         break;
         case AST_VAR: {
-            printf ("Scope '%s', Lookup variable: %s\n", scope->name, node->Variable.name);
             Var* v = scope_find(scope, node->Variable.name);
             if (!v) {
                 printf("Undefined variable: %s\n", node->Variable.name);
@@ -54,8 +53,25 @@ Value eval(Ast* node, Scope* scope) {
                 case TOKEN_GE:    return make_bool(left.value.number >= right.value.number);
                 case TOKEN_EQ:    return make_bool(left.value.number == right.value.number);
                 case TOKEN_NE:    return make_bool(left.value.number != right.value.number);
+                case TOKEN_AND:   return make_bool(is_true(left) && is_true(right));
+                case TOKEN_OR:    return make_bool(is_true(left) || is_true(right));
+                
                 default:
                     printf("Unknown operator\n");
+                    exit(1);
+            }
+        }
+        break;
+
+        case AST_UNARY: {
+            Value val = eval(node->Unary.value, scope);
+            switch (node->Unary.op) {
+                case TOKEN_MINUS:
+                    return make_number(-val.value.number);
+                case TOKEN_NOT:
+                    return make_bool(!is_true(val));
+                default:
+                    printf("Unknown unary operator\n");
                     exit(1);
             }
         }

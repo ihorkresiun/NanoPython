@@ -7,7 +7,7 @@
 #include "stdio.h"
 #include "string.h"
 
-Ast* parse_expr(Parser* p);
+Ast* parse_arithmetic(Parser* p);
 
 void parser_init(Parser* p, const char* input) {
     p->lexer->input = input;
@@ -34,31 +34,35 @@ Ast* parse_factor(Parser* p) {
 
     if (tok.type == TOKEN_LPAREN) {
         parser_eat(p, TOKEN_LPAREN);
-        Ast* node = parse_expr(p);
+        Ast* node = parse_arithmetic(p);
         parser_eat(p, TOKEN_RPAREN);
         return node;
-    }
-
-    if (tok.type == TOKEN_IDENT) {
-        parser_eat(p, TOKEN_IDENT);
-
-        // якщо далі = → assignment
-        if (p->current.type == TOKEN_ASSIGN) {
-            parser_eat(p, TOKEN_ASSIGN);
-            Ast* value = parse_expr(p);
-
-            return ast_new_assign(tok.ident, value);
-        }
-        
-        return ast_new_var(tok.ident);
     }
 
     printf("Invalid factor\n");
     exit(1);
 }
 
+Ast* parse_unary(Parser* p) {
+    Token tok = p->current;
+
+    if (tok.type == TOKEN_MINUS) {
+        parser_eat(p, TOKEN_MINUS);
+        Ast* node = parse_unary(p);
+        return ast_new_unary(TOKEN_MINUS, node);
+    }
+
+    if (tok.type == TOKEN_NOT) {
+        parser_eat(p, TOKEN_NOT);
+        Ast* node = parse_unary(p);
+        return ast_new_unary(TOKEN_NOT, node);
+    }
+
+    return parse_factor(p);
+}
+
 Ast* parse_term(Parser* p) {
-    Ast* node = parse_factor(p);
+    Ast* node = parse_unary(p);
 
     while (p->current.type == TOKEN_STAR || p->current.type == TOKEN_SLASH || p->current.type == TOKEN_CARET) {
         TokenType op = p->current.type;
@@ -69,7 +73,7 @@ Ast* parse_term(Parser* p) {
     return node;
 }
 
-Ast* parse_expr(Parser* p) {
+Ast* parse_arithmetic(Parser* p) {
     Ast* node = parse_term(p);
 
     while (p->current.type == TOKEN_PLUS || p->current.type == TOKEN_MINUS) {
@@ -82,13 +86,13 @@ Ast* parse_expr(Parser* p) {
 }
 
 Ast* parse_comparison(Parser* p) {
-    Ast* left = parse_expr(p);
+    Ast* left = parse_arithmetic(p);
     
     TokenType op = p->current.type;
     if (op == TOKEN_LT || op == TOKEN_GT || op == TOKEN_LE ||
         op == TOKEN_GE || op == TOKEN_EQ || op == TOKEN_NE) {
         parser_eat(p, op);
-        Ast* right = parse_expr(p);
+        Ast* right = parse_arithmetic(p);
         left = ast_new_expr(op, left, right);
     }
 
@@ -139,7 +143,7 @@ Ast* parse_if(Parser* p) {
 
 Ast* parse_while(Parser* p) {
     parser_eat(p, TOKEN_WHILE);
-    Ast* condition = parse_expr(p);
+    Ast* condition = parse_arithmetic(p);
     parser_eat(p, TOKEN_COLON);
     parser_eat(p, TOKEN_NEWLINE);
     parser_eat(p, TOKEN_INDENT);
@@ -155,6 +159,27 @@ Ast* parse_def(Parser* p) {
 
 Ast* parse_call(Parser* p, const char* func_name) {
 
+}
+
+Ast* parse_logic_or(Parser* p) {
+
+}
+
+Ast* parse_assignment(Parser* p, const char* var_name) {
+    Token tok = p->current;
+    if (tok.type == TOKEN_IDENT) {
+        parser_eat(p, TOKEN_IDENT);
+
+        // якщо далі = → assignment
+        if (p->current.type == TOKEN_ASSIGN) {
+            parser_eat(p, TOKEN_ASSIGN);
+            Ast* value = parse_comparison(p);
+
+            return ast_new_assign(tok.ident, value);
+        }
+        
+        return ast_new_var(tok.ident);
+    }
 }
 
 Ast* parse_print(Parser* p) {
@@ -173,9 +198,10 @@ Ast* parse_statement(Parser* p) {
             return parse_while(p);
         case TOKEN_DEF:
             return parse_def(p);
+        case TOKEN_ASSIGN:
         case TOKEN_PRINT:
             return parse_print(p);
         default:
-            return parse_expr(p);  // assignment або звичайний вираз
+            return parse_comparison(p);  // assignment or expression
     }
 }

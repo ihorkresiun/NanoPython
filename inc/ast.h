@@ -6,6 +6,7 @@
 typedef enum {
     AST_NUMBER,
     AST_BINARY,
+    AST_UNARY,
     AST_VAR,
     AST_ASSIGN,
     AST_IF,
@@ -31,6 +32,11 @@ typedef struct Ast {
             struct Ast* right;
             TokenType op;
         }Binary;
+
+        struct  {
+            struct Ast* value;
+            TokenType op;
+        }Unary;
 
         struct  {
             char* name;
@@ -82,6 +88,7 @@ typedef struct Ast {
 
 Ast* ast_new_number(double value);
 Ast* ast_new_expr(TokenType type, Ast* left, Ast* right);
+Ast* ast_new_unary(TokenType type, Ast* value);
 Ast* ast_new_var(const char* name);
 Ast* ast_new_assign(const char* name, Ast* value);
 Ast* ast_new_block(Ast** statements, int count);

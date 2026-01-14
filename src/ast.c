@@ -16,6 +16,18 @@ Ast* ast_new_number(double value) {
     return node;
 }
 
+Ast* ast_new_unary(TokenType type, Ast* value) {
+    Ast* node = malloc(sizeof(Ast));
+    if (!node) {
+        printf("Out of memory!\n");
+        exit(1);
+    }
+    node->type = AST_UNARY;
+    node->Unary.value = value;
+    node->Unary.op = type;
+    return node;
+}
+
 Ast* ast_new_expr(TokenType type, Ast* left, Ast* right) {
     Ast* node = malloc(sizeof(Ast));
     if (!node) {

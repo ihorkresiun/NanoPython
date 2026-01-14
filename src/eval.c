@@ -21,6 +21,7 @@ Value eval(Ast* node, Scope* scope) {
         case AST_NUMBER:
             return make_number(node->Number.value);
         break;
+
         case AST_VAR: {
             Var* v = scope_find(scope, node->Variable.name);
             if (!v) {
@@ -30,13 +31,15 @@ Value eval(Ast* node, Scope* scope) {
             return v->value;
         }
         break;
+        
         case AST_ASSIGN: {
             Value value = eval(node->Assign.value, scope);
-            printf ("Scope '%s', Assign: %s = %g\n", scope->name, node->Assign.name, value.value.number);
+            // printf ("Scope '%s', Assign: %s = %g\n", scope->name, node->Assign.name, value.value.number);
             scope_set(scope, node->Assign.name, value);
             return value;
         }
         break;
+
         case AST_BINARY: {
             Value left = eval(node->Binary.left, scope);
             Value right = eval(node->Binary.right, scope);
@@ -94,11 +97,15 @@ Value eval(Ast* node, Scope* scope) {
             }
             return make_none();
         }
+        break;
 
         case AST_BLOCK: {
             Value result = make_none();
             for (int i = 0; i < node->Block.count; i++) {
                 result = eval(node->Block.statements[i], scope);
+                if (node->Block.statements[i]->type == AST_RETURN) {
+                    return result;
+                }
             }
             return result;
         }
@@ -106,8 +113,8 @@ Value eval(Ast* node, Scope* scope) {
 
         case AST_FUNCDEF: {
             Function* fn = malloc(sizeof(Function));
-            fn->params = node->FuncDef.params;
-            fn->param_count = node->FuncDef.param_count;
+            fn->params = node->FuncDef.args;
+            fn->param_count = node->FuncDef.argc;
             fn->body = node->FuncDef.body;
             fn->closure = scope;
 
@@ -127,8 +134,8 @@ Value eval(Ast* node, Scope* scope) {
             }
 
             Function* fn = v->value.value.function;
-            if (node->Call.arg_count != fn->param_count) {
-                printf("Function %s expects %d arguments, got %d\n", node->Call.name, fn->param_count, node->Call.arg_count);
+            if (node->Call.argc != fn->param_count) {
+                printf("Function %s expects %d arguments, got %d\n", node->Call.name, fn->param_count, node->Call.argc);
                 exit(1);
             }
 
@@ -156,10 +163,10 @@ Value eval(Ast* node, Scope* scope) {
             if (val.type == VAL_NUMBER) {
                 printf("%g\n", val.value.number);
             } else if (val.type == VAL_BOOL) {
-                printf("%s\n", val.value.boolean ? "true" : "false" );
+                printf("%s\n", val.value.boolean ? "True" : "False" );
             } else if (val.type == VAL_NONE) {
                 printf("=\n");
-            } else {
+            } else if (val.type == VAL_FUNCTION) {
                 printf("<function>\n");
             }
             return make_none();

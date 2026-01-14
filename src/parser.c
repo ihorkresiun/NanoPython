@@ -8,7 +8,7 @@
 #include "string.h"
 
 // Forward declaration of lower-level parsing functions
-Ast* parse_logic_or(Parser* p);
+static Ast* parse_logic_or(Parser* p);
 
 void parser_init(Parser* p, const char* input) {
     p->lexer->input = input;
@@ -16,7 +16,7 @@ void parser_init(Parser* p, const char* input) {
     p->current = lexer_next(p->lexer);
 }
 
-void parser_eat(Parser* p, TokenType type) {
+static void parser_eat(Parser* p, TokenType type) {
     if (p->current.type == type) {
         p->current = lexer_next(p->lexer);
     } else {
@@ -25,12 +25,17 @@ void parser_eat(Parser* p, TokenType type) {
     }
 }
 
-Ast* parse_factor(Parser* p) {
+static Ast* parse_factor(Parser* p) {
     Token tok = p->current;
 
     if (tok.type == TOKEN_NUMBER) {
         parser_eat(p, TOKEN_NUMBER);
         return ast_new_number(tok.value.value.number);
+    }
+
+    if (tok.type == TOKEN_IDENT) {
+        parser_eat(p, TOKEN_IDENT);
+        return ast_new_var(tok.ident);
     }
 
     if (tok.type == TOKEN_LPAREN) {
@@ -44,7 +49,7 @@ Ast* parse_factor(Parser* p) {
     exit(1);
 }
 
-Ast* parse_unary(Parser* p) {
+static Ast* parse_unary(Parser* p) {
     Token tok = p->current;
 
     if (tok.type == TOKEN_MINUS) {
@@ -62,7 +67,7 @@ Ast* parse_unary(Parser* p) {
     return parse_factor(p);
 }
 
-Ast* parse_term(Parser* p) {
+static Ast* parse_term(Parser* p) {
     Ast* node = parse_unary(p);
 
     while (p->current.type == TOKEN_STAR || p->current.type == TOKEN_SLASH || p->current.type == TOKEN_CARET) {
@@ -74,7 +79,7 @@ Ast* parse_term(Parser* p) {
     return node;
 }
 
-Ast* parse_arithmetic(Parser* p) {
+static Ast* parse_arithmetic(Parser* p) {
     Ast* node = parse_term(p);
 
     while (p->current.type == TOKEN_PLUS || p->current.type == TOKEN_MINUS) {
@@ -86,7 +91,7 @@ Ast* parse_arithmetic(Parser* p) {
     return node;
 }
 
-Ast* parse_comparison(Parser* p) {
+static Ast* parse_comparison(Parser* p) {
     Ast* left = parse_arithmetic(p);
     
     TokenType op = p->current.type;
@@ -100,7 +105,7 @@ Ast* parse_comparison(Parser* p) {
     return left;
 }
 
-Ast* parse_logic_and(Parser* p) {
+static Ast* parse_logic_and(Parser* p) {
     Ast* left = parse_comparison(p);
 
     while (p->current.type == TOKEN_AND) {
@@ -112,7 +117,7 @@ Ast* parse_logic_and(Parser* p) {
     return left;
 }
 
-Ast* parse_logic_or(Parser* p) {
+static Ast* parse_logic_or(Parser* p) {
     Ast* left = parse_logic_and(p);
 
     while (p->current.type == TOKEN_OR) {
@@ -124,7 +129,7 @@ Ast* parse_logic_or(Parser* p) {
     return left;
 }
 
-Ast* parse_block(Parser* p) {
+static Ast* parse_block(Parser* p) {
     Ast** stmts = NULL;
     int count = 0;
 
@@ -145,7 +150,7 @@ Ast* parse_block(Parser* p) {
     return ast_new_block(stmts, count);
 }
 
-Ast* parse_if(Parser* p) {
+static Ast* parse_if(Parser* p) {
     parser_eat(p, TOKEN_IF);
     Ast* condition = parse_logic_or(p);
     parser_eat(p, TOKEN_COLON);
@@ -166,7 +171,7 @@ Ast* parse_if(Parser* p) {
     return ast_new_if(condition, then_block, else_block);
 }
 
-Ast* parse_while(Parser* p) {
+static Ast* parse_while(Parser* p) {
     parser_eat(p, TOKEN_WHILE);
     Ast* condition = parse_logic_or(p);
     parser_eat(p, TOKEN_COLON);
@@ -178,15 +183,79 @@ Ast* parse_while(Parser* p) {
     return ast_new_while(condition, body);
 }
 
-Ast* parse_def(Parser* p) {
+static Ast* parse_def(Parser* p) {
+    parser_eat(p, TOKEN_DEF);
 
+    if (p->current.type != TOKEN_IDENT) {
+        printf("Expected function name after 'def'\n");
+        exit(1);
+    }
+
+    const char* func_name = p->current.ident;
+    parser_eat(p, TOKEN_IDENT);
+
+    parser_eat(p, TOKEN_LPAREN);
+    char** args = NULL;
+    int argc = 0;
+
+    if (p->current.type != TOKEN_RPAREN) {
+        while (1) {
+            if (p->current.type != TOKEN_IDENT) {
+                printf("Expected parameter name in function definition\n");
+                exit(1);
+            }
+            args = realloc(args, sizeof(char*) * (argc + 1));
+            args[argc++] = strdup(p->current.ident);
+            parser_eat(p, TOKEN_IDENT);
+
+            if (p->current.type == TOKEN_COMMA) {
+                parser_eat(p, TOKEN_COMMA);
+            } else {
+                break;
+            }
+        }
+    }
+
+    parser_eat(p, TOKEN_RPAREN);
+    parser_eat(p, TOKEN_COLON);
+    parser_eat(p, TOKEN_NEWLINE);
+    parser_eat(p, TOKEN_INDENT);
+
+    Ast* body = parse_block(p);
+
+    return ast_new_funcdef(func_name, args, argc, body);
 }
 
-Ast* parse_call(Parser* p, const char* func_name) {
+static Ast* parse_call(Parser* p, const char* func_name) {
+    parser_eat(p, TOKEN_IDENT);
+    parser_eat(p, TOKEN_LPAREN);
+    Ast** args = NULL;
+    int argc = 0;
 
+    if (p->current.type != TOKEN_RPAREN) {
+        while (1) {
+            Ast* arg = parse_logic_or(p);
+            args = realloc(args, sizeof(Ast*) * (argc + 1));
+            args[argc++] = arg;
+
+            if (p->current.type == TOKEN_COMMA) {
+                parser_eat(p, TOKEN_COMMA);
+            } else {
+                break;
+            }
+        }
+    }
+    parser_eat(p, TOKEN_RPAREN);
+    return ast_new_call(func_name, args, argc);
 }
 
-Ast* parse_assignment(Parser* p, const char* var_name) {
+static Ast* parse_return(Parser* p) {
+    parser_eat(p, TOKEN_RETURN);
+    Ast* value = parse_logic_or(p);
+    return ast_new_return(value);
+}
+
+static Ast* parse_assignment(Parser* p, const char* var_name) {
     Token tok = p->current;
     if (tok.type == TOKEN_IDENT) {
         parser_eat(p, TOKEN_IDENT);
@@ -194,7 +263,6 @@ Ast* parse_assignment(Parser* p, const char* var_name) {
         if (p->current.type == TOKEN_ASSIGN) {
             parser_eat(p, TOKEN_ASSIGN);
             Ast* value = parse_logic_or(p);
-
             return ast_new_assign(tok.ident, value);
         }
         
@@ -202,7 +270,29 @@ Ast* parse_assignment(Parser* p, const char* var_name) {
     }
 }
 
-Ast* parse_print(Parser* p) {
+static Ast* parse_single_ident(Parser* p) {
+    Token tok = p->current;
+    parser_eat(p, TOKEN_IDENT);
+    return ast_new_var(tok.ident);
+}
+
+static Ast* parse_ident(Parser* p) {
+    Token next_tok = lexer_peek_next(p->lexer);
+    if (next_tok.type == TOKEN_LPAREN) {
+        // Function call by name
+        return parse_call(p, p->current.ident);
+    } else if (next_tok.type == TOKEN_NEWLINE) {
+        // Single identifier statement
+        return parse_single_ident(p);
+    } else if (next_tok.type == TOKEN_ASSIGN) {
+        // Assignment
+        return parse_assignment(p, p->current.ident);
+    }
+
+    return parse_logic_or(p);
+}
+
+static Ast* parse_print(Parser* p) {
     parser_eat(p, TOKEN_PRINT);
     parser_eat(p, TOKEN_LPAREN);
     Ast* expr = parse_logic_or(p);
@@ -218,8 +308,11 @@ Ast* parse_statement(Parser* p) {
             return parse_while(p);
         case TOKEN_DEF:
             return parse_def(p);
+        case TOKEN_RETURN:
+            return parse_return(p);
         case TOKEN_IDENT:
-            return parse_assignment(p, p->current.ident);
+            // Function call, get identifier or assignment
+            return parse_ident(p);
         case TOKEN_PRINT:
             return parse_print(p);
         default:

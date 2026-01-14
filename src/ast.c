@@ -105,6 +105,50 @@ Ast* ast_new_while(Ast* condition, Ast* body) {
     return node;
 }
 
+Ast* ast_new_funcdef(const char* name, char** args, int argc, Ast* body) {
+    Ast* node = malloc(sizeof(Ast));
+    if (!node) {
+        printf("Out of memory!\n");
+        exit(1);
+    }
+
+    node->type = AST_FUNCDEF;
+    node->FuncDef.name = strdup(name);
+    node->FuncDef.args = args;
+    node->FuncDef.argc = argc;
+    node->FuncDef.body = body;
+
+    return node;
+}
+
+Ast* ast_new_call(const char* name, Ast** args, int argc) {
+    Ast* node = malloc(sizeof(Ast));
+    if (!node) {
+        printf("Out of memory!\n");
+        exit(1);
+    }
+
+    node->type = AST_CALL;
+    node->Call.name = strdup(name);
+    node->Call.args = args;
+    node->Call.argc = argc;
+
+    return node;
+}
+
+Ast* ast_new_return(Ast* value) {
+    Ast* node = malloc(sizeof(Ast));
+    if (!node) {
+        printf("Out of memory!\n");
+        exit(1);
+    }
+
+    node->type = AST_RETURN;
+    node->Return.value = value;
+
+    return node;
+}
+
 Ast* ast_new_print(Ast* expr) {
     Ast* node = malloc(sizeof(Ast));
     if (!node) {

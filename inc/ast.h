@@ -65,15 +65,15 @@ typedef struct Ast {
 
         struct {
             char* name;
-            char** params;
-            int param_count;
+            char** args;
+            int argc;
             struct Ast* body;
         }FuncDef;
 
         struct {
             char* name;
             struct Ast** args;
-            int arg_count;
+            int argc;
         }Call;
 
         struct {
@@ -94,6 +94,9 @@ Ast* ast_new_assign(const char* name, Ast* value);
 Ast* ast_new_block(Ast** statements, int count);
 Ast* ast_new_if(Ast* condition, Ast* then_block, Ast* else_block);
 Ast* ast_new_while(Ast* condition, Ast* body);
+Ast* ast_new_funcdef(const char* name, char** args, int argc, Ast* body);
+Ast* ast_new_call(const char* name, Ast** args, int argc);
+Ast* ast_new_return(Ast* value);
 Ast* ast_new_print(Ast* expr);
 void ast_free(Ast* node);
 

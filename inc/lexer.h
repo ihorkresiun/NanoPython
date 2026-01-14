@@ -14,12 +14,14 @@ typedef enum {
     TOKEN_SLASH,
     TOKEN_LPAREN,
     TOKEN_RPAREN,
+    TOKEN_COMMA,
     TOKEN_CARET,
     TOKEN_ASSIGN,
     TOKEN_IF,
     TOKEN_ELSE,
     TOKEN_WHILE,
     TOKEN_DEF,
+    TOKEN_RETURN,
     TOKEN_COLON,
     TOKEN_LT,
     TOKEN_GT,
@@ -79,5 +81,8 @@ typedef struct {
 } Lexer;
 
 Token lexer_next(Lexer * lexer);
+
+// Peek at the next token without consuming it
+Token lexer_peek_next(Lexer* lexer);
 
 #endif // __INC_LEXER_H__

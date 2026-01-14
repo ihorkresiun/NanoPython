@@ -20,6 +20,7 @@ static Keyword keywords[] = {
     {"and", TOKEN_AND},
     {"or", TOKEN_OR},
     {"not", TOKEN_NOT},
+    {"return", TOKEN_RETURN},
 
     {NULL, 0}
 };
@@ -171,9 +172,17 @@ Token lexer_next(Lexer* l) {
         case '^': tok.type=TOKEN_CARET;     l->pos++; return tok;
         case '(': tok.type=TOKEN_LPAREN;    l->pos++; return tok;
         case ')': tok.type=TOKEN_RPAREN;    l->pos++; return tok;
+        case ',': tok.type=TOKEN_COMMA;     l->pos++; return tok;
         case ':': tok.type=TOKEN_COLON;     l->pos++; return tok;
     }
 
     printf("Unknown char: %c\n", s);
     exit(1);
+}
+
+Token lexer_peek_next(Lexer* l) {
+    int saved_pos = l->pos;
+    Token tok = lexer_next(l);
+    l->pos = saved_pos;
+    return tok;
 }

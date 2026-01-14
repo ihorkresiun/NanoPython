@@ -99,6 +99,30 @@ Ast* parse_comparison(Parser* p) {
     return left;
 }
 
+Ast* parse_logic_and(Parser* p) {
+    Ast* left = parse_comparison(p);
+
+    while (p->current.type == TOKEN_AND) {
+        parser_eat(p, TOKEN_AND);
+        Ast* right = parse_comparison(p);
+        left = ast_new_expr(TOKEN_AND, left, right);
+    }
+
+    return left;
+}
+
+Ast* parse_logic_or(Parser* p) {
+    Ast* left = parse_logic_and(p);
+
+    while (p->current.type == TOKEN_OR) {
+        parser_eat(p, TOKEN_OR);
+        Ast* right = parse_logic_and(p);
+        left = ast_new_expr(TOKEN_OR, left, right);
+    }
+
+    return left;
+}
+
 Ast* parse_block(Parser* p) {
     Ast** stmts = NULL;
     int count = 0;
@@ -122,7 +146,7 @@ Ast* parse_block(Parser* p) {
 
 Ast* parse_if(Parser* p) {
     parser_eat(p, TOKEN_IF);
-    Ast* condition = parse_comparison(p);
+    Ast* condition = parse_logic_or(p);
     parser_eat(p, TOKEN_COLON);
     parser_eat(p, TOKEN_NEWLINE);
     parser_eat(p, TOKEN_INDENT);
@@ -143,7 +167,7 @@ Ast* parse_if(Parser* p) {
 
 Ast* parse_while(Parser* p) {
     parser_eat(p, TOKEN_WHILE);
-    Ast* condition = parse_arithmetic(p);
+    Ast* condition = parse_logic_or(p);
     parser_eat(p, TOKEN_COLON);
     parser_eat(p, TOKEN_NEWLINE);
     parser_eat(p, TOKEN_INDENT);
@@ -161,19 +185,14 @@ Ast* parse_call(Parser* p, const char* func_name) {
 
 }
 
-Ast* parse_logic_or(Parser* p) {
-
-}
-
 Ast* parse_assignment(Parser* p, const char* var_name) {
     Token tok = p->current;
     if (tok.type == TOKEN_IDENT) {
         parser_eat(p, TOKEN_IDENT);
 
-        // якщо далі = → assignment
         if (p->current.type == TOKEN_ASSIGN) {
             parser_eat(p, TOKEN_ASSIGN);
-            Ast* value = parse_comparison(p);
+            Ast* value = parse_logic_or(p);
 
             return ast_new_assign(tok.ident, value);
         }
@@ -185,7 +204,7 @@ Ast* parse_assignment(Parser* p, const char* var_name) {
 Ast* parse_print(Parser* p) {
     parser_eat(p, TOKEN_PRINT);
     parser_eat(p, TOKEN_LPAREN);
-    Ast* expr = parse_comparison(p);
+    Ast* expr = parse_logic_or(p);
     parser_eat(p, TOKEN_RPAREN);
     return ast_new_print(expr);
 }
@@ -198,10 +217,19 @@ Ast* parse_statement(Parser* p) {
             return parse_while(p);
         case TOKEN_DEF:
             return parse_def(p);
-        case TOKEN_ASSIGN:
+        case TOKEN_IDENT:
+            return parse_assignment(p, p->current.ident);
         case TOKEN_PRINT:
             return parse_print(p);
         default:
-            return parse_comparison(p);  // assignment or expression
+            // Start parsing an expression
+            // parse_logic_or -> 
+            // parse_logic_and ->
+            // parse_comparison ->
+            // parse_arithmetic ->
+            // parse_term ->
+            // parse_unary ->
+            // parse_factor
+            return parse_logic_or(p);
     }
 }

@@ -34,6 +34,11 @@ static Ast* parse_factor(Parser* p) {
         return ast_new_number(tok.value.value.number);
     }
 
+    if (tok.type == TOKEN_STRING) {
+        parser_eat(p, TOKEN_STRING);
+        return ast_new_string(tok.value.value.string);
+    }
+
     if (tok.type == TOKEN_IDENT) {
         parser_eat(p, TOKEN_IDENT);
 

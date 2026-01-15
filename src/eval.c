@@ -33,6 +33,10 @@ Value eval(Ast* node, Scope* scope) {
             return v->value;
         }
         break;
+
+        case AST_STRING:
+            return make_string(node->String.value);
+        break;
         
         case AST_ASSIGN: {
             Value value = eval(node->Assign.value, scope);
@@ -47,7 +51,27 @@ Value eval(Ast* node, Scope* scope) {
             Value right = eval(node->Binary.right, scope);
 
             switch (node->Binary.op) {
-                case TOKEN_PLUS:  return make_number(left.value.number + right.value.number);
+                case TOKEN_PLUS:
+                    if (left.type == VAL_STRING && right.type == VAL_STRING) {
+                        char* combined = malloc(strlen(left.value.string) + strlen(right.value.string) + 1);
+                        strcpy(combined, left.value.string);
+                        strcat(combined, right.value.string);
+                        Value v = make_string(combined);
+                        free(combined);
+                        return v;
+                    } else if (left.type == VAL_STRING && right.type == VAL_NUMBER) {
+                        char buffer[64];
+                        sprintf(buffer, "%s%g", left.value.string, right.value.number);
+                        return make_string(buffer);
+                    } else if (left.type == VAL_NUMBER && right.type == VAL_STRING) {
+                        char buffer[64];
+                        sprintf(buffer, "%g%s", left.value.number, right.value.string);
+                        return make_string(buffer);
+                    }
+                    
+                    return make_number(left.value.number + right.value.number);
+                break;
+
                 case TOKEN_MINUS: return make_number(left.value.number - right.value.number);
                 case TOKEN_STAR:  return make_number(left.value.number * right.value.number);
                 case TOKEN_SLASH: return make_number(left.value.number / right.value.number);
@@ -172,6 +196,8 @@ Value eval(Ast* node, Scope* scope) {
             Value val = eval(node->Print.expr, scope);
             if (val.type == VAL_NUMBER) {
                 printf("%g\n", val.value.number);
+            } else if (val.type == VAL_STRING) {
+                printf("%s\n", val.value.string);
             } else if (val.type == VAL_BOOL) {
                 printf("%s\n", val.value.boolean ? "True" : "False" );
             } else if (val.type == VAL_NONE) {

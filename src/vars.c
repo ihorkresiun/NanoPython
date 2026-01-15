@@ -48,6 +48,13 @@ Value make_bool(int b) {
     return (Value){.type = VAL_BOOL, .value.boolean = b};
 }
 
+Value make_string(const char* s) {
+    Value v;
+    v.type = VAL_STRING;
+    v.value.string = strdup(s);
+    return v;
+}
+
 Value make_none() {
     return (Value){.type = VAL_NONE};
 }

@@ -7,6 +7,7 @@ typedef enum {
     TOKEN_EOF,
 
     TOKEN_NUMBER,
+    TOKEN_STRING,
     TOKEN_IDENT,
     TOKEN_MINUS,
     TOKEN_PLUS,
@@ -52,8 +53,9 @@ typedef struct Function {
 typedef enum {
     VAL_NUMBER,
     VAL_BOOL,
+    VAL_FUNCTION,
+    VAL_STRING,
     VAL_NONE,
-    VAL_FUNCTION
 }ValueType;
 
 typedef struct Value {
@@ -62,6 +64,7 @@ typedef struct Value {
         double number;
         int boolean;
         struct Function* function;
+        char* string;
     }value;
 } Value;
 

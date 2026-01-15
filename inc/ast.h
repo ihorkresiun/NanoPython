@@ -5,6 +5,7 @@
 
 typedef enum {
     AST_NUMBER,
+    AST_STRING,
     AST_BINARY,
     AST_UNARY,
     AST_VAR,
@@ -26,6 +27,10 @@ typedef struct Ast {
         struct  {
             double value;
         }Number;
+
+        struct  {
+            char* value;
+        }String;
 
         struct  {
             struct Ast* left;
@@ -90,6 +95,7 @@ Ast* ast_new_number(double value);
 Ast* ast_new_expr(TokenType type, Ast* left, Ast* right);
 Ast* ast_new_unary(TokenType type, Ast* value);
 Ast* ast_new_var(const char* name);
+Ast* ast_new_string(const char* value);
 Ast* ast_new_assign(const char* name, Ast* value);
 Ast* ast_new_block(Ast** statements, int count);
 Ast* ast_new_if(Ast* condition, Ast* then_block, Ast* else_block);

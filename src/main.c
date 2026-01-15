@@ -66,10 +66,12 @@ int main(int argc, char** argv)
         Value result = eval(tree, &global_scope);
         if (result.type == VAL_NUMBER) {
             printf("= %g\n", result.value.number);
+        } else if (result.type == VAL_STRING) {
+            printf("= %s\n", result.value.string);
         } else if (result.type == VAL_BOOL) {
             printf("= %s\n", result.value.boolean ? "True" : "False");
         } else if (result.type == VAL_NONE) {
-            printf("None\n");
+            printf("\n");
         }
 
         ast_free(tree);

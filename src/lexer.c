@@ -92,6 +92,43 @@ Token lexer_next(Lexer* l) {
         return tok;
     }
 
+    if (s == '\r') {
+        l->pos++;
+        return lexer_next(l);
+    }
+
+    if (s == '#') {
+        // Skip comment till end of line
+        while (s != '\n' && s != '\0') {
+            l->pos++;
+            s = l->input[l->pos];
+        }
+        return lexer_next(l);
+    }
+
+    if (s == '"') {
+        // Parse string literal
+        l->pos++; // skip opening quote
+        char buffer[256];
+        size_t i = 0;
+        s = l->input[l->pos];
+        while (s != '"' && s != '\0' && i < sizeof(buffer) - 1) {
+            buffer[i++] = s;
+            l->pos++;
+            s = l->input[l->pos];
+        }
+        buffer[i] = '\0';
+        if (s == '"') {
+            l->pos++; // skip closing quote
+        } else {
+            printf("Unterminated string literal\n");
+            exit(1);
+        }
+        tok.type = TOKEN_STRING; // Using STRING type for strings
+        tok.value = make_string(buffer);
+        return tok;
+    }
+
     // Skip spaces inside a line
     if (s == ' ' || s == '\t') { l->pos++; return lexer_next(l); }
 

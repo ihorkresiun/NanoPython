@@ -52,6 +52,17 @@ Ast* ast_new_var(const char* name) {
     return node;
 }
 
+Ast* ast_new_string(const char* value) {
+    Ast* node = malloc(sizeof(Ast));
+    if (!node) {
+        printf("Out of memory!\n");
+        exit(1);
+    }
+    node->type = AST_STRING;
+    node->String.value = strdup(value);
+    return node;
+}
+
 Ast* ast_new_assign(const char* name, Ast* value) {
     Ast* node = malloc(sizeof(Ast));
     if (!node) {

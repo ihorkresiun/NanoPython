@@ -255,8 +255,17 @@ static Ast* parse_call(Parser* p, const char* func_name) {
     return ast_new_call(func_name, args, argc);
 }
 
+static int tocken_endline_or_eof(TokenType type) {
+    return type == TOKEN_NEWLINE || type == TOKEN_EOF || type == TOKEN_DEDENT;
+}
+
 static Ast* parse_return(Parser* p) {
     parser_eat(p, TOKEN_RETURN);
+
+    if (tocken_endline_or_eof(p->current.type)) {
+        return ast_new_return(NULL);
+    }
+
     Ast* value = parse_logic_or(p);
     return ast_new_return(value);
 }
@@ -275,7 +284,7 @@ static Ast* parse_assignment(Parser* p) {
             // Parse the expression on the right side
             Ast* value = parse_logic_or(p);
             return ast_new_assign(tok.ident, value);
-        } else if (next_token.type == TOKEN_NEWLINE) {
+        } else if (tocken_endline_or_eof(next_token.type)) {
             // Just a variable reference
             return ast_new_var(tok.ident);
         }

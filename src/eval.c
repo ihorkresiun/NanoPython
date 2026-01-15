@@ -5,6 +5,7 @@
 
 #include "stdio.h"
 #include "stdlib.h"
+#include "string.h"
 #include "math.h"
 
 static int is_true(Value v) {
@@ -28,6 +29,7 @@ Value eval(Ast* node, Scope* scope) {
                 printf("Undefined variable: %s\n", node->Variable.name);
                 exit(1);
             }
+            // printf ("Scope '%s', Variable: %s = %g\n", scope->name, node->Variable.name, v->value.value.number);
             return v->value;
         }
         break;
@@ -103,7 +105,7 @@ Value eval(Ast* node, Scope* scope) {
             Value result = make_none();
             for (int i = 0; i < node->Block.count; i++) {
                 result = eval(node->Block.statements[i], scope);
-                if (node->Block.statements[i]->type == AST_RETURN) {
+                if (scope->has_return) {
                     return result;
                 }
             }
@@ -113,10 +115,11 @@ Value eval(Ast* node, Scope* scope) {
 
         case AST_FUNCDEF: {
             Function* fn = malloc(sizeof(Function));
+            fn->name = strdup(node->FuncDef.name);
             fn->params = node->FuncDef.args;
             fn->param_count = node->FuncDef.argc;
             fn->body = node->FuncDef.body;
-            fn->closure = scope;
+            fn->scope = scope;
 
             Value v;
             v.type = VAL_FUNCTION;
@@ -139,7 +142,11 @@ Value eval(Ast* node, Scope* scope) {
                 exit(1);
             }
 
-            Scope fn_scope = {"Function", NULL, fn->closure};
+            Scope fn_scope;
+            fn_scope.name = fn->name;
+            fn_scope.vars = NULL;
+            fn_scope.parent = scope;
+            fn_scope.has_return = 0;
 
             for (int i = 0; i < fn->param_count; i++) {
                 Value arg_value = eval(node->Call.args[i], scope);
@@ -151,10 +158,13 @@ Value eval(Ast* node, Scope* scope) {
         break;
 
         case AST_RETURN: {
-            Value ret_value = eval(node->Return.value, scope);
-            // For simplicity, we just return the value here.
-            // In a full implementation, we would need to handle this differently.
-            return ret_value;
+            Value v = make_none();
+            if (node->Return.value) {
+                v = eval(node->Return.value, scope);
+            }
+            scope->has_return = 1;
+            scope->return_value = v;
+            return v;
         }
         break;
 

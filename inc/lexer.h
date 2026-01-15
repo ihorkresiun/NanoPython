@@ -42,10 +42,11 @@ typedef struct Ast Ast; // forward declaration
 typedef struct Scope Scope; // forward declaration
 
 typedef struct Function {
+    char* name;
     char** params;
     int param_count;
     Ast* body;
-    Scope* closure;
+    Scope* scope; // Closure scope
 }Function;
 
 typedef enum {

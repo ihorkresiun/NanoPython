@@ -28,7 +28,8 @@ int main(int argc, char** argv)
 
     Lexer lexer = {0};
     Parser parser = {&lexer, {0}};
-    Scope global_scope = {"Global", NULL, NULL};
+    Scope global_scope = {0};
+    global_scope.name = "Global";
     
     while (1)
     {
@@ -68,7 +69,7 @@ int main(int argc, char** argv)
         } else if (result.type == VAL_BOOL) {
             printf("= %s\n", result.value.boolean ? "True" : "False");
         } else if (result.type == VAL_NONE) {
-            printf("=\n");
+            printf("None\n");
         }
 
         ast_free(tree);

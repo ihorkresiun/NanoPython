@@ -22,14 +22,17 @@ Var * scope_find(Scope* scope, const char* name) {
 }
 
 void scope_set(Scope* scope, const char* name, Value value) {
-    // Change current value if exist
-    Var* v = scope_find(scope, name);
-    if (v) {
-        v->value = value;
-        return;
+    // Find value in current scope
+    Var* v = scope->vars;
+    while (v) {
+        if (strcmp(v->name, name) == 0) {
+            v->value = value;
+            return;
+        }
+        v = v->next;
     }
 
-    // Create new value
+    // Create new value if not found
     v = malloc(sizeof(Var));
     v->name = strdup(name);
     v->value = value;

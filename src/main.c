@@ -7,7 +7,7 @@
 
 #include "string.h"
 
-void print_usage(const char* prog_name) {
+static void print_usage(const char* prog_name) {
     printf("Usage: %s \"expression\"\n", prog_name);
     printf("Evaluates the arithmetic expression provided as a command-line argument.\n");
     printf("Example: %s \"3 + 4 * (2 - 1)\"\n", prog_name);
@@ -31,6 +31,8 @@ int main(int argc, char** argv)
     Scope global_scope = {0};
     global_scope.name = "Global";
     
+
+
     while (1)
     {
         // REPL loop
@@ -63,18 +65,16 @@ int main(int argc, char** argv)
             printf("Error: Failed to parse expression.\n");
             continue;
         }
-        
-        Value result = (eval(tree, &global_scope)).value;
-        if (result.type == VAL_NUMBER) {
-            printf("= %g\n", result.value.number);
-        } else if (result.type == VAL_STRING) {
-            printf("= %s\n", result.value.string);
-        } else if (result.type == VAL_BOOL) {
-            printf("= %s\n", result.value.boolean ? "True" : "False");
-        } else if (result.type == VAL_NONE) {
-            printf("\n");
+
+        EvalResult res = eval(tree, &global_scope);
+        if (res.status != NORMAL) {
+            printf("Error: Evaluation failed.\n");
+            continue;
         }
 
+        print_value(res.value);
+        printf("\n");
+        
         //ast_free(tree);
         buffer[0] = 0; // Clear buffer for next input
     }

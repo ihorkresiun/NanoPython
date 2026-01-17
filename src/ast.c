@@ -52,6 +52,43 @@ Ast* ast_new_var(const char* name) {
     return node;
 }
 
+Ast* ast_new_list(Ast** elements, int count) {
+    Ast* node = malloc(sizeof(Ast));
+    if (!node) {
+        printf("Out of memory!\n");
+        exit(1);
+    }
+    node->type = AST_LIST;
+    node->List.elements = elements;
+    node->List.count = count;
+    return node;
+}
+
+Ast* ast_new_index(Ast* target, Ast* index) {
+    Ast* node = malloc(sizeof(Ast));
+    if (!node) {
+        printf("Out of memory!\n");
+        exit(1);
+    }
+    node->type = AST_INDEX;
+    node->Index.target = target;
+    node->Index.index = index;
+    return node;
+}
+
+Ast* ast_new_assign_index(Ast* target, Ast* index, Ast* value) {
+    Ast* node = malloc(sizeof(Ast));
+    if (!node) {
+        printf("Out of memory!\n");
+        exit(1);
+    }
+    node->type = AST_ASSIGN_INDEX;
+    node->AssignIndex.target = target;
+    node->AssignIndex.index = index;
+    node->AssignIndex.value = value;
+    return node;
+}
+
 Ast* ast_new_string(const char* value) {
     Ast* node = malloc(sizeof(Ast));
     if (!node) {

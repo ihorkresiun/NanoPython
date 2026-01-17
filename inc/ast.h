@@ -14,6 +14,9 @@ typedef enum {
     AST_ELSE,
     AST_WHILE,
     AST_BLOCK,
+    AST_LIST,
+    AST_INDEX,
+    AST_ASSIGN_INDEX,
     AST_FUNCDEF,
     AST_CALL,
     AST_RETURN,
@@ -29,6 +32,22 @@ typedef struct Ast {
         struct  {
             double value;
         }Number;
+
+        struct  {
+            struct Ast** elements;
+            int count;
+        }List;
+
+        struct {
+            Ast* target;
+            Ast* index;
+        }Index;
+
+        struct {
+            Ast* target;
+            Ast* index;
+            Ast* value;
+        }AssignIndex;
 
         struct  {
             char* value;
@@ -97,6 +116,9 @@ Ast* ast_new_number(double value);
 Ast* ast_new_expr(TokenType type, Ast* left, Ast* right);
 Ast* ast_new_unary(TokenType type, Ast* value);
 Ast* ast_new_var(const char* name);
+Ast* ast_new_list(Ast** elements, int count);
+Ast* ast_new_index(Ast* target, Ast* index);
+Ast* ast_new_assign_index(Ast* target, Ast* index, Ast* value);
 Ast* ast_new_string(const char* value);
 Ast* ast_new_assign(const char* name, Ast* value);
 Ast* ast_new_block(Ast** statements, int count);

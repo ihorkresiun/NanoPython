@@ -15,6 +15,8 @@ typedef enum {
     TOKEN_SLASH,
     TOKEN_LPAREN,
     TOKEN_RPAREN,
+    TOKEN_LBRACKET,
+    TOKEN_RBRACKET,
     TOKEN_COMMA,
     TOKEN_CARET,
     TOKEN_ASSIGN,
@@ -55,20 +57,30 @@ typedef struct Function {
 typedef enum {
     VAL_NUMBER,
     VAL_BOOL,
+    VAL_LIST,
     VAL_FUNCTION,
     VAL_STRING,
     VAL_NONE,
 }ValueType;
+
+typedef struct List List; // forward declaration
 
 typedef struct Value {
     ValueType type;
     union {
         double number;
         int boolean;
-        struct Function* function;
         char* string;
+        List* list;
+        struct Function* function;
     }value;
 } Value;
+
+typedef struct List {
+    int count;
+    int capacity;
+    Value* items;
+} List;
 
 typedef struct {
     TokenType type;

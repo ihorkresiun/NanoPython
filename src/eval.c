@@ -17,6 +17,48 @@ static int is_true(Value v) {
     }
 }
 
+static Value binary_op(Value left, Value right, TokenType op) {
+    switch (op) {
+    case TOKEN_PLUS:
+        if (left.type == VAL_STRING && right.type == VAL_STRING) {
+            char* combined = malloc(strlen(left.value.string) + strlen(right.value.string) + 1);
+            strcpy(combined, left.value.string);
+            strcat(combined, right.value.string);
+            Value v = make_string(combined);
+            free(combined);
+            return v;
+        } else if (left.type == VAL_STRING && right.type == VAL_NUMBER) {
+            char buffer[64];
+            sprintf(buffer, "%s%g", left.value.string, right.value.number);
+            return make_string(buffer);
+        } else if (left.type == VAL_NUMBER && right.type == VAL_STRING) {
+            char buffer[64];
+            sprintf(buffer, "%g%s", left.value.number, right.value.string);
+            return make_string(buffer);
+        }
+        
+        return make_number(left.value.number + right.value.number);
+    break;
+
+    case TOKEN_MINUS: return make_number(left.value.number - right.value.number);
+    case TOKEN_STAR:  return make_number(left.value.number * right.value.number);
+    case TOKEN_SLASH: return make_number(left.value.number / right.value.number);
+    case TOKEN_CARET: return make_number(pow(left.value.number, right.value.number));
+    case TOKEN_LT:    return make_bool(left.value.number < right.value.number);
+    case TOKEN_GT:    return make_bool(left.value.number > right.value.number);
+    case TOKEN_LE:    return make_bool(left.value.number <= right.value.number);
+    case TOKEN_GE:    return make_bool(left.value.number >= right.value.number);
+    case TOKEN_EQ:    return make_bool(left.value.number == right.value.number);
+    case TOKEN_NE:    return make_bool(left.value.number != right.value.number);
+    case TOKEN_AND:   return make_bool(is_true(left) && is_true(right));
+    case TOKEN_OR:    return make_bool(is_true(left) || is_true(right));
+    
+    default:
+        printf("Unknown binary operator %d\n", op);
+        exit(1);
+    }
+}
+
 EvalResult eval(Ast* node, Scope* scope) {
     switch(node->type) {
         case AST_NUMBER:
@@ -50,45 +92,7 @@ EvalResult eval(Ast* node, Scope* scope) {
             Value left = (eval(node->Binary.left, scope)).value;
             Value right = (eval(node->Binary.right, scope)).value;
 
-            switch (node->Binary.op) {
-                case TOKEN_PLUS:
-                    if (left.type == VAL_STRING && right.type == VAL_STRING) {
-                        char* combined = malloc(strlen(left.value.string) + strlen(right.value.string) + 1);
-                        strcpy(combined, left.value.string);
-                        strcat(combined, right.value.string);
-                        Value v = make_string(combined);
-                        free(combined);
-                        return (EvalResult){v, NORMAL};
-                    } else if (left.type == VAL_STRING && right.type == VAL_NUMBER) {
-                        char buffer[64];
-                        sprintf(buffer, "%s%g", left.value.string, right.value.number);
-                        return (EvalResult){make_string(buffer), NORMAL};
-                    } else if (left.type == VAL_NUMBER && right.type == VAL_STRING) {
-                        char buffer[64];
-                        sprintf(buffer, "%g%s", left.value.number, right.value.string);
-                        return (EvalResult){make_string(buffer), NORMAL};
-                    }
-                    
-                    return (EvalResult){make_number(left.value.number + right.value.number), NORMAL};
-                break;
-
-                case TOKEN_MINUS: return (EvalResult){make_number(left.value.number - right.value.number), NORMAL};
-                case TOKEN_STAR:  return (EvalResult){make_number(left.value.number * right.value.number), NORMAL};
-                case TOKEN_SLASH: return (EvalResult){make_number(left.value.number / right.value.number), NORMAL};
-                case TOKEN_CARET: return (EvalResult){make_number(pow(left.value.number, right.value.number)), NORMAL};
-                case TOKEN_LT:    return (EvalResult){make_bool(left.value.number < right.value.number), NORMAL};
-                case TOKEN_GT:    return (EvalResult){make_bool(left.value.number > right.value.number), NORMAL};
-                case TOKEN_LE:    return (EvalResult){make_bool(left.value.number <= right.value.number), NORMAL};
-                case TOKEN_GE:    return (EvalResult){make_bool(left.value.number >= right.value.number), NORMAL};
-                case TOKEN_EQ:    return (EvalResult){make_bool(left.value.number == right.value.number), NORMAL};
-                case TOKEN_NE:    return (EvalResult){make_bool(left.value.number != right.value.number), NORMAL};
-                case TOKEN_AND:   return (EvalResult){make_bool(is_true(left) && is_true(right)), NORMAL};
-                case TOKEN_OR:    return (EvalResult){make_bool(is_true(left) || is_true(right)), NORMAL};
-                
-                default:
-                    printf("Unknown operator\n");
-                    exit(1);
-            }
+            return (EvalResult){binary_op(left, right, node->Binary.op), NORMAL};
         }
         break;
 
@@ -142,6 +146,62 @@ EvalResult eval(Ast* node, Scope* scope) {
                 }
             }
             return result;
+        }
+        break;
+
+        case AST_LIST: {
+            Value v = make_list();
+            List* list = v.value.list;
+            for (int i = 0; i < node->List.count; i++) {
+                Value item = (eval(node->List.elements[i], scope)).value;
+
+                if (list->count >= list->capacity) {
+                    list->capacity *= 2;
+                    list->items = realloc(list->items, sizeof(Value) * list->capacity);
+                }
+                list->items[list->count++] = item;
+            }
+
+            return (EvalResult){v, NORMAL};
+        }
+
+        case AST_INDEX: {
+            Value target = (eval(node->Index.target, scope)).value;
+            Value index = (eval(node->Index.index, scope)).value;
+
+            if (target.type != VAL_LIST || index.type != VAL_NUMBER) {
+                printf("Indexing error: target must be a list and index must be a number\n");
+                exit(1);
+            }
+
+            int idx = (int)index.value.number;
+            if (idx < 0 || idx >= target.value.list->count) {
+                printf("Index out of bounds: %d\n", idx);
+                exit(1);
+            }
+
+            return (EvalResult){target.value.list->items[idx], NORMAL};
+        }
+        break;
+
+        case AST_ASSIGN_INDEX: {
+            Value target = (eval(node->AssignIndex.target, scope)).value;
+            Value index = (eval(node->AssignIndex.index, scope)).value;
+            Value value = (eval(node->AssignIndex.value, scope)).value;
+
+            if (target.type != VAL_LIST || index.type != VAL_NUMBER) {
+                printf("Index assignment error: target must be a list and index must be a number\n");
+                exit(1);
+            }
+
+            int idx = (int)index.value.number;
+            if (idx < 0 || idx >= target.value.list->count) {
+                printf("Index out of bounds: %d\n", idx);
+                exit(1);
+            }
+
+            target.value.list->items[idx] = value;
+            return (EvalResult){value, NORMAL};
         }
         break;
 
@@ -210,23 +270,13 @@ EvalResult eval(Ast* node, Scope* scope) {
 
         case AST_PRINT: {
             Value val = (eval(node->Print.expr, scope)).value;
-            if (val.type == VAL_NUMBER) {
-                printf("%g\n", val.value.number);
-            } else if (val.type == VAL_STRING) {
-                printf("%s\n", val.value.string);
-            } else if (val.type == VAL_BOOL) {
-                printf("%s\n", val.value.boolean ? "True" : "False" );
-            } else if (val.type == VAL_NONE) {
-                printf("=\n");
-            } else if (val.type == VAL_FUNCTION) {
-                printf("<function>\n");
-            }
+            print_value(val);
             return (EvalResult){make_none(), NORMAL};
         }
         break;
 
         default:
-            printf("Unknown AST node type\n");
+            printf("Unknown AST node type %d\n", node->type);
             exit(1);
     }
 }

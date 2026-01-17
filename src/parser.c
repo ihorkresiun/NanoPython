@@ -56,6 +56,27 @@ static Ast* parse_factor(Parser* p) {
         return node;
     }
 
+    if (tok.type == TOKEN_LBRACKET) {
+        parser_eat(p, TOKEN_LBRACKET);
+        
+        Ast** elements = NULL; 
+        int count = 0;
+
+        while (p->current.type != TOKEN_RBRACKET) {
+            Ast* elem = parse_logic_or(p);
+            elements = realloc(elements, sizeof(Ast*) * (count + 1));
+            elements[count++] = elem;
+
+            if (p->current.type == TOKEN_COMMA) {
+                parser_eat(p, TOKEN_COMMA);
+            } else {
+                break;
+            }
+        }
+    
+        parser_eat(p, TOKEN_RBRACKET);
+        return ast_new_list(elements, count);
+    }
     printf("Invalid factor %d\n", tok.type);
     exit(1);
 }
@@ -285,23 +306,43 @@ static Ast* parse_continue(Parser* p) {
     return ast_new_continue();
 }
 
-static Ast* parse_assignment(Parser* p) {
+static Ast* parse_ident(Parser* p) {
     Token tok = p->current;
     if (tok.type == TOKEN_IDENT) {
-        Token next_token = lexer_peek_next(p->lexer);
+        if (tocken_endline_or_eof(lexer_peek_next(p->lexer).type)) {
+            // Just a variable reference
+            return ast_new_var(tok.ident);
+        }
 
-        if (next_token.type == TOKEN_ASSIGN) {
-            // a = 2 + 3
-            // Eat identifier 'a'
-            parser_eat(p, TOKEN_IDENT);
-            // Eat '='
+        parser_eat(p, TOKEN_IDENT);
+
+        if (p->current.type == TOKEN_LBRACKET) {
+            
+            parser_eat(p, TOKEN_LBRACKET);
+            Ast* index = parse_logic_or(p);
+            parser_eat(p, TOKEN_RBRACKET);
+
+            if (p->current.type != TOKEN_ASSIGN) {
+                // Just a list index access a[0]
+                Ast* target = ast_new_var(tok.ident);
+                return ast_new_index(target, index);
+            }
+
             parser_eat(p, TOKEN_ASSIGN);
+            // Assignment to list index a[0] = 5
+            Ast* value = parse_logic_or(p);
+            Ast* target = ast_new_var(tok.ident);
+            return ast_new_assign_index(target, index, value);
+        }
+
+        if (p->current.type == TOKEN_ASSIGN) {
+            // Assignment to variable
+            parser_eat(p, TOKEN_ASSIGN);
+
+
             // Parse the expression on the right side
             Ast* value = parse_logic_or(p);
             return ast_new_assign(tok.ident, value);
-        } else if (tocken_endline_or_eof(next_token.type)) {
-            // Just a variable reference
-            return ast_new_var(tok.ident);
         }
         
         // Not an assignment, parse as expression, a + b, a + 1 etc.
@@ -333,7 +374,7 @@ Ast* parse_statement(Parser* p) {
             return parse_continue(p);
         case TOKEN_IDENT:
             // Identifier or assignment
-            return parse_assignment(p);
+            return parse_ident(p);
         case TOKEN_PRINT:
             return parse_print(p);
         default:

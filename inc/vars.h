@@ -21,7 +21,10 @@ void scope_set(Scope* scope, const char* name, Value value);
 
 Value make_number(double x);
 Value make_bool(int b);
+Value make_list();
 Value make_string(const char* s);
 Value make_none();
+
+void print_value(Value v);
 
 #endif // __INC_VARS_H__

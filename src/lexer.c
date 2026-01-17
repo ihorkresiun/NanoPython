@@ -21,9 +21,21 @@ static Keyword keywords[] = {
     {"or", TOKEN_OR},
     {"not", TOKEN_NOT},
     {"return", TOKEN_RETURN},
+    {"break", TOKEN_BREAK},
+    {"continue", TOKEN_CONTINUE},
 
     {NULL, 0}
 };
+
+void lexer_init(Lexer * lexer, const char * input) {
+    lexer->input = input;
+    lexer->pos = 0;
+    lexer->line_start = 1;
+    lexer->indent_top = 0;
+    lexer->indent_stack[lexer->indent_top] = 0;
+    lexer->pending_indents = 0;
+    lexer->pending_dedents = 0;
+}
 
 static TokenType check_keyword(const char* ident) {
     for (int i = 0; keywords[i].name != NULL; i++) {
@@ -32,14 +44,6 @@ static TokenType check_keyword(const char* ident) {
         }
     }
     return TOKEN_IDENT;
-}
-
-void lexer_init(Lexer * lexer, const char * input) {
-    lexer->input = input;
-    lexer->pos = 0;
-    lexer->line_start = 1;
-    lexer->indent_top = 0;
-    lexer->indent_stack[lexer->indent_top] = 0;
 }
 
 static int count_leading_spaces(const char * str) {

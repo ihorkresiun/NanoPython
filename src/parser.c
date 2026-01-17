@@ -21,7 +21,7 @@ static void parser_eat(Parser* p, TokenType type) {
     if (p->current.type == type) {
         p->current = lexer_next(p->lexer);
     } else {
-        printf("Unexpected token: expected %d, got %d\n", type, p->current.type);
+         printf("Unexpected token: expected %d, got %d\n", type, p->current.type);
         exit(1);
     }
 }
@@ -56,7 +56,7 @@ static Ast* parse_factor(Parser* p) {
         return node;
     }
 
-    printf("Invalid factor\n");
+    printf("Invalid factor %d\n", tok.type);
     exit(1);
 }
 
@@ -275,6 +275,16 @@ static Ast* parse_return(Parser* p) {
     return ast_new_return(value);
 }
 
+static Ast* parse_break(Parser* p) {
+    parser_eat(p, TOKEN_BREAK);
+    return ast_new_break();
+}
+
+static Ast* parse_continue(Parser* p) {
+    parser_eat(p, TOKEN_CONTINUE);
+    return ast_new_continue();
+}
+
 static Ast* parse_assignment(Parser* p) {
     Token tok = p->current;
     if (tok.type == TOKEN_IDENT) {
@@ -317,6 +327,10 @@ Ast* parse_statement(Parser* p) {
             return parse_def(p);
         case TOKEN_RETURN:
             return parse_return(p);
+        case TOKEN_BREAK:
+            return parse_break(p);
+        case TOKEN_CONTINUE:
+            return parse_continue(p);
         case TOKEN_IDENT:
             // Identifier or assignment
             return parse_assignment(p);

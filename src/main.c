@@ -56,6 +56,7 @@ int main(int argc, char** argv)
             }
         }
 
+        lexer_init(&lexer, buffer);
         parser_init(&parser, buffer);
         Ast* tree = parse_statement(&parser);
         if (!tree) {
@@ -63,7 +64,7 @@ int main(int argc, char** argv)
             continue;
         }
         
-        Value result = eval(tree, &global_scope);
+        Value result = (eval(tree, &global_scope)).value;
         if (result.type == VAL_NUMBER) {
             printf("= %g\n", result.value.number);
         } else if (result.type == VAL_STRING) {
@@ -74,7 +75,7 @@ int main(int argc, char** argv)
             printf("\n");
         }
 
-        ast_free(tree);
+        //ast_free(tree);
         buffer[0] = 0; // Clear buffer for next input
     }
 

@@ -160,6 +160,30 @@ Ast* ast_new_return(Ast* value) {
     return node;
 }
 
+Ast* ast_new_break() {
+    Ast* node = malloc(sizeof(Ast));
+    if (!node) {
+        printf("Out of memory!\n");
+        exit(1);
+    }
+
+    node->type = AST_BREAK;
+
+    return node;
+}
+
+Ast* ast_new_continue() {
+    Ast* node = malloc(sizeof(Ast));
+    if (!node) {
+        printf("Out of memory!\n");
+        exit(1);
+    }
+
+    node->type = AST_CONTINUE;
+
+    return node;
+}
+
 Ast* ast_new_print(Ast* expr) {
     Ast* node = malloc(sizeof(Ast));
     if (!node) {

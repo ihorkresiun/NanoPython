@@ -17,6 +17,8 @@ typedef enum {
     AST_FUNCDEF,
     AST_CALL,
     AST_RETURN,
+    AST_BREAK,
+    AST_CONTINUE,
     AST_PRINT
 } AstType;
 
@@ -103,6 +105,8 @@ Ast* ast_new_while(Ast* condition, Ast* body);
 Ast* ast_new_funcdef(const char* name, char** args, int argc, Ast* body);
 Ast* ast_new_call(const char* name, Ast** args, int argc);
 Ast* ast_new_return(Ast* value);
+Ast* ast_new_break();
+Ast* ast_new_continue();
 Ast* ast_new_print(Ast* expr);
 void ast_free(Ast* node);
 

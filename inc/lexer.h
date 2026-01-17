@@ -23,6 +23,8 @@ typedef enum {
     TOKEN_WHILE,
     TOKEN_DEF,
     TOKEN_RETURN,
+    TOKEN_BREAK,
+    TOKEN_CONTINUE,
     TOKEN_COLON,
     TOKEN_LT,
     TOKEN_GT,
@@ -84,6 +86,8 @@ typedef struct {
     int pending_dedents;
 } Lexer;
 
+
+void lexer_init(Lexer * lexer, const char * input);
 Token lexer_next(Lexer * lexer);
 
 // Peek at the next token without consuming it

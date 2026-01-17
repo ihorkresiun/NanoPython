@@ -12,7 +12,6 @@ typedef struct Var {
 typedef struct Scope {
     const char * name;
     Var * vars;
-    int has_return;
     Value return_value;
     struct Scope* parent;
 }Scope;

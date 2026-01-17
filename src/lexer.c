@@ -23,6 +23,8 @@ static Keyword keywords[] = {
     {"return", TOKEN_RETURN},
     {"break", TOKEN_BREAK},
     {"continue", TOKEN_CONTINUE},
+    {"for", TOKEN_FOR},
+    {"in", TOKEN_IN},
 
     {NULL, 0}
 };

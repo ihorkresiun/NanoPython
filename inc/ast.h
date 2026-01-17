@@ -13,6 +13,7 @@ typedef enum {
     AST_IF,
     AST_ELSE,
     AST_WHILE,
+    AST_FOR,
     AST_BLOCK,
     AST_LIST,
     AST_INDEX,
@@ -85,6 +86,12 @@ typedef struct Ast {
         }While;
 
         struct {
+            const char* var;
+            Ast* iterable;
+            Ast* body;
+        }For;
+
+        struct {
             struct Ast** statements;
             int count;
         }Block;
@@ -113,23 +120,25 @@ typedef struct Ast {
 } Ast;
 
 Ast* ast_new_number(double value);
-Ast* ast_new_expr(TokenType type, Ast* left, Ast* right);
-Ast* ast_new_unary(TokenType type, Ast* value);
+Ast* ast_new_string(const char* value);
+Ast* ast_new_binary_expr(TokenType type, Ast* left, Ast* right);
+Ast* ast_new_unary_expr(TokenType type, Ast* value);
 Ast* ast_new_var(const char* name);
+Ast* ast_new_assign(const char* name, Ast* value);
+Ast* ast_new_if(Ast* condition, Ast* then_block, Ast* else_block);
+Ast* ast_new_while(Ast* condition, Ast* body);
+Ast* ast_new_for(const char* var, Ast* iterable, Ast* body);
+Ast* ast_new_block(Ast** statements, int count);
 Ast* ast_new_list(Ast** elements, int count);
 Ast* ast_new_index(Ast* target, Ast* index);
 Ast* ast_new_assign_index(Ast* target, Ast* index, Ast* value);
-Ast* ast_new_string(const char* value);
-Ast* ast_new_assign(const char* name, Ast* value);
-Ast* ast_new_block(Ast** statements, int count);
-Ast* ast_new_if(Ast* condition, Ast* then_block, Ast* else_block);
-Ast* ast_new_while(Ast* condition, Ast* body);
 Ast* ast_new_funcdef(const char* name, char** args, int argc, Ast* body);
 Ast* ast_new_call(const char* name, Ast** args, int argc);
 Ast* ast_new_return(Ast* value);
 Ast* ast_new_break();
 Ast* ast_new_continue();
 Ast* ast_new_print(Ast* expr);
+
 void ast_free(Ast* node);
 
 #endif // __INC_AST_H__

@@ -27,6 +27,8 @@ typedef enum {
     TOKEN_RETURN,
     TOKEN_BREAK,
     TOKEN_CONTINUE,
+    TOKEN_FOR,
+    TOKEN_IN,
     TOKEN_COLON,
     TOKEN_LT,
     TOKEN_GT,

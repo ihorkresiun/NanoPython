@@ -137,6 +137,32 @@ EvalResult eval(Ast* node, Scope* scope) {
         }
         break;
 
+        case AST_FOR: {
+            Value iterable = (eval(node->For.iterable, scope)).value;
+            if (iterable.type != VAL_LIST) {
+                printf("For loop error: iterable must be a list\n");
+                exit(1);
+            }
+            EvalResult result = {make_none(), NORMAL};
+            List* list = iterable.value.list;
+            
+            for (int i = 0; i < list->count; i++) {
+                scope_set(scope, node->For.var, list->items[i]);
+
+                result = eval(node->For.body, scope);
+
+                if (result.status == BREAKING) {
+                    break;
+                } else if (result.status == CONTINUING) {
+                    continue;
+                } else if (result.status == RETURNING) {
+                    return result;
+                }
+            }
+            return result;
+        }
+        break;
+
         case AST_BLOCK: {
             EvalResult result = {make_none(), NORMAL};
             for (int i = 0; i < node->Block.count; i++) {
@@ -271,6 +297,7 @@ EvalResult eval(Ast* node, Scope* scope) {
         case AST_PRINT: {
             Value val = (eval(node->Print.expr, scope)).value;
             print_value(val);
+            printf("\n");
             return (EvalResult){make_none(), NORMAL};
         }
         break;

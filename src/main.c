@@ -75,7 +75,7 @@ int main(int argc, char** argv)
         print_value(res.value);
         printf("\n");
         
-        //ast_free(tree);
+        ast_free(tree);
         buffer[0] = 0; // Clear buffer for next input
     }
 

@@ -1,6 +1,7 @@
 #include "stdio.h"
 
 #include "ast.h"
+#include "compiler.h"
 #include "eval.h"
 #include "lexer.h"
 #include "parser.h"
@@ -15,6 +16,35 @@ static void print_usage(const char* prog_name) {
 }   
 
 int main(int argc, char** argv) {
+    const char* source = "print(3 + 4)";
+
+    Lexer lexer = {0};
+    Parser parser = {&lexer, {0}};
+
+    lexer_init(&lexer, source);
+    parser_init(&parser, source);
+    Ast* tree = parse_statement(&parser);
+
+    static Instruction code[64] = {0};
+    static Value constants[16] = {0};
+    static Bytecode bytecode = {
+        .instructions = code,
+        .count = 0,
+        .capacity = 64,
+        .constants = constants,
+        .const_count = 0
+    };
+
+    Compiler compiler = {&bytecode};
+    compile(&compiler, tree);
+
+    Scope globals = {0};
+    globals.name = "Global";
+    VM vm = {&bytecode, {0}, 0, 0, &globals};
+    vm_run(&vm);
+}
+
+int main_vm(int argc, char** argv) {
     static const Instruction code[] = {
         {OP_CONST, 0}, // Push constant 0 (placeholder)
         {OP_CONST, 1}, // Push constant 1 (placeholder)

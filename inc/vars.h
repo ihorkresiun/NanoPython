@@ -3,6 +3,47 @@
 
 #include "ast.h"
 
+typedef struct Ast Ast; // forward declaration
+typedef struct Scope Scope; // forward declaration
+
+typedef struct Function {
+    char* name;
+    char** params;
+    int param_count;
+    Ast* body;
+    Scope* scope; // Closure scope
+}Function;
+
+typedef enum {
+    VAL_NONE,
+    VAL_INT,
+    VAL_FLOAT,
+    VAL_BOOL,
+    VAL_LIST,
+    VAL_FUNCTION,
+    VAL_STRING,
+}ValueType;
+
+typedef struct List List; // forward declaration
+
+typedef struct Value {
+    ValueType type;
+    union {
+        long i;
+        double f;
+        int boolean;
+        char* string;
+        List* list;
+        struct Function* function;
+    }value;
+} Value;
+
+typedef struct List {
+    int count;
+    int capacity;
+    Value* items;
+} List;
+
 typedef struct Var {
     const char* name;
     Value value;

@@ -1,7 +1,7 @@
 #ifndef __INC_AST_H__
 #define __INC_AST_H__
 
-#include "lexer.h"
+#include "tokens.h"
 
 typedef enum {
     AST_NUMBER,
@@ -26,7 +26,6 @@ typedef enum {
     AST_PRINT
 } AstType;
 
-
 typedef struct Ast {
     AstType type;
     union {
@@ -40,14 +39,14 @@ typedef struct Ast {
         }List;
 
         struct {
-            Ast* target;
-            Ast* index;
+            struct Ast* target;
+            struct Ast* index;
         }Index;
 
         struct {
-            Ast* target;
-            Ast* index;
-            Ast* value;
+            struct Ast* target;
+            struct Ast* index;
+            struct Ast* value;
         }AssignIndex;
 
         struct  {
@@ -87,8 +86,8 @@ typedef struct Ast {
 
         struct {
             const char* var;
-            Ast* iterable;
-            Ast* body;
+            struct Ast* iterable;
+            struct Ast* body;
         }For;
 
         struct {
@@ -114,7 +113,7 @@ typedef struct Ast {
         }Return;
 
         struct {
-            Ast* expr;
+            struct Ast* expr;
         }Print;
     };
 } Ast;

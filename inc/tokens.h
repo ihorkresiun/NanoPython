@@ -1,0 +1,47 @@
+#ifndef __INC_TOKENS_H__
+#define __INC_TOKENS_H__
+
+typedef enum {
+    TOKEN_EOF,
+
+    TOKEN_NUMBER,
+    TOKEN_FLOAT,
+    TOKEN_STRING,
+    TOKEN_IDENT,
+    TOKEN_MINUS,
+    TOKEN_PLUS,
+    TOKEN_STAR,
+    TOKEN_SLASH,
+    TOKEN_LPAREN,
+    TOKEN_RPAREN,
+    TOKEN_LBRACKET,
+    TOKEN_RBRACKET,
+    TOKEN_COMMA,
+    TOKEN_CARET,
+    TOKEN_ASSIGN,
+    TOKEN_IF,
+    TOKEN_ELSE,
+    TOKEN_WHILE,
+    TOKEN_DEF,
+    TOKEN_RETURN,
+    TOKEN_BREAK,
+    TOKEN_CONTINUE,
+    TOKEN_FOR,
+    TOKEN_IN,
+    TOKEN_COLON,
+    TOKEN_LT,
+    TOKEN_GT,
+    TOKEN_LE,
+    TOKEN_GE,
+    TOKEN_EQ,
+    TOKEN_NE,
+    TOKEN_NEWLINE,
+    TOKEN_INDENT,
+    TOKEN_DEDENT,
+    TOKEN_PRINT,
+    TOKEN_AND,
+    TOKEN_OR,
+    TOKEN_NOT
+}TokenType;
+
+#endif // __INC_TOKENS_H__

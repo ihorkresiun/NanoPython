@@ -4,6 +4,7 @@
 #include "eval.h"
 #include "lexer.h"
 #include "parser.h"
+#include "vm.h"
 
 #include "string.h"
 
@@ -13,7 +14,44 @@ static void print_usage(const char* prog_name) {
     printf("Example: %s \"3 + 4 * (2 - 1)\"\n", prog_name);
 }   
 
-int main(int argc, char** argv)
+int main(int argc, char** argv) {
+    static const Instruction code[] = {
+        {OP_CONST, 0}, // Push constant 0 (placeholder)
+        {OP_CONST, 1}, // Push constant 1 (placeholder)
+        {OP_ADD, 0},  // Add top two values
+        {OP_PRINT, 0}, // Print result
+        {OP_HALT, 0}   // Halt execution
+    };
+    static const Value constants[] = {
+        {.type = VAL_FLOAT, .value.f = 3},
+        {.type = VAL_FLOAT, .value.f = 4}
+    };
+
+    Bytecode bytecode = {
+        .instructions = (Instruction*)code,
+        .count = sizeof(code) / sizeof(Instruction),
+        .capacity = sizeof(code) / sizeof(Instruction),
+        .constants = (Value*)constants,
+        .const_count = sizeof(constants) / sizeof(Value)
+    };
+
+    Scope globals = {
+        .name = "Global",
+        .vars = NULL,
+        .parent = NULL
+    };
+
+    VM vm = {
+        .bytecode = &bytecode,
+        .sp = 0,
+        .ip = 0,
+        .globals = &globals
+    };
+
+    vm_run(&vm);
+}
+
+int main_ast(int argc, char** argv)
 {
     char line[128] = {0};
     char buffer[2048] = {0};

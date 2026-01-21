@@ -2,6 +2,7 @@
 
 #include "ast.h"
 #include "lexer.h"
+#include "vars.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -11,7 +12,7 @@
 static int is_true(Value v) {
     switch (v.type) {
         case VAL_BOOL:      return v.value.boolean;
-        case VAL_NUMBER:    return v.value.number != 0;
+        case VAL_FLOAT:    return v.value.f != 0;
         case VAL_NONE:      return 0;
         default: return 1;
     }
@@ -27,29 +28,29 @@ static Value binary_op(Value left, Value right, TokenType op) {
             Value v = make_string(combined);
             free(combined);
             return v;
-        } else if (left.type == VAL_STRING && right.type == VAL_NUMBER) {
+        } else if (left.type == VAL_STRING && right.type == VAL_FLOAT) {
             char buffer[64];
-            sprintf(buffer, "%s%g", left.value.string, right.value.number);
+            sprintf(buffer, "%s%g", left.value.string, right.value.f);
             return make_string(buffer);
-        } else if (left.type == VAL_NUMBER && right.type == VAL_STRING) {
+        } else if (left.type == VAL_FLOAT && right.type == VAL_STRING) {
             char buffer[64];
-            sprintf(buffer, "%g%s", left.value.number, right.value.string);
+            sprintf(buffer, "%g%s", left.value.f, right.value.string);
             return make_string(buffer);
         }
         
-        return make_number(left.value.number + right.value.number);
+        return make_number(left.value.f + right.value.f);
     break;
 
-    case TOKEN_MINUS: return make_number(left.value.number - right.value.number);
-    case TOKEN_STAR:  return make_number(left.value.number * right.value.number);
-    case TOKEN_SLASH: return make_number(left.value.number / right.value.number);
-    case TOKEN_CARET: return make_number(pow(left.value.number, right.value.number));
-    case TOKEN_LT:    return make_bool(left.value.number < right.value.number);
-    case TOKEN_GT:    return make_bool(left.value.number > right.value.number);
-    case TOKEN_LE:    return make_bool(left.value.number <= right.value.number);
-    case TOKEN_GE:    return make_bool(left.value.number >= right.value.number);
-    case TOKEN_EQ:    return make_bool(left.value.number == right.value.number);
-    case TOKEN_NE:    return make_bool(left.value.number != right.value.number);
+    case TOKEN_MINUS: return make_number(left.value.f - right.value.f);
+    case TOKEN_STAR:  return make_number(left.value.f * right.value.f);
+    case TOKEN_SLASH: return make_number(left.value.f / right.value.f);
+    case TOKEN_CARET: return make_number(pow(left.value.f, right.value.f));
+    case TOKEN_LT:    return make_bool(left.value.f < right.value.f);
+    case TOKEN_GT:    return make_bool(left.value.f > right.value.f);
+    case TOKEN_LE:    return make_bool(left.value.f <= right.value.f);
+    case TOKEN_GE:    return make_bool(left.value.f >= right.value.f);
+    case TOKEN_EQ:    return make_bool(left.value.f == right.value.f);
+    case TOKEN_NE:    return make_bool(left.value.f != right.value.f);
     case TOKEN_AND:   return make_bool(is_true(left) && is_true(right));
     case TOKEN_OR:    return make_bool(is_true(left) || is_true(right));
     
@@ -100,7 +101,7 @@ EvalResult eval(Ast* node, Scope* scope) {
             Value val = (eval(node->Unary.value, scope)).value;
             switch (node->Unary.op) {
                 case TOKEN_MINUS:
-                    return (EvalResult){make_number(-val.value.number), NORMAL};
+                    return (EvalResult){make_number(-val.value.f), NORMAL};
                 case TOKEN_NOT:
                     return (EvalResult){make_bool(!is_true(val)), NORMAL};
                 default:
@@ -195,12 +196,12 @@ EvalResult eval(Ast* node, Scope* scope) {
             Value target = (eval(node->Index.target, scope)).value;
             Value index = (eval(node->Index.index, scope)).value;
 
-            if (target.type != VAL_LIST || index.type != VAL_NUMBER) {
+            if (target.type != VAL_LIST || index.type != VAL_FLOAT) {
                 printf("Indexing error: target must be a list and index must be a number\n");
                 exit(1);
             }
 
-            int idx = (int)index.value.number;
+            int idx = (int)index.value.f;
             if (idx < 0 || idx >= target.value.list->count) {
                 printf("Index out of bounds: %d\n", idx);
                 exit(1);
@@ -215,12 +216,12 @@ EvalResult eval(Ast* node, Scope* scope) {
             Value index = (eval(node->AssignIndex.index, scope)).value;
             Value value = (eval(node->AssignIndex.value, scope)).value;
 
-            if (target.type != VAL_LIST || index.type != VAL_NUMBER) {
+            if (target.type != VAL_LIST || index.type != VAL_FLOAT) {
                 printf("Index assignment error: target must be a list and index must be a number\n");
                 exit(1);
             }
 
-            int idx = (int)index.value.number;
+            int idx = (int)index.value.f;
             if (idx < 0 || idx >= target.value.list->count) {
                 printf("Index out of bounds: %d\n", idx);
                 exit(1);

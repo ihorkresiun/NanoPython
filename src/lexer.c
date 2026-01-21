@@ -143,12 +143,22 @@ Token lexer_next(Lexer* l) {
         // Parse number
         char buffer[64];
         size_t i = 0;
+        int dot_seen = 0;
         while(isdigit(s) || s == '.') {
+            if (s == '.') {
+                if (dot_seen) break;
+                dot_seen = 1;
+            }
             buffer[i++] = l->input[l->pos++];
             s = l->input[l->pos];
         }
         buffer[i] = '\0';
-        tok.type = TOKEN_NUMBER;
+
+        if (dot_seen) {
+            tok.type = TOKEN_FLOAT;
+        } else {
+            tok.type = TOKEN_NUMBER;
+        }
         tok.value = make_number(atof(buffer));
         return tok;
     }

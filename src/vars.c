@@ -42,7 +42,7 @@ void scope_set(Scope* scope, const char* name, Value value) {
 }
 
 Value make_number(double x) {
-    return (Value){.type = VAL_NUMBER, .value.number = x};
+    return (Value){.type = VAL_FLOAT, .value.f = x};
 }
 
 Value make_bool(int b) {
@@ -73,8 +73,8 @@ Value make_none() {
 
 void print_value(Value v) {
     switch (v.type) {
-        case VAL_NUMBER:
-            printf("%g", v.value.number);
+        case VAL_FLOAT:
+            printf("%g", v.value.f);
         break;
         case VAL_STRING:
             printf("%s", v.value.string);

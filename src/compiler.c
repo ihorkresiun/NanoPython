@@ -98,6 +98,19 @@ static void compile_node(Compiler* compiler, Ast* node) {
         }
         break;
 
+        case AST_WHILE: {
+            int loop_start = compiler->bytecode->count;
+
+            compile_node(compiler, node->While.condition);
+            int exit_jump = emit_jump(compiler, OP_JUMP_IF_ZERO);
+
+            compile_node(compiler, node->While.body);
+            emit(compiler, OP_JUMP, loop_start);
+
+            patch_jump(compiler, exit_jump);
+        }
+        break;
+
         case AST_ASSIGN: {
             compile_node(compiler, node->Assign.value);
             int idx = add_constant(compiler, make_string(node->Assign.name));

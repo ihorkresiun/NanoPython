@@ -19,7 +19,10 @@ int main(int argc, char** argv) {
     // const char* source = "x = 10\nx=x+4\nprint(x + 12*2)\0";
     // const char* source = "x = 10 + 2 * 3\nprint(x)\0";
 
-    const char* source = "x = 5\nif x > 10:\n    print(x)\nelse:\n    print(0)\0";
+    //const char* source = "x = 5\nif x > 10:\n    print(x)\nelse:\n    print(0)\0";
+    
+    const char* source = "x = 10\nwhile x > 0:\n    print(x)\n    x = x - 1\0";
+    
     Lexer lexer = {0};
     Parser parser = {&lexer, {0}};
 

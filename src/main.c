@@ -16,14 +16,15 @@ static void print_usage(const char* prog_name) {
 }   
 
 int main(int argc, char** argv) {
-    const char* source = "print(3 + 4)";
+    const char* source = "x = 10\nx=x+4\nprint(x + 12*2)\0";
+    //const char* source = "x = 10 + 2 * 3\nprint(x)\0";
 
     Lexer lexer = {0};
     Parser parser = {&lexer, {0}};
 
     lexer_init(&lexer, source);
     parser_init(&parser, source);
-    Ast* tree = parse_statement(&parser);
+    Ast* tree = parse_program(&parser);
 
     static Instruction code[64] = {0};
     static Value constants[16] = {0};

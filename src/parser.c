@@ -416,3 +416,22 @@ Ast* parse_statement(Parser* p) {
             return parse_logic_or(p);
     }
 }
+
+Ast* parse_program(Parser* p)
+{
+    Ast** stmts = NULL;
+    int count = 0;
+
+    while (p->current.type != TOKEN_EOF) {
+        if (p->current.type == TOKEN_NEWLINE) {
+            parser_eat(p, TOKEN_NEWLINE);
+            continue;
+        }
+
+        Ast* stmt = parse_statement(p);
+        stmts = realloc(stmts, sizeof(Ast*) * (count + 1));
+        stmts[count++] = stmt;
+    }
+
+    return ast_new_block(stmts, count);
+}

@@ -42,6 +42,28 @@ static int add_constant(Compiler* compiler, Value value) {
     return bytecode->const_count++;
 }
 
+static void push_loop(Compiler* compiler, int loop_start) {
+    if (compiler->loop_count >= 16) {
+        printf("Loop stack overflow\n");
+        exit(1);
+    }
+
+    LoopContext* loop = &compiler->loop_stack[compiler->loop_count++];
+    loop->loop_start = loop_start;
+    loop->break_jumps = NULL;
+    loop->break_count = 0;
+    loop->break_capacity = 0;
+}
+
+void pop_loop(Compiler* compiler) {
+    if (compiler->loop_count <= 0) {
+        printf("Loop stack underflow\n");
+        exit(1);
+    }
+
+    LoopContext* loop = &compiler->loop_stack[--compiler->loop_count];
+    free(loop->break_jumps);
+}
 static void compile_node(Compiler* compiler, Ast* node) {
     switch (node->type) {
         case AST_NUMBER: {

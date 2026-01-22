@@ -5,7 +5,17 @@
 #include "vm.h"
 
 typedef struct {
+    int loop_start;
+    int* break_jumps;
+    int break_count;
+    int break_capacity;
+} LoopContext;
+
+typedef struct {
     Bytecode* bytecode;
+
+    LoopContext loop_stack[16];
+    int loop_count;
 } Compiler;
 
 void compile(Compiler* compiler, Ast* node);

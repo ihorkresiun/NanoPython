@@ -48,7 +48,19 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 case TOKEN_MINUS:
                     emit(compiler, OP_SUB, 0);
                     break;
-                // Add cases for other binary operations as needed
+                case TOKEN_STAR:
+                    emit(compiler, OP_MUL, 0);
+                    break;
+                case TOKEN_SLASH:
+                    emit(compiler, OP_DIV, 0);
+                    break;
+                default:
+                    printf("Unsupported binary operator in compiler: %d\n", node->Binary.op);
+                    exit(1);
+                break;
+            }
+        }
+        break;
             }
         }
         break;

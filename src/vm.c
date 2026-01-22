@@ -60,6 +60,22 @@ void vm_run(VM* vm) {
             }
             break;
 
+            case OP_MUL: {
+                Value b = vm_pop(vm);
+                Value a = vm_pop(vm);
+                Value result = make_number(a.value.f * b.value.f);
+                vm_push(vm, result);
+            }
+            break;
+
+            case OP_DIV: {
+                Value b = vm_pop(vm);
+                Value a = vm_pop(vm);
+                Value result = make_number(a.value.f / b.value.f);
+                vm_push(vm, result);
+            }
+            break;
+            
             case OP_LOAD: {
                 Value v = vm->bytecode->constants[instr.operand];
                 vm_push(vm, v);

@@ -43,7 +43,7 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             case OP_STORE_GLOBAL: {
                 Value name = bytecode->constants[instr.operand];
                 if (name.type == VAL_STRING) {
-                    fprintf(file, "STORE_GLOBAL \"%s\"\n", name.value.string);
+                    fprintf(file, "STORE_GLOBAL %s\n", name.value.string);
                 } else {
                     fprintf(file, "STORE_GLOBAL %d\n", instr.operand);
                 }
@@ -52,7 +52,7 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             case OP_LOAD_GLOBAL: {
                 Value name = bytecode->constants[instr.operand];
                 if (name.type == VAL_STRING) {
-                    fprintf(file, "LOAD_GLOBAL \"%s\"\n", name.value.string);
+                    fprintf(file, "LOAD_GLOBAL %s\n", name.value.string);
                 } else {
                     fprintf(file, "LOAD_GLOBAL %d\n", instr.operand);
                 }

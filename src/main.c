@@ -16,9 +16,10 @@ static void print_usage(const char* prog_name) {
 }   
 
 int main(int argc, char** argv) {
-    const char* source = "x = 10\nx=x+4\nprint(x + 12*2)\0";
-    //const char* source = "x = 10 + 2 * 3\nprint(x)\0";
+    // const char* source = "x = 10\nx=x+4\nprint(x + 12*2)\0";
+    // const char* source = "x = 10 + 2 * 3\nprint(x)\0";
 
+    const char* source = "x = 5\nif x > 10:\n    print(x)\nelse:\n    print(0)\0";
     Lexer lexer = {0};
     Parser parser = {&lexer, {0}};
 

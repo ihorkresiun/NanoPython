@@ -16,6 +16,18 @@ static void emit(Compiler* compiler, Opcode op, int arg) {
     bytecode->instructions[bytecode->count++] = (Instruction){op, arg};
 }
 
+// Emit a jump instruction and return its position for later patching
+static int emit_jump(Compiler* compiler, Opcode op) {
+    emit(compiler, op, 0);
+    return compiler->bytecode->count - 1;
+}
+
+// Patch a previously emitted jump instruction to jump to the current bytecode position
+static void patch_jump(Compiler* compiler, int jump_pos) {
+    int jump_target = compiler->bytecode->count;
+    compiler->bytecode->instructions[jump_pos].operand = jump_target;
+}
+
 static int add_constant(Compiler* compiler, Value value) {
     Bytecode* bytecode = compiler->bytecode;
     if (bytecode->const_count >= bytecode->capacity) {
@@ -54,11 +66,35 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 case TOKEN_SLASH:
                     emit(compiler, OP_DIV, 0);
                     break;
+                case TOKEN_EQ:
+                    emit(compiler, OP_EQ, 0);
+                    break;
+                case TOKEN_LT:
+                    emit(compiler, OP_LT, 0);
+                    break;
+                case TOKEN_GT:
+                    emit(compiler, OP_GT, 0);
+                    break;
                 default:
                     printf("Unsupported binary operator in compiler: %d\n", node->Binary.op);
                     exit(1);
                 break;
             }
+        }
+        break;
+
+        case AST_IF: {
+            compile_node(compiler, node->If.condition);
+            int jump_if_false = emit_jump(compiler, OP_JUMP_IF_ZERO);
+
+            compile_node(compiler, node->If.then_branch);
+            int jump_end = emit_jump(compiler, OP_JUMP);
+
+            patch_jump(compiler, jump_if_false);
+            if (node->If.else_branch) {
+                compile_node(compiler, node->If.else_branch);
+            }
+            patch_jump(compiler, jump_end);
         }
         break;
 

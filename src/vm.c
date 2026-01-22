@@ -75,7 +75,7 @@ void vm_run(VM* vm) {
                 vm_push(vm, result);
             }
             break;
-            
+
             case OP_LOAD: {
                 Value v = vm->bytecode->constants[instr.operand];
                 vm_push(vm, v);
@@ -119,6 +119,44 @@ void vm_run(VM* vm) {
                 }
                 vm_push(vm, var->value);
             }
+            break;
+
+            case OP_JUMP_IF_ZERO: {
+                Value cond = vm_pop(vm);
+                if (!is_true(cond)) {
+                    vm->ip = instr.operand;
+                }
+            }
+            break;
+
+            case OP_EQ: {
+                Value b = vm_pop(vm);
+                Value a = vm_pop(vm);
+                Value result = make_bool(a.value.f == b.value.f);
+                vm_push(vm, result);
+            }
+            break;
+
+            case OP_LT: {
+                Value b = vm_pop(vm);
+                Value a = vm_pop(vm);
+                Value result = make_bool(a.value.f < b.value.f);
+                vm_push(vm, result);
+            }
+            break;
+
+            case OP_GT: {
+                Value b = vm_pop(vm);
+                Value a = vm_pop(vm);
+                Value result = make_bool(a.value.f > b.value.f);
+                vm_push(vm, result);
+            }
+            break;
+            
+            case OP_JUMP: {
+                vm->ip = instr.operand;
+            }
+            break;
 
             case OP_NOP:
                 // Do nothing
@@ -131,7 +169,7 @@ void vm_run(VM* vm) {
                 return;
 
             default:
-                printf("Unknown opcode %d\n", instr.opcode);
+                printf("VM: Unknown opcode %d\n", instr.opcode);
                 exit(1);
         }
     }

@@ -2,6 +2,7 @@
 
 #include "ast.h"
 #include "compiler.h"
+#include "disasm.h"
 #include "eval.h"
 #include "lexer.h"
 #include "parser.h"
@@ -22,7 +23,7 @@ int main(int argc, char** argv) {
     //const char* source = "x = 5\nif x > 10:\n    print(x)\nelse:\n    print(0)\0";
     
     const char* source = "x = 10\nwhile x > 0:\n    print(x)\n    x = x - 1\0";
-    
+
     Lexer lexer = {0};
     Parser parser = {&lexer, {0}};
 
@@ -42,6 +43,8 @@ int main(int argc, char** argv) {
 
     Compiler compiler = {&bytecode};
     compile(&compiler, tree);
+
+    store_disasm(&bytecode, "bytecode.txt");
 
     Scope globals = {0};
     globals.name = "Global";

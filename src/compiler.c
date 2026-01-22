@@ -45,7 +45,19 @@ static int add_constant(Compiler* compiler, Value value) {
 static void compile_node(Compiler* compiler, Ast* node) {
     switch (node->type) {
         case AST_NUMBER: {
-            int idx = add_constant(compiler, make_number(node->Number.value));
+            int idx = add_constant(compiler, make_number_int(node->NumberInt.value));
+            emit(compiler, OP_CONST, idx);
+        }
+        break;
+
+        case AST_FLOAT: {
+            int idx = add_constant(compiler, make_number_float(node->NumberFloat.value));
+            emit(compiler, OP_CONST, idx);
+        }
+        break;
+
+        case AST_STRING: {
+            int idx = add_constant(compiler, make_string(node->String.value));
             emit(compiler, OP_CONST, idx);
         }
         break;

@@ -47,7 +47,12 @@ void vm_run(VM* vm) {
             case OP_ADD: {
                 Value b = vm_pop(vm);
                 Value a = vm_pop(vm);
-                Value result = make_number(a.value.f + b.value.f);
+                Value result;
+                if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
+                    result = make_number_float(a.value.f + b.value.f);
+                } else {
+                    result = make_number_int(a.value.i + b.value.i);
+                }
                 vm_push(vm, result);
             }
             break;
@@ -55,7 +60,12 @@ void vm_run(VM* vm) {
             case OP_SUB: {
                 Value b = vm_pop(vm);
                 Value a = vm_pop(vm);
-                Value result = make_number(a.value.f - b.value.f);
+                Value result;
+                if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
+                    result = make_number_float(a.value.f - b.value.f);
+                } else {
+                    result = make_number_int(a.value.i - b.value.i);
+                }
                 vm_push(vm, result);
             }
             break;
@@ -63,7 +73,12 @@ void vm_run(VM* vm) {
             case OP_MUL: {
                 Value b = vm_pop(vm);
                 Value a = vm_pop(vm);
-                Value result = make_number(a.value.f * b.value.f);
+                Value result;
+                if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
+                    result = make_number_float(a.value.f * b.value.f);
+                } else {
+                    result = make_number_int(a.value.i * b.value.i);
+                }
                 vm_push(vm, result);
             }
             break;
@@ -71,7 +86,12 @@ void vm_run(VM* vm) {
             case OP_DIV: {
                 Value b = vm_pop(vm);
                 Value a = vm_pop(vm);
-                Value result = make_number(a.value.f / b.value.f);
+                Value result;
+                if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
+                    result = make_number_float(a.value.f / b.value.f);
+                } else {
+                    result = make_number_int(a.value.i / b.value.i);
+                }
                 vm_push(vm, result);
             }
             break;

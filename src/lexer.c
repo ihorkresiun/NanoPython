@@ -156,10 +156,12 @@ Token lexer_next(Lexer* l) {
 
         if (dot_seen) {
             tok.type = TOKEN_FLOAT;
+            tok.value = make_number_float(atof(buffer));
         } else {
             tok.type = TOKEN_NUMBER;
+            tok.value = make_number_int(atoi(buffer));
         }
-        tok.value = make_number(atof(buffer));
+        
         return tok;
     }
 

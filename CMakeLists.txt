@@ -4,7 +4,7 @@ project(NanoPython)
 
 # include_directories(inc)
 
-add_executable(NanoPython src/main.c src/ast.c src/compiler.c src/eval.c src/lexer.c src/parser.c src/vars.c src/vm.c)
+add_executable(NanoPython src/main.c src/ast.c src/compiler.c src/disasm.c src/eval.c src/lexer.c src/parser.c src/vars.c src/vm.c)
 
 target_include_directories(NanoPython PRIVATE inc)
 target_link_libraries(NanoPython m)

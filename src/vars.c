@@ -50,7 +50,11 @@ int is_true(Value v) {
     }
 }
 
-Value make_number(double x) {
+Value make_number_int(int x) {
+    return (Value){.type = VAL_INT, .value.i = x};
+}
+
+Value make_number_float(double x) {
     return (Value){.type = VAL_FLOAT, .value.f = x};
 }
 
@@ -82,6 +86,9 @@ Value make_none() {
 
 void print_value(Value v) {
     switch (v.type) {
+        case VAL_INT:
+            printf("%ld", v.value.i);
+        break;
         case VAL_FLOAT:
             printf("%g", v.value.f);
         break;

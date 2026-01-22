@@ -29,13 +29,13 @@ static Value binary_op(Value left, Value right, TokenType op) {
             return make_string(buffer);
         }
         
-        return make_number(left.value.f + right.value.f);
+        return make_number_float(left.value.f + right.value.f);
     break;
 
-    case TOKEN_MINUS: return make_number(left.value.f - right.value.f);
-    case TOKEN_STAR:  return make_number(left.value.f * right.value.f);
-    case TOKEN_SLASH: return make_number(left.value.f / right.value.f);
-    case TOKEN_CARET: return make_number(pow(left.value.f, right.value.f));
+    case TOKEN_MINUS: return make_number_float(left.value.f - right.value.f);
+    case TOKEN_STAR:  return make_number_float(left.value.f * right.value.f);
+    case TOKEN_SLASH: return make_number_float(left.value.f / right.value.f);
+    case TOKEN_CARET: return make_number_float(pow(left.value.f, right.value.f));
     case TOKEN_LT:    return make_bool(left.value.f < right.value.f);
     case TOKEN_GT:    return make_bool(left.value.f > right.value.f);
     case TOKEN_LE:    return make_bool(left.value.f <= right.value.f);
@@ -54,7 +54,11 @@ static Value binary_op(Value left, Value right, TokenType op) {
 EvalResult eval(Ast* node, Scope* scope) {
     switch(node->type) {
         case AST_NUMBER:
-            return (EvalResult){make_number(node->Number.value), NORMAL};
+            return (EvalResult){make_number_int(node->NumberInt.value), NORMAL};
+        break;
+
+        case AST_FLOAT:
+            return (EvalResult){make_number_float(node->NumberFloat.value), NORMAL};
         break;
 
         case AST_VAR: {
@@ -92,7 +96,7 @@ EvalResult eval(Ast* node, Scope* scope) {
             Value val = (eval(node->Unary.value, scope)).value;
             switch (node->Unary.op) {
                 case TOKEN_MINUS:
-                    return (EvalResult){make_number(-val.value.f), NORMAL};
+                    return (EvalResult){make_number_float(-val.value.f), NORMAL};
                 case TOKEN_NOT:
                     return (EvalResult){make_bool(!is_true(val)), NORMAL};
                 default:

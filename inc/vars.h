@@ -62,7 +62,8 @@ void scope_set(Scope* scope, const char* name, Value value);
 
 int is_true(Value v);
 
-Value make_number(double x);
+Value make_number_int(int x);
+Value make_number_float(double x);
 Value make_bool(int b);
 Value make_list();
 Value make_string(const char* s);

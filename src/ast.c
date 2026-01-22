@@ -13,10 +13,17 @@ static Ast* ast_new() {
     return node;
 }
 
-Ast* ast_new_number(double value) {
+Ast* ast_new_number(int value) {
     Ast* node = ast_new();
     node->type = AST_NUMBER;
-    node->Number.value = value;
+    node->NumberInt.value = value;
+    return node;
+}
+
+Ast* ast_new_number_float(double value) {
+    Ast* node = ast_new();
+    node->type = AST_FLOAT;
+    node->NumberFloat.value = value;
     return node;
 }
 

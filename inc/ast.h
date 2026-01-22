@@ -5,6 +5,7 @@
 
 typedef enum {
     AST_NUMBER,
+    AST_FLOAT,
     AST_STRING,
     AST_BINARY,
     AST_UNARY,
@@ -30,8 +31,12 @@ typedef struct Ast {
     AstType type;
     union {
         struct  {
+            long value;
+        }NumberInt;
+
+        struct  {
             double value;
-        }Number;
+        }NumberFloat;
 
         struct  {
             struct Ast** elements;
@@ -118,7 +123,8 @@ typedef struct Ast {
     };
 } Ast;
 
-Ast* ast_new_number(double value);
+Ast* ast_new_number(int value);
+Ast* ast_new_number_float(double value);
 Ast* ast_new_string(const char* value);
 Ast* ast_new_binary_expr(TokenType type, Ast* left, Ast* right);
 Ast* ast_new_unary_expr(TokenType type, Ast* value);

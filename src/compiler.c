@@ -61,6 +61,23 @@ static void compile_node(Compiler* compiler, Ast* node) {
             }
         }
         break;
+
+        case AST_ASSIGN: {
+            compile_node(compiler, node->Assign.value);
+            int idx = add_constant(compiler, make_string(node->Assign.name));
+            emit(compiler, OP_STORE_GLOBAL, idx);
+        }
+        break;
+
+        case AST_VAR: {
+            int idx = add_constant(compiler, make_string(node->Variable.name));
+            emit(compiler, OP_LOAD_GLOBAL, idx);
+        }
+        break;
+
+        case AST_BLOCK: {
+            for (int i = 0; i < node->Block.count; i++) {
+                compile_node(compiler, node->Block.statements[i]);
             }
         }
         break;

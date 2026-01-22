@@ -95,6 +95,31 @@ void vm_run(VM* vm) {
             }
             break;
 
+            case OP_STORE_GLOBAL: {
+                Value v = vm_pop(vm);
+                Value name_val = vm->bytecode->constants[instr.operand];
+                if (name_val.type != VAL_STRING) {
+                    printf("STORE_GLOBAL expects a string constant as variable name\n");
+                    exit(1);
+                }
+                scope_set(vm->globals, name_val.value.string, v);
+            }
+            break;
+
+            case OP_LOAD_GLOBAL: {
+                Value name_val = vm->bytecode->constants[instr.operand];
+                if (name_val.type != VAL_STRING) {
+                    printf("LOAD_GLOBAL expects a string constant as variable name\n");
+                    exit(1);
+                }
+                Var* var = scope_find(vm->globals, name_val.value.string);
+                if (!var) {
+                    printf("Undefined global variable: %s\n", name_val.value.string);
+                    exit(1);
+                }
+                vm_push(vm, var->value);
+            }
+
             case OP_NOP:
                 // Do nothing
             break;

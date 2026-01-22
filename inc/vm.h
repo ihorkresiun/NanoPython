@@ -29,6 +29,9 @@ typedef enum {
 
     OP_PRINT,
 
+    OP_STORE_GLOBAL,
+    OP_LOAD_GLOBAL,
+
     OP_HALT
 } Opcode;
 

@@ -9,15 +9,6 @@
 #include "string.h"
 #include "math.h"
 
-static int is_true(Value v) {
-    switch (v.type) {
-        case VAL_BOOL:      return v.value.boolean;
-        case VAL_FLOAT:    return v.value.f != 0;
-        case VAL_NONE:      return 0;
-        default: return 1;
-    }
-}
-
 static Value binary_op(Value left, Value right, TokenType op) {
     switch (op) {
     case TOKEN_PLUS:

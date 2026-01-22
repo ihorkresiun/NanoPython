@@ -60,6 +60,8 @@ typedef struct Scope {
 Var * scope_find(Scope* scope, const char* name);
 void scope_set(Scope* scope, const char* name, Value value);
 
+int is_true(Value v);
+
 Value make_number(double x);
 Value make_bool(int b);
 Value make_list();

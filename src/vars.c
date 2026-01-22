@@ -41,6 +41,15 @@ void scope_set(Scope* scope, const char* name, Value value) {
     scope->vars = v;
 }
 
+int is_true(Value v) {
+    switch (v.type) {
+        case VAL_BOOL: return v.value.boolean;
+        case VAL_FLOAT: return v.value.f != 0;
+        case VAL_NONE: return 0;
+        default: return 1;
+    }
+}
+
 Value make_number(double x) {
     return (Value){.type = VAL_FLOAT, .value.f = x};
 }

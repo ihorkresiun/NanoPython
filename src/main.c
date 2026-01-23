@@ -22,7 +22,18 @@ int main(int argc, char** argv) {
 
     //const char* source = "x = 5\nif x > 10:\n    print(x)\nelse:\n    print(0)\0";
     
-    const char* source = "x = 10\nwhile x > 0:\n    print(x)\n    x = x - 1\0";
+    // const char* source = "x = 10\nwhile x > 0:\n    print(x)\n    x = x - 1\0";
+
+    const char* source = "\
+x = 10\n\
+while x > 0:\n\
+    x = x - 1\n\
+    if x == 6:\n\
+        continue\n\
+    if x == 3:\n\
+        break\n\
+    print(x)\n\0\
+";
 
     Lexer lexer = {0};
     Parser parser = {&lexer, {0}};

@@ -23,8 +23,7 @@ static int emit_jump(Compiler* compiler, Opcode op) {
 }
 
 // Patch a previously emitted jump instruction to jump to the current bytecode position
-static void patch_jump(Compiler* compiler, int jump_pos) {
-    int jump_target = compiler->bytecode->count;
+static void patch_jump(Compiler* compiler, int jump_pos, int jump_target) {
     compiler->bytecode->instructions[jump_pos].operand = jump_target;
 }
 
@@ -64,6 +63,44 @@ void pop_loop(Compiler* compiler) {
     LoopContext* loop = &compiler->loop_stack[--compiler->loop_count];
     free(loop->break_jumps);
 }
+
+LoopContext* current_loop(Compiler* compiler) {
+    if (compiler->loop_count <= 0) {
+        return NULL;
+    }
+    return &compiler->loop_stack[compiler->loop_count - 1];
+}
+
+void add_break_jump(Compiler* compiler, int jump_pos) {
+    LoopContext* loop = current_loop(compiler);
+    if (!loop) {
+        printf("No active loop for break statement\n");
+        exit(1);
+    }
+
+    if (loop->break_count >= loop->break_capacity) {
+        loop->break_capacity = loop->break_capacity == 0 ? 4 : loop->break_capacity * 2;
+        loop->break_jumps = realloc(
+            loop->break_jumps,
+            sizeof(int) * loop->break_capacity
+        );
+    }
+
+    loop->break_jumps[loop->break_count++] = jump_pos;
+}
+
+void patch_break_jumps(Compiler* compiler, int break_target) {
+    LoopContext* loop = current_loop(compiler);
+    if (!loop) {
+        printf("No active loop for patching break statements\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < loop->break_count; i++) {
+        patch_jump(compiler, loop->break_jumps[i], break_target);
+    }
+}
+
 static void compile_node(Compiler* compiler, Ast* node) {
     switch (node->type) {
         case AST_NUMBER: {
@@ -124,16 +161,18 @@ static void compile_node(Compiler* compiler, Ast* node) {
             compile_node(compiler, node->If.then_branch);
             int jump_end = emit_jump(compiler, OP_JUMP);
 
-            patch_jump(compiler, jump_if_false);
+            // bytecode->count is the last position after then_branch
+            patch_jump(compiler, jump_if_false, compiler->bytecode->count);
             if (node->If.else_branch) {
                 compile_node(compiler, node->If.else_branch);
             }
-            patch_jump(compiler, jump_end);
+            patch_jump(compiler, jump_end, compiler->bytecode->count);
         }
         break;
 
         case AST_WHILE: {
             int loop_start = compiler->bytecode->count;
+            push_loop(compiler, loop_start);
 
             compile_node(compiler, node->While.condition);
             int exit_jump = emit_jump(compiler, OP_JUMP_IF_ZERO);
@@ -141,7 +180,26 @@ static void compile_node(Compiler* compiler, Ast* node) {
             compile_node(compiler, node->While.body);
             emit(compiler, OP_JUMP, loop_start);
 
-            patch_jump(compiler, exit_jump);
+            int loop_end = compiler->bytecode->count;
+            patch_jump(compiler, exit_jump, loop_end);
+            patch_break_jumps(compiler, loop_end);
+            pop_loop(compiler);
+        }
+        break;
+
+        case AST_BREAK: {
+            int break_jump = emit_jump(compiler, OP_JUMP);
+            add_break_jump(compiler, break_jump);
+        }
+        break;
+
+        case AST_CONTINUE: {
+            LoopContext* loop = current_loop(compiler);
+            if (!loop) {
+                printf("No active loop for continue statement\n");
+                exit(1);
+            }
+            emit(compiler, OP_JUMP, loop->loop_start);
         }
         break;
 

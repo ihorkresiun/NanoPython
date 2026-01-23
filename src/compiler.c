@@ -159,14 +159,15 @@ static void compile_node(Compiler* compiler, Ast* node) {
             int jump_if_false = emit_jump(compiler, OP_JUMP_IF_ZERO);
 
             compile_node(compiler, node->If.then_branch);
-            int jump_end = emit_jump(compiler, OP_JUMP);
 
-            // bytecode->count is the last position after then_branch
-            patch_jump(compiler, jump_if_false, compiler->bytecode->count);
             if (node->If.else_branch) {
+                int jump_over_else = emit_jump(compiler, OP_JUMP);
+                patch_jump(compiler, jump_if_false, compiler->bytecode->count);
                 compile_node(compiler, node->If.else_branch);
+                patch_jump(compiler, jump_over_else, compiler->bytecode->count);
+            } else {
+                patch_jump(compiler, jump_if_false, compiler->bytecode->count);
             }
-            patch_jump(compiler, jump_end, compiler->bytecode->count);
         }
         break;
 

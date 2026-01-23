@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
     
     // const char* source = "x = 10\nwhile x > 0:\n    print(x)\n    x = x - 1\0";
 
+    /*
     const char* source = "\
 x = 10\n\
 while x > 0:\n\
@@ -33,6 +34,16 @@ while x > 0:\n\
     if x == 3:\n\
         break\n\
     print(x)\n\0\
+";
+    */
+
+    const char* source = "\
+x = 5\n\
+if x>3:\n\
+    print(\"x is greater than 3\")\n\
+else:\n\
+    print(\"x is 3 or less\")\n\
+print(\"Done.\")\0\
 ";
 
     Lexer lexer = {0};

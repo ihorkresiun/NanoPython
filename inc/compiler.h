@@ -11,10 +11,12 @@ typedef struct {
     int break_capacity;
 } LoopContext;
 
+#define MAX_LOOP_NESTING 16
+
 typedef struct {
     Bytecode* bytecode;
 
-    LoopContext loop_stack[16];
+    LoopContext loop_stack[MAX_LOOP_NESTING];
     int loop_count;
 } Compiler;
 

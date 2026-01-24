@@ -7,6 +7,7 @@ static void vm_init(VM* vm, Bytecode* bytecode) {
     vm->bytecode = bytecode;
     vm->sp = 0;
     vm->ip = 0;
+    vm->frame_count = 0;
 }
 
 static void vm_push(VM* vm, Value value) {
@@ -182,6 +183,23 @@ void vm_run(VM* vm) {
                 // Do nothing
             break;
 
+            case OP_CALL: {
+                Value func_val = vm_pop(vm);
+                if (func_val.type != VAL_FUNCTION) {
+                    printf("Attempted to call a non-function value\n");
+                    exit(1);
+                }
+                if (vm->frame_count >= MAX_CALL_STACK_SIZE) {
+                    printf("Call stack overflow\n");
+                    exit(1);
+                }
+                CallFrame* frame = &vm->call_stack[vm->frame_count++];
+                frame->return_address = vm->ip;
+                Function* fn = func_val.value.function;
+                frame->base_sp = vm->sp - fn->param_count;
+                vm->ip = fn->addr;
+            }
+            break;
             case OP_RET:
                 return;
 

@@ -59,7 +59,12 @@ while x > 0:\n\
 
     Scope globals = {0};
     globals.name = "Global";
-    VM vm = {&bytecode, {0}, 0, 0, &globals};
+    VM vm;
+    vm.bytecode = &bytecode;
+    vm.sp = 0;
+    vm.ip = 0;
+    vm.frame_count = 0;
+    vm.globals = &globals;
     vm_run(&vm);
 }
 

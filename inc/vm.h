@@ -21,9 +21,6 @@ typedef enum {
     OP_JUMP,
     OP_JUMP_IF_ZERO,
 
-    OP_CALL,
-    OP_RET,
-
     OP_CONST,
     OP_POP,
 
@@ -31,6 +28,9 @@ typedef enum {
 
     OP_STORE_GLOBAL,
     OP_LOAD_GLOBAL,
+
+    OP_CALL,
+    OP_RET,
 
     OP_HALT
 } Opcode;
@@ -49,7 +49,14 @@ typedef struct {
     int const_count;
 } Bytecode;
 
+
+typedef struct CallFrame {
+    int return_address;
+    int base_sp;
+} CallFrame;
+
 #define VM_STACK_SIZE 1024
+#define MAX_CALL_STACK_SIZE 64
 
 typedef struct {
     Bytecode* bytecode;
@@ -57,6 +64,8 @@ typedef struct {
     int sp; // Stack pointer
     int ip; // Instruction pointer
 
+    CallFrame call_stack[MAX_CALL_STACK_SIZE];
+    int frame_count;
     Scope* globals;
 } VM;
 

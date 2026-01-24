@@ -7,6 +7,7 @@ typedef struct Ast Ast; // forward declaration
 typedef struct Scope Scope; // forward declaration
 
 typedef struct Function {
+    int addr; // Address in bytecode
     char* name;
     char** params;
     int param_count;

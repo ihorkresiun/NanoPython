@@ -199,6 +199,7 @@ void vm_run(VM* vm) {
                 Scope *new_scope = malloc(sizeof(Scope));
                 new_scope->name = fn->name;
                 new_scope->parent = fn->scope ? fn->scope : vm->scope;
+                new_scope->vars = NULL;
 
                 for (int i = fn->param_count - 1; i >= 0; i--) {
                     Value arg_val = vm_pop(vm);
@@ -225,14 +226,14 @@ void vm_run(VM* vm) {
                     exit(1);
                 }
                 CallFrame* frame = &vm->call_stack[--vm->frame_count];
+                // Free current scope
+                free_scope(vm->scope);
                 // Restore previous frame state
                 vm->scope = frame->scope;
                 Value ret_val = vm_pop(vm);
                 vm->sp = frame->base_sp;
                 vm->ip = frame->return_address;
                 vm_push(vm, ret_val);
-                // TODO: Free the function scope
-                //free_scope(frame->scope);
                 
             }
             break;

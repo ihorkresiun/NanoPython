@@ -72,4 +72,7 @@ Value make_none();
 
 void print_value(Value v);
 
+void free_var(Var* v);
+void free_scope(Scope* scope);
+
 #endif // __INC_VARS_H__

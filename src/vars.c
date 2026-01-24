@@ -4,8 +4,6 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-static Var* var_list = NULL;
-
 Var * scope_find(Scope* scope, const char* name) {
     while (scope) {
         Var* v = scope->vars;
@@ -118,4 +116,38 @@ void print_value(Value v) {
         default:
             printf("<unknown>");
     }
+}
+
+void free_var(Var* v) {
+    if (!v) return;
+
+    if (v->value.type == VAL_STRING && v->value.value.string) {
+        free(v->value.value.string);
+    }
+
+    if (v->value.type == VAL_FUNCTION && v->value.value.function) {
+        Function* fn = v->value.value.function;
+        free(fn->name);
+        for (int i = 0; i < fn->param_count; i++) {
+            free(fn->params[i]);
+        }
+        free(fn->params);
+        free(fn);
+    }
+
+    free(v);
+}
+
+void free_scope(Scope* scope) {
+    if (!scope) return;
+
+    Var* v = scope->vars;
+    while (v) {
+        Var* next = v->next;
+        free_var(v);
+        v = next;
+    }
+
+    scope->vars = NULL;
+    free(scope);
 }

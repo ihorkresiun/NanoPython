@@ -2,6 +2,7 @@
 
 #include "stdlib.h"
 #include "stdio.h"
+#include "string.h"
 
 static void emit(Compiler* compiler, Opcode op, int arg) {
     if (compiler->bytecode->count >= compiler->bytecode->capacity) {
@@ -230,6 +231,56 @@ static void compile_node(Compiler* compiler, Ast* node) {
         }
         break;
 
+        case AST_FUNCDEF: {
+            // 1. Put function object in constants
+            // 2. Store function object in global scope
+            // 3  Jump over function body
+            // 4. Function body starts here
+            int fn_addr = compiler->bytecode->count + 3; 
+
+            Function* fn = malloc(sizeof(Function));
+            fn->addr = fn_addr;
+            fn->name = strdup(node->FuncDef.name);
+            fn->params = node->FuncDef.args;
+            fn->param_count = node->FuncDef.argc;
+            fn->body = node->FuncDef.body;
+            fn->scope = NULL; // Closure scope will be set during execution
+
+            Value v = {.type = VAL_FUNCTION, .value.function = fn};
+            int fn_idx = add_constant(compiler, v);
+            emit(compiler, OP_CONST, fn_idx);
+
+            int fn_idx_name = add_constant(compiler, make_string(node->FuncDef.name));
+            emit(compiler, OP_STORE_GLOBAL, fn_idx_name);
+
+            int jump_over_func = emit_jump(compiler, OP_JUMP);
+            
+            compile_node(compiler, node->FuncDef.body);
+
+            patch_jump(compiler, jump_over_func, compiler->bytecode->count);
+        }
+        break;
+
+        case AST_CALL: {
+            for (int i = 0; i < node->Call.argc; i++) {
+                compile_node(compiler, node->Call.args[i]);
+            }
+            int fn_idx_name = add_constant(compiler, make_string(node->Call.name));
+            emit(compiler, OP_LOAD_GLOBAL, fn_idx_name);
+            emit(compiler, OP_CALL, 0);
+        }
+        break;
+
+        case AST_RETURN: {
+            if (node->Return.value) {
+                compile_node(compiler, node->Return.value);
+            } else {
+                int none_idx = add_constant(compiler, (Value){.type = VAL_NONE});
+                emit(compiler, OP_CONST, none_idx);
+            }
+            emit(compiler, OP_RET, 0);
+        }
+        break;
         // Handle other AST node types as needed
 
         default:

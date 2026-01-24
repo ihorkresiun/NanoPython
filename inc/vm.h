@@ -53,6 +53,7 @@ typedef struct {
 typedef struct CallFrame {
     int return_address;
     int base_sp;
+    Scope* scope;
 } CallFrame;
 
 #define VM_STACK_SIZE 1024
@@ -66,7 +67,7 @@ typedef struct {
 
     CallFrame call_stack[MAX_CALL_STACK_SIZE];
     int frame_count;
-    Scope* globals;
+    Scope* scope;
 } VM;
 
 void vm_run(VM* vm);

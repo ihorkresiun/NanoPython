@@ -33,6 +33,10 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
                     fprintf(file, "CONST %f (FLOAT)\n", constant.value.f);
                 } else if (constant.type == VAL_STRING) {
                     fprintf(file, "CONST \"%s\" (STRING)\n", constant.value.string);
+                } else if (constant.type == VAL_BOOL) {
+                    fprintf(file, "CONST %s (BOOL)\n", constant.value.boolean ? "True" : "False");
+                } else if (constant.type == VAL_FUNCTION) {
+                    fprintf(file, "CONST (FUNCTION)\n");
                 } else {
                     fprintf(file, "CONST (TYPE %d)\n", constant.type);
                 }
@@ -59,6 +63,8 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
                 break;
             }
             case OP_HALT:        fprintf(file, "HALT\n"); break;
+            case OP_CALL:        fprintf(file, "CALL\n"); break;
+            case OP_RET:         fprintf(file, "RET\n"); break;
             default:             fprintf(file, "UNKNOWN OPCODE %d\n", instr.opcode); break;
         }
     }

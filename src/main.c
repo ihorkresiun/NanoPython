@@ -35,7 +35,7 @@ while x > 0:\n\
         break\n\
     print(x)\n\0\
 ";
-    */
+
 
     const char* source = "\
 x = 5\n\
@@ -44,6 +44,14 @@ if x>3:\n\
 else:\n\
     print(\"x is 3 or less\")\n\
 print(\"Done.\")\0\
+";
+    */
+
+    const char* source = "\
+def sum(a, b):\n\
+    return a + b\n\
+result = sum(3, 4)\n\
+print(result)\0\
 ";
 
     Lexer lexer = {0};
@@ -75,7 +83,7 @@ print(\"Done.\")\0\
     vm.sp = 0;
     vm.ip = 0;
     vm.frame_count = 0;
-    vm.globals = &globals;
+    vm.scope = &globals;
     vm_run(&vm);
 }
 
@@ -110,7 +118,7 @@ int main_vm(int argc, char** argv) {
         .bytecode = &bytecode,
         .sp = 0,
         .ip = 0,
-        .globals = &globals
+        .scope = &globals
     };
 
     vm_run(&vm);

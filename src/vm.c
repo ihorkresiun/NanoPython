@@ -2,6 +2,7 @@
 
 #include "stdio.h"
 #include "stdlib.h"
+#include "string.h"
 
 static void vm_init(VM* vm, Bytecode* bytecode) {
     vm->bytecode = bytecode;
@@ -105,7 +106,7 @@ void vm_run(VM* vm) {
 
             case OP_STORE: {
                 Value v = vm_pop(vm);
-                scope_set(vm->globals, "Global", v);
+                scope_set(vm->scope, "Global", v);
             }
             break;
 
@@ -123,7 +124,7 @@ void vm_run(VM* vm) {
                     printf("STORE_GLOBAL expects a string constant as variable name\n");
                     exit(1);
                 }
-                scope_set(vm->globals, name_val.value.string, v);
+                scope_set(vm->scope, name_val.value.string, v);
             }
             break;
 
@@ -133,7 +134,7 @@ void vm_run(VM* vm) {
                     printf("LOAD_GLOBAL expects a string constant as variable name\n");
                     exit(1);
                 }
-                Var* var = scope_find(vm->globals, name_val.value.string);
+                Var* var = scope_find(vm->scope, name_val.value.string);
                 if (!var) {
                     printf("Undefined global variable: %s\n", name_val.value.string);
                     exit(1);
@@ -193,15 +194,48 @@ void vm_run(VM* vm) {
                     printf("Call stack overflow\n");
                     exit(1);
                 }
+
+                Function* fn = func_val.value.function;
+                Scope *new_scope = malloc(sizeof(Scope));
+                new_scope->name = fn->name;
+                new_scope->parent = fn->scope ? fn->scope : vm->scope;
+
+                for (int i = fn->param_count - 1; i >= 0; i--) {
+                    Value arg_val = vm_pop(vm);
+                    Var* var = malloc(sizeof(Var));
+                    var->name = strdup(fn->params[i]);
+                    var->value = arg_val;
+                    var->next = new_scope->vars;
+                    new_scope->vars = var;
+                }
+
                 CallFrame* frame = &vm->call_stack[vm->frame_count++];
                 frame->return_address = vm->ip;
-                Function* fn = func_val.value.function;
-                frame->base_sp = vm->sp - fn->param_count;
+                frame->scope = vm->scope;
+                frame->base_sp = vm->sp;
+
+                vm->scope = new_scope;
                 vm->ip = fn->addr;
             }
             break;
-            case OP_RET:
-                return;
+
+            case OP_RET: {
+                if (vm->frame_count <= 0) {
+                    printf("Call stack underflow\n");
+                    exit(1);
+                }
+                CallFrame* frame = &vm->call_stack[--vm->frame_count];
+                // Restore previous frame state
+                vm->scope = frame->scope;
+                Value ret_val = vm_pop(vm);
+                vm->sp = frame->base_sp;
+                vm->ip = frame->return_address;
+                vm_push(vm, ret_val);
+                // TODO: Free the function scope
+                //free_scope(frame->scope);
+                
+            }
+            break;
 
             case OP_HALT:
                 return;

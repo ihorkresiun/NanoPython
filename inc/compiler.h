@@ -15,11 +15,11 @@ typedef struct {
 
 typedef struct {
     Bytecode* bytecode;
-
     LoopContext loop_stack[MAX_LOOP_NESTING];
     int loop_count;
 } Compiler;
 
-void compile(Compiler* compiler, Ast* node);
+void compiler_init(Compiler* compiler);
+Bytecode* compile(Compiler* compiler, Ast* node);
 
 #endif // INC_COMPILER_H

@@ -45,14 +45,18 @@ else:\n\
     print(\"x is 3 or less\")\n\
 print(\"Done.\")\0\
 ";
-    */
 
     const char* source = "\
 def sum(a, b):\n\
     return a + b\n\
 result = sum(3, 4)\n\
 print(result)\0\
-";
+"; */
+    
+
+    const char* source = "\
+i = 3\n\
+print(i)\0";
 
     Lexer lexer = {0};
     Parser parser = {&lexer, {0}};
@@ -61,29 +65,22 @@ print(result)\0\
     parser_init(&parser, source);
     Ast* tree = parse_program(&parser);
 
-    static Instruction code[64] = {0};
-    static Value constants[16] = {0};
-    static Bytecode bytecode = {
-        .instructions = code,
-        .count = 0,
-        .capacity = 64,
-        .constants = constants,
-        .const_count = 0
-    };
+    if (!tree) {
+        printf("Error: Failed to parse program.\n");
+        return 1;
+    }
+    
+    Compiler compiler;
+    compiler_init(&compiler);
+    Bytecode* bytecode = compile(&compiler, tree);
+    if (!bytecode) {
+        printf("Error: Compilation failed.\n");
+        return 1;
+    }
+    store_disasm(bytecode, "bytecode.txt");
 
-    Compiler compiler = {&bytecode};
-    compile(&compiler, tree);
-
-    store_disasm(&bytecode, "bytecode.txt");
-
-    Scope globals = {0};
-    globals.name = "Global";
     VM vm;
-    vm.bytecode = &bytecode;
-    vm.sp = 0;
-    vm.ip = 0;
-    vm.frame_count = 0;
-    vm.scope = &globals;
+    vm_init(&vm, bytecode);
     vm_run(&vm);
 }
 
@@ -141,9 +138,10 @@ int main_ast(int argc, char** argv)
     Parser parser = {&lexer, {0}};
     Scope global_scope = {0};
     global_scope.name = "Global";
+    global_scope.vars = NULL;
+    global_scope.parent = NULL;
+    global_scope.return_value = make_none();
     
-
-
     while (1)
     {
         // REPL loop

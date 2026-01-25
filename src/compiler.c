@@ -4,6 +4,18 @@
 #include "stdio.h"
 #include "string.h"
 
+void compiler_init(Compiler* compiler) {
+    const int code_cap = 1024;
+    const int const_cap = 256;
+    compiler->bytecode = malloc(sizeof(Bytecode));
+    compiler->bytecode->instructions = malloc(sizeof(Instruction) * code_cap);
+    compiler->bytecode->count = 0;
+    compiler->bytecode->capacity = code_cap;
+    compiler->bytecode->constants = malloc(sizeof(Value) * const_cap);
+    compiler->bytecode->const_count = 0;
+    compiler->loop_count = 0;
+}
+
 static void emit(Compiler* compiler, Opcode op, int arg) {
     if (compiler->bytecode->count >= compiler->bytecode->capacity) {
         compiler->bytecode->capacity *= 2;
@@ -13,8 +25,7 @@ static void emit(Compiler* compiler, Opcode op, int arg) {
         );
     }
 
-    Bytecode* bytecode = compiler->bytecode;
-    bytecode->instructions[bytecode->count++] = (Instruction){op, arg};
+    compiler->bytecode->instructions[compiler->bytecode->count++] = (Instruction){op, arg};
 }
 
 // Emit a jump instruction and return its position for later patching
@@ -312,8 +323,9 @@ static void compile_node(Compiler* compiler, Ast* node) {
     }
 }
 
-void compile(Compiler* compiler, Ast* node) 
+Bytecode* compile(Compiler* compiler, Ast* node) 
 {
     compile_node(compiler, node);
     emit(compiler, OP_HALT, 0);
+    return compiler->bytecode;
 }

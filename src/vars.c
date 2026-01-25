@@ -41,40 +41,87 @@ void scope_set(Scope* scope, const char* name, Value value) {
 
 int is_true(Value v) {
     switch (v.type) {
-        case VAL_BOOL: return v.value.boolean;
-        case VAL_FLOAT: return v.value.f != 0;
+        case VAL_BOOL: return v.as.boolean;
+        case VAL_FLOAT: return v.as.floating != 0;
         case VAL_NONE: return 0;
         default: return 1;
     }
 }
 
 Value make_number_int(int x) {
-    return (Value){.type = VAL_INT, .value.i = x};
+    return (Value){.type = VAL_INT, .as.integer = x};
 }
 
 Value make_number_float(double x) {
-    return (Value){.type = VAL_FLOAT, .value.f = x};
+    return (Value){.type = VAL_FLOAT, .as.floating = x};
 }
 
 Value make_bool(int b) {
-    return (Value){.type = VAL_BOOL, .value.boolean = b};
+    return (Value){.type = VAL_BOOL, .as.boolean = b};
+}
+
+int is_obj_type(Value v, ObjectType type) {
+    return v.type == VAL_OBJ && v.as.object->type == type;
+}
+
+ObjString* as_string(Value v) {
+    return (ObjString*)v.as.object;
+}
+
+ObjString* new_string(const char* chars)
+{
+    ObjString* string = malloc(sizeof(ObjString));
+    string->obj.type = OBJ_STRING;
+    string->length = strlen(chars);
+    string->chars = strdup(chars);
+    return string;
+}
+
+ObjList* new_list(int capacity)
+{
+    ObjList* list = malloc(sizeof(ObjList));
+    list->obj.type = OBJ_LIST;
+    list->count = 0;
+    list->capacity = capacity;
+    list->items = malloc(sizeof(Value) * list->capacity);
+    return list;
+}
+
+ObjFunction* new_function()
+{
+    ObjFunction* function = malloc(sizeof(ObjFunction));
+    function->obj.type = OBJ_FUNCTION;
+    function->addr = 0;
+    function->name = NULL;
+    function->params = NULL;
+    function->param_count = 0;
+    function->scope = NULL;
+    return function;
 }
 
 Value make_list() {
-    List* l = malloc(sizeof(List));
+    ObjList* l = malloc(sizeof(ObjList));
+    l->obj.type = OBJ_LIST;
     l->count = 0;
     l->capacity = 4;
     l->items = malloc(sizeof(Value) * l->capacity);
     Value v;
-    v.type = VAL_LIST;
-    v.value.list = l; // Initialize as needed
+    v.type = VAL_OBJ;
+    v.as.object = (Obj*)l; // Initialize as needed
     return v;
 }
 
 Value make_string(const char* s) {
     Value v;
-    v.type = VAL_STRING;
-    v.value.string = strdup(s);
+    v.type = VAL_OBJ;
+    v.as.object = (Obj*)new_string(s);
+    return v;
+}
+
+Value make_function(ObjFunction* fn) {
+    Value v;
+    v.type = VAL_OBJ;
+    v.as.object = (Obj*)fn;
     return v;
 }
 
@@ -85,34 +132,41 @@ Value make_none() {
 void print_value(Value v) {
     switch (v.type) {
         case VAL_INT:
-            printf("%ld", v.value.i);
+            printf("%ld", v.as.integer);
         break;
         case VAL_FLOAT:
-            printf("%g", v.value.f);
-        break;
-        case VAL_STRING:
-            printf("%s", v.value.string);
+            printf("%g", v.as.floating);
         break;
         case VAL_BOOL:
-            printf("%s", v.value.boolean ? "True" : "False");
+            printf("%s", v.as.boolean ? "True" : "False");
         break;
         case VAL_NONE:
             printf("None");
         break;
-        case VAL_FUNCTION:
-            printf("<function>");
-        break;
-        case VAL_LIST: {
-            printf("[");
-            for (int i = 0; i < v.value.list->count; i++) {
-                print_value(v.value.list->items[i]);
-                if (i < v.value.list->count - 1) {
-                    printf(", ");
+        case VAL_OBJ:
+            if (v.as.object->type == OBJ_STRING) {
+                ObjString* str = (ObjString*)v.as.object;
+                printf("%s", str->chars);
+                break;
+            } else if (v.as.object->type == OBJ_LIST) {
+                ObjList* list = (ObjList*)v.as.object;
+                printf("[");
+                for (int i = 0; i < list->count; i++) {
+                    print_value(list->items[i]);
+                    if (i < list->count - 1) {
+                        printf(", ");
+                    }
                 }
+                printf("]");
+                break;
+            } else if (v.as.object->type == OBJ_FUNCTION) {
+                printf("<function>");
+            } else {
+                printf("<Unknown object type %d>", v.as.object->type);
             }
-            printf("]");
-        }
+
         break;
+        
         default:
             printf("<unknown>");
     }
@@ -121,18 +175,24 @@ void print_value(Value v) {
 void free_var(Var* v) {
     if (!v) return;
 
-    if (v->value.type == VAL_STRING && v->value.value.string) {
-        free(v->value.value.string);
-    }
-
-    if (v->value.type == VAL_FUNCTION && v->value.value.function) {
-        Function* fn = v->value.value.function;
-        free(fn->name);
-        for (int i = 0; i < fn->param_count; i++) {
-            free(fn->params[i]);
+    if (v->value.type == VAL_OBJ) {
+        if (is_obj_type(v->value, OBJ_STRING)) {
+            ObjString* str = as_string(v->value);
+            free(str->chars);
+            free(str);
+        } else if (is_obj_type(v->value, OBJ_LIST)) {
+            ObjList* list = (ObjList*)v->value.as.object;
+            free(list->items);
+            free(list);
+        } else if (is_obj_type(v->value, OBJ_FUNCTION)) {
+            ObjFunction* fn = (ObjFunction*)v->value.as.object;
+            free(fn->name);
+            for (int i = 0; i < fn->param_count; i++) {
+                free(fn->params[i]);
+            }
+            free(fn->params);
+            free(fn);
         }
-        free(fn->params);
-        free(fn);
     }
 
     free(v);

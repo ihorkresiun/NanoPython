@@ -55,9 +55,20 @@ print(result)\0\
     
 
     const char* source = "\
-i = 3\n\
-print(i)\0";
-
+i = [1, 2, 3]\n\
+print(i)\n\
+c = 3\n\
+while c > 0:\n\
+    c = c - 1\n\
+    print(i[c])\n\
+\
+def sum(a, b):\n\
+    return a + b\n\
+result = sum(10, 20)\n\
+print(result)\0\
+";
+    
+    
     Lexer lexer = {0};
     Parser parser = {&lexer, {0}};
 
@@ -84,6 +95,7 @@ print(i)\0";
     vm_run(&vm);
 }
 
+#if 0
 int main_vm(int argc, char** argv) {
     static const Instruction code[] = {
         {OP_CONST, 0}, // Push constant 0 (placeholder)
@@ -93,8 +105,8 @@ int main_vm(int argc, char** argv) {
         {OP_HALT, 0}   // Halt execution
     };
     static const Value constants[] = {
-        {.type = VAL_FLOAT, .value.f = 3},
-        {.type = VAL_FLOAT, .value.f = 4}
+        {.type = VAL_FLOAT, .as.f = 3},
+        {.type = VAL_FLOAT, .as.f = 4}
     };
 
     Bytecode bytecode = {
@@ -190,3 +202,5 @@ int main_ast(int argc, char** argv)
 
     return 0;
 }
+
+#endif

@@ -6,44 +6,58 @@
 typedef struct Ast Ast; // forward declaration
 typedef struct Scope Scope; // forward declaration
 
-typedef struct Function {
-    int addr; // Address in bytecode
-    char* name;
-    char** params;
-    int param_count;
-    Ast* body;
-    Scope* scope; // Closure scope
-}Function;
-
 typedef enum {
     VAL_NONE,
     VAL_INT,
     VAL_FLOAT,
     VAL_BOOL,
-    VAL_LIST,
-    VAL_FUNCTION,
-    VAL_STRING,
+    VAL_OBJ,
 }ValueType;
 
-typedef struct List List; // forward declaration
+typedef enum {
+    OBJ_STRING,
+    OBJ_LIST,
+    OBJ_FUNCTION,
+    OBJ_NATIVE_FUNCTION,
+}ObjectType;
+
+typedef struct Obj {
+    ObjectType type;
+    struct Obj* next;
+}Obj;
 
 typedef struct Value {
     ValueType type;
     union {
-        long i;
-        double f;
+        long integer;
+        double floating;
         int boolean;
-        char* string;
-        List* list;
-        struct Function* function;
-    }value;
+        Obj* object;
+    }as;
 } Value;
 
-typedef struct List {
+typedef struct ObjString{
+    Obj obj;
+    int length;
+    char* chars;
+} ObjString;
+
+typedef struct ObjList {
+    Obj obj;
     int count;
     int capacity;
     Value* items;
-} List;
+} ObjList;
+
+typedef struct ObjFunction {
+    Obj obj;
+    int addr; // Address in bytecode
+    char* name;
+    char** params;
+    int param_count;
+    // Ast* body;
+    Scope* scope; // Closure scope
+} ObjFunction;
 
 typedef struct Var {
     const char* name;
@@ -66,8 +80,18 @@ int is_true(Value v);
 Value make_number_int(int x);
 Value make_number_float(double x);
 Value make_bool(int b);
+
+ObjString* new_string(const char* chars);
+ObjList* new_list(int capacity);
+ObjFunction* new_function();
+
+int is_obj_type(Value v, ObjectType type);
+ObjString* as_string(Value v);
+
 Value make_list();
 Value make_string(const char* s);
+Value make_function(ObjFunction* fn);
+
 Value make_none();
 
 void print_value(Value v);

@@ -247,17 +247,18 @@ static void compile_node(Compiler* compiler, Ast* node) {
             // 2. Store function object in global scope
             // 3  Jump over function body
             // 4. Function body starts here
-            int fn_addr = compiler->bytecode->count + 3; 
+            int fn_addr = compiler->bytecode->count + 3;
 
-            Function* fn = malloc(sizeof(Function));
+            ObjFunction* fn = malloc(sizeof(ObjFunction));
             fn->addr = fn_addr;
             fn->name = strdup(node->FuncDef.name);
             fn->params = node->FuncDef.args;
             fn->param_count = node->FuncDef.argc;
-            fn->body = node->FuncDef.body;
             fn->scope = NULL; // Closure scope will be set during execution
 
-            Value v = {.type = VAL_FUNCTION, .value.function = fn};
+            Obj * obj_fn = (Obj*)fn;
+            obj_fn->type = OBJ_FUNCTION;
+            Value v = {.type = VAL_OBJ, .as.object = obj_fn};
             int fn_idx = add_constant(compiler, v);
             emit(compiler, OP_CONST, fn_idx);
 

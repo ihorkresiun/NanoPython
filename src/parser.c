@@ -31,17 +31,17 @@ static Ast* parse_factor(Parser* p) {
 
     if (tok.type == TOKEN_NUMBER) {
         parser_eat(p, TOKEN_NUMBER);
-        return ast_new_number(tok.value.value.i);
+        return ast_new_number(tok.value.as.integer);
     }
 
     if (tok.type == TOKEN_FLOAT) {
         parser_eat(p, TOKEN_FLOAT);
-        return ast_new_number_float(tok.value.value.f);
+        return ast_new_number_float(tok.value.as.floating);
     }
 
     if (tok.type == TOKEN_STRING) {
         parser_eat(p, TOKEN_STRING);
-        return ast_new_string(tok.value.value.string);
+        return ast_new_string(as_string(tok.value)->chars);
     }
 
     if (tok.type == TOKEN_IDENT) {

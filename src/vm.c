@@ -102,59 +102,14 @@ static void op_add(VM* vm) {
     Value a = vm_pop(vm);
     Value result;
     if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
-        result = make_number_float(a.value.f + b.value.f);
+        result = make_number_float(a.as.floating + b.as.floating);
     } else if (a.type == VAL_FLOAT && b.type == VAL_INT) {
-        result = make_number_float(a.value.f + b.value.i);
+        result = make_number_float(a.as.floating + b.as.integer);
     } else if (a.type == VAL_INT && b.type == VAL_FLOAT) {
-        result = make_number_float(a.value.i + b.value.f);
+        result = make_number_float(a.as.integer + b.as.floating);
     } else if (a.type == VAL_INT && b.type == VAL_INT) {
-        result = make_number_int(a.value.i + b.value.i);
-    } else if (a.type == VAL_STRING && b.type == VAL_STRING) {
-        int len_a = strlen(a.value.string);
-        int len_b = strlen(b.value.string);
-        char* concatenated = malloc(len_a + len_b + 1);
-        strcpy(concatenated, a.value.string);
-        strcat(concatenated, b.value.string);
-        result = (Value){.type = VAL_STRING, .value.string = concatenated};
-    } else if (a.type == VAL_STRING && b.type == VAL_INT) {
-        int len_a = strlen(a.value.string);
-        char buffer[32];
-        snprintf(buffer, sizeof(buffer), "%ld", b.value.i);
-        int len_b = strlen(buffer);
-        char* concatenated = malloc(len_a + len_b + 1);
-        strcpy(concatenated, a.value.string);
-        strcat(concatenated, buffer);
-        result = (Value){.type = VAL_STRING, .value.string = concatenated};
-    } else if (a.type == VAL_INT && b.type == VAL_STRING) {
-        int len_b = strlen(b.value.string);
-        char buffer[32];
-        snprintf(buffer, sizeof(buffer), "%ld", a.value.i);
-        int len_a = strlen(buffer);
-        char* concatenated = malloc(len_a + len_b + 1);
-        strcpy(concatenated, buffer);
-        strcat(concatenated, b.value.string);
-        result = (Value){.type = VAL_STRING, .value.string = concatenated};
-    } else if (a.type == VAL_STRING && b.type == VAL_FLOAT) {
-        int len_a = strlen(a.value.string);
-        char buffer[32];
-        snprintf(buffer, sizeof(buffer), "%f", b.value.f);
-        int len_b = strlen(buffer);
-        char* concatenated = malloc(len_a + len_b + 1);
-        strcpy(concatenated, a.value.string);
-        strcat(concatenated, buffer);
-        result = (Value){.type = VAL_STRING, .value.string = concatenated};
-    } else if (a.type == VAL_FLOAT && b.type == VAL_STRING) {
-        int len_b = strlen(b.value.string);
-        char buffer[32];
-        snprintf(buffer, sizeof(buffer), "%f", a.value.f);
-        int len_a = strlen(buffer);
-        char* concatenated = malloc(len_a + len_b + 1);
-        strcpy(concatenated, buffer);
-        strcat(concatenated, b.value.string);
-        result = (Value){.type = VAL_STRING, .value.string = concatenated};
-    } 
-    
-    else {
+        result = make_number_int(a.as.integer + b.as.integer);
+    } else {
         printf("Unsupported types for ADD operation\n");
         exit(1);
     }
@@ -166,9 +121,9 @@ static void op_sub(VM* vm) {
     Value a = vm_pop(vm);
     Value result;
     if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
-        result = make_number_float(a.value.f - b.value.f);
+        result = make_number_float(a.as.floating - b.as.floating);
     } else {
-        result = make_number_int(a.value.i - b.value.i);
+        result = make_number_int(a.as.integer - b.as.integer);
     }
     vm_push(vm, result);
 }
@@ -178,9 +133,9 @@ static void op_mul(VM* vm) {
     Value a = vm_pop(vm);
     Value result;
     if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
-        result = make_number_float(a.value.f * b.value.f);
+        result = make_number_float(a.as.floating * b.as.floating);
     } else {
-        result = make_number_int(a.value.i * b.value.i);
+        result = make_number_int(a.as.integer * b.as.integer);
     }
     vm_push(vm, result);
 }
@@ -190,9 +145,9 @@ static void op_div(VM* vm) {
     Value a = vm_pop(vm);
     Value result;
     if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
-        result = make_number_float(a.value.f / b.value.f);
+        result = make_number_float(a.as.floating / b.as.floating);
     } else {
-        result = make_number_int(a.value.i / b.value.i);
+        result = make_number_int(a.as.integer / b.as.integer);
     }
     vm_push(vm, result);
 }
@@ -206,22 +161,22 @@ static void op_print(VM* vm) {
 static void op_store_global(VM* vm, int operand) {
     Value v = vm_pop(vm);
     Value name_val = vm->bytecode->constants[operand];
-    if (name_val.type != VAL_STRING) {
+    if (!is_obj_type(name_val, OBJ_STRING)) {
         printf("STORE_GLOBAL expects a string constant as variable name\n");
         exit(1);
     }
-    scope_set(vm->scope, name_val.value.string, v);
+    scope_set(vm->scope, as_string(name_val)->chars, v);
 }
 
 static void op_load_global(VM* vm, int operand) {
     Value name_val = vm->bytecode->constants[operand];
-    if (name_val.type != VAL_STRING) {
+    if (!is_obj_type(name_val, OBJ_STRING)) {
         printf("LOAD_GLOBAL expects a string constant as variable name\n");
         exit(1);
     }
-    Var* var = scope_find(vm->scope, name_val.value.string);
+    Var* var = scope_find(vm->scope, as_string(name_val)->chars);
     if (!var) {
-        printf("Undefined global variable: %s\n", name_val.value.string);
+        printf("Undefined global variable: %s\n", as_string(name_val)->chars);
         exit(1);
     }
     vm_push(vm, var->value);
@@ -237,28 +192,28 @@ static void op_jump_if_zero(VM* vm, int operand) {
 static void op_equal(VM* vm) {
     Value b = vm_pop(vm);
     Value a = vm_pop(vm);
-    Value result = make_bool(a.value.f == b.value.f);
+    Value result = make_bool(a.as.floating == b.as.floating);
     vm_push(vm, result);
 }
 
 static void op_less_than(VM* vm) {
     Value b = vm_pop(vm);
     Value a = vm_pop(vm);
-    Value result = make_bool(a.value.f < b.value.f);
+    Value result = make_bool(a.as.floating < b.as.floating);
     vm_push(vm, result);
 }
 
 static void op_greater_than(VM* vm) {
     Value b = vm_pop(vm);
     Value a = vm_pop(vm);
-    Value result = make_bool(a.value.f > b.value.f);
+    Value result = make_bool(a.as.floating > b.as.floating);
     vm_push(vm, result);
 }
 
 static void op_call(VM* vm) 
 {
     Value func_val = vm_pop(vm);
-    if (func_val.type != VAL_FUNCTION) {
+    if (!is_obj_type(func_val, OBJ_FUNCTION)) {
         printf("Attempted to call a non-function value\n");
         exit(1);
     }
@@ -267,7 +222,7 @@ static void op_call(VM* vm)
         exit(1);
     }
 
-    Function* fn = func_val.value.function;
+    ObjFunction* fn = (ObjFunction*)func_val.as.object;
     Scope *new_scope = malloc(sizeof(Scope));
     new_scope->name = fn->name;
     new_scope->parent = fn->scope ? fn->scope : vm->scope;
@@ -309,27 +264,30 @@ void op_return(VM* vm) {
 }
 
 void op_make_list(VM* vm, int count) {
-    List* list = malloc(sizeof(List));
+    ObjList* list = malloc(sizeof(ObjList));
     list->count = count;
     list->capacity = count;
     list->items = malloc(sizeof(Value) * count);
     for (int i = count - 1; i >= 0; i--) {
         list->items[i] = vm_pop(vm);
     }
-    Value list_val = {.type = VAL_LIST, .value.list = list};
+    Value list_val;
+    list_val.type = VAL_OBJ;
+    list_val.as.object = (Obj*)list;
+    list_val.as.object->type = OBJ_LIST;
     vm_push(vm, list_val);
 }
 
 void op_list_get(VM* vm) {
     Value index_val = vm_pop(vm);
     Value list_val = vm_pop(vm);
-    if (list_val.type != VAL_LIST) {
+    if (!is_obj_type(list_val, OBJ_LIST)) {
         printf("LIST_GET expects a list value\n");
         exit(1);
     }
 
-    List* list = list_val.value.list;
-    int index = (int)index_val.value.i;
+    ObjList* list = (ObjList*)list_val.as.object;
+    int index = (int)index_val.as.integer;
     if (index < 0 || index >= list->count) {
         printf("LIST_GET index out of bounds\n");
         exit(1);
@@ -342,13 +300,13 @@ void op_list_set(VM* vm) {
     Value value = vm_pop(vm);
     Value index_val = vm_pop(vm);
     Value list_val = vm_pop(vm);
-    if (list_val.type != VAL_LIST) {
+    if (!is_obj_type(list_val, OBJ_LIST)) {
         printf("LIST_SET expects a list value\n");
         exit(1);
     }
 
-    List* list = list_val.value.list;
-    int index = (int)index_val.value.i;
+    ObjList* list = (ObjList*)list_val.as.object;
+    int index = (int)index_val.as.integer;
     if (index < 0 || index >= list->count) {
         printf("LIST_SET index out of bounds\n");
         exit(1);

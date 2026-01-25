@@ -14,8 +14,6 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
         fprintf(file, "%04d: ", i);
         switch (instr.opcode) {
             case OP_NOP:          fprintf(file, "NOP\n"); break;
-            case OP_LOAD:        fprintf(file, "LOAD %d\n", instr.operand); break;
-            case OP_STORE:       fprintf(file, "STORE %d\n", instr.operand); break;
             case OP_ADD:         fprintf(file, "ADD\n"); break;
             case OP_SUB:         fprintf(file, "SUB\n"); break;
             case OP_MUL:         fprintf(file, "MUL\n"); break;
@@ -44,21 +42,21 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             }
             case OP_POP:         fprintf(file, "POP\n"); break;
             case OP_PRINT:      fprintf(file, "PRINT\n"); break;
-            case OP_STORE_GLOBAL: {
+            case OP_STORE: {
                 Value name = bytecode->constants[instr.operand];
                 if (name.type == VAL_STRING) {
-                    fprintf(file, "STORE_GLOBAL %s\n", name.value.string);
+                    fprintf(file, "STORE %s\n", name.value.string);
                 } else {
-                    fprintf(file, "STORE_GLOBAL %d\n", instr.operand);
+                    fprintf(file, "STORE %d\n", instr.operand);
                 }
                 break;
             }
-            case OP_LOAD_GLOBAL: {
+            case OP_LOAD: {
                 Value name = bytecode->constants[instr.operand];
                 if (name.type == VAL_STRING) {
-                    fprintf(file, "LOAD_GLOBAL %s\n", name.value.string);
+                    fprintf(file, "LOAD %s\n", name.value.string);
                 } else {
-                    fprintf(file, "LOAD_GLOBAL %d\n", instr.operand);
+                    fprintf(file, "LOAD %d\n", instr.operand);
                 }
                 break;
             }

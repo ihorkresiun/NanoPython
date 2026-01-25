@@ -208,13 +208,13 @@ static void compile_node(Compiler* compiler, Ast* node) {
         case AST_ASSIGN: {
             compile_node(compiler, node->Assign.value);
             int idx = add_constant(compiler, make_string(node->Assign.name));
-            emit(compiler, OP_STORE_GLOBAL, idx);
+            emit(compiler, OP_STORE, idx);
         }
         break;
 
         case AST_VAR: {
             int idx = add_constant(compiler, make_string(node->Variable.name));
-            emit(compiler, OP_LOAD_GLOBAL, idx);
+            emit(compiler, OP_LOAD, idx);
         }
         break;
 
@@ -251,7 +251,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
             emit(compiler, OP_CONST, fn_idx);
 
             int fn_idx_name = add_constant(compiler, make_string(node->FuncDef.name));
-            emit(compiler, OP_STORE_GLOBAL, fn_idx_name);
+            emit(compiler, OP_STORE, fn_idx_name);
 
             int jump_over_func = emit_jump(compiler, OP_JUMP);
             
@@ -266,7 +266,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 compile_node(compiler, node->Call.args[i]);
             }
             int fn_idx_name = add_constant(compiler, make_string(node->Call.name));
-            emit(compiler, OP_LOAD_GLOBAL, fn_idx_name);
+            emit(compiler, OP_LOAD, fn_idx_name);
             emit(compiler, OP_CALL, 0);
         }
         break;

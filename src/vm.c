@@ -98,18 +98,6 @@ void vm_run(VM* vm) {
             }
             break;
 
-            case OP_LOAD: {
-                Value v = vm->bytecode->constants[instr.operand];
-                vm_push(vm, v);
-            }
-            break;
-
-            case OP_STORE: {
-                Value v = vm_pop(vm);
-                scope_set(vm->scope, "Global", v);
-            }
-            break;
-
             case OP_PRINT: {
                 Value v = vm_pop(vm);
                 print_value(v);
@@ -117,7 +105,7 @@ void vm_run(VM* vm) {
             }
             break;
 
-            case OP_STORE_GLOBAL: {
+            case OP_STORE: {
                 Value v = vm_pop(vm);
                 Value name_val = vm->bytecode->constants[instr.operand];
                 if (name_val.type != VAL_STRING) {
@@ -128,7 +116,7 @@ void vm_run(VM* vm) {
             }
             break;
 
-            case OP_LOAD_GLOBAL: {
+            case OP_LOAD: {
                 Value name_val = vm->bytecode->constants[instr.operand];
                 if (name_val.type != VAL_STRING) {
                     printf("LOAD_GLOBAL expects a string constant as variable name\n");

@@ -4,7 +4,6 @@
 #include "stdlib.h"
 #include "string.h"
 
-static void vm_init(VM* vm, Bytecode* bytecode);
 static void vm_push(VM* vm, Value value);
 static Value vm_pop(VM* vm);
 static Value vm_peek(VM* vm);
@@ -60,11 +59,17 @@ void vm_run(VM* vm)
     }
 }
 
-static void vm_init(VM* vm, Bytecode* bytecode) {
+void vm_init(VM* vm, Bytecode* bytecode) {
     vm->bytecode = bytecode;
     vm->sp = 0;
     vm->ip = 0;
     vm->frame_count = 0;
+    Scope* global_scope = malloc(sizeof(Scope));
+    global_scope->name = "Global";
+    global_scope->vars = NULL;
+    global_scope->parent = NULL;
+    global_scope->return_value = make_none();
+    vm->scope = global_scope;
 }
 
 static void vm_push(VM* vm, Value value) {

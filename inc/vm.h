@@ -50,7 +50,6 @@ typedef struct {
     int const_count;
 } Bytecode;
 
-
 typedef struct CallFrame {
     int return_address;
     int base_sp;
@@ -72,5 +71,6 @@ typedef struct {
 } VM;
 
 void vm_run(VM* vm);
+void vm_init(VM* vm, Bytecode* bytecode);
 
 #endif /* __INC_VM_H__ */

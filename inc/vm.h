@@ -30,8 +30,8 @@ typedef enum {
     OP_RET,
 
     OP_MAKE_LIST,
-    OP_POP_LIST,
-    OP_PUSH_LIST,
+    OP_LIST_GET,
+    OP_LIST_SET,
 
     OP_HALT
 } Opcode;

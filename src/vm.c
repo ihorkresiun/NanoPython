@@ -238,6 +238,57 @@ void vm_run(VM* vm) {
             }
             break;
 
+            case OP_MAKE_LIST: {
+                int count = instr.operand;
+                List* list = malloc(sizeof(List));
+                list->count = count;
+                list->items = malloc(sizeof(Value) * count);
+                for (int i = count - 1; i >= 0; i--) {
+                    list->items[i] = vm_pop(vm);
+                }
+                Value list_val = {.type = VAL_LIST, .value.list = list};
+                vm_push(vm, list_val);
+            }
+            break;
+
+            case OP_POP_LIST: {
+                Value index_val = vm_pop(vm);
+                Value list_val = vm_pop(vm);
+                if (list_val.type != VAL_LIST) {
+                    printf("POP_LIST expects a list value\n");
+                    exit(1);
+                }
+
+                List* list = list_val.value.list;
+                int index = (int)index_val.value.i;
+                if (index < 0 || index >= list->count) {
+                    printf("POP_LIST index out of bounds\n");
+                    exit(1);
+                }
+                Value item = list->items[index];
+                vm_push(vm, item);
+            }
+            break;
+
+            case OP_PUSH_LIST: {
+                Value value = vm_pop(vm);
+                Value index_val = vm_pop(vm);
+                Value list_val = vm_pop(vm);
+                if (list_val.type != VAL_LIST) {
+                    printf("PUSH_LIST expects a list value\n");
+                    exit(1);
+                }
+
+                List* list = list_val.value.list;
+                int index = (int)index_val.value.i;
+                if (index < 0 || index >= list->count) {
+                    printf("PUSH_LIST index out of bounds\n");
+                    exit(1);
+                }
+                list->items[index] = value;
+            }
+            break;
+
             case OP_HALT:
                 return;
 

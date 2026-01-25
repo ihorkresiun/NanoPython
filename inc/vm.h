@@ -32,6 +32,10 @@ typedef enum {
     OP_CALL,
     OP_RET,
 
+    OP_MAKE_LIST,
+    OP_POP_LIST,
+    OP_PUSH_LIST,
+
     OP_HALT
 } Opcode;
 

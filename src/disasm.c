@@ -65,6 +65,9 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             case OP_HALT:        fprintf(file, "HALT\n"); break;
             case OP_CALL:        fprintf(file, "CALL\n"); break;
             case OP_RET:         fprintf(file, "RET\n"); break;
+            case OP_MAKE_LIST:   fprintf(file, "MAKE_LIST %d\n", instr.operand); break;
+            case OP_POP_LIST:    fprintf(file, "POP_LIST\n"); break;
+            case OP_PUSH_LIST:   fprintf(file, "PUSH_LIST\n"); break;
             default:             fprintf(file, "UNKNOWN OPCODE %d\n", instr.opcode); break;
         }
     }

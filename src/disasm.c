@@ -28,13 +28,13 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
                 if (constant.type == VAL_INT) {
                     fprintf(file, "CONST %d (INT)\n", (int)constant.value.i);
                 } else if (constant.type == VAL_FLOAT) {
-                    fprintf(file, "CONST %f (FLOAT)\n", constant.value.f);
+                    fprintf(file, "CONST %f (FLT)\n", constant.value.f);
                 } else if (constant.type == VAL_STRING) {
-                    fprintf(file, "CONST \"%s\" (STRING)\n", constant.value.string);
+                    fprintf(file, "CONST \"%s\" (STR)\n", constant.value.string);
                 } else if (constant.type == VAL_BOOL) {
                     fprintf(file, "CONST %s (BOOL)\n", constant.value.boolean ? "True" : "False");
                 } else if (constant.type == VAL_FUNCTION) {
-                    fprintf(file, "CONST (FUNCTION)\n");
+                    fprintf(file, "CONST (FUNC)\n");
                 } else {
                     fprintf(file, "CONST (TYPE %d)\n", constant.type);
                 }

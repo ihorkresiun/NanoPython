@@ -374,6 +374,10 @@ static Ast* parse_ident(Parser* p) {
             Ast* value = parse_logic_or(p);
             return ast_new_assign(tok.ident, value);
         }
+
+        if (p->current.type == TOKEN_RPAREN) {
+            return ast_new_var(tok.ident);
+        }
         
         // Not an assignment, parse as expression, a + b, a + 1 etc.
         return parse_logic_or(p);
@@ -383,7 +387,7 @@ static Ast* parse_ident(Parser* p) {
 static Ast* parse_print(Parser* p) {
     parser_eat(p, TOKEN_PRINT);
     parser_eat(p, TOKEN_LPAREN);
-    Ast* expr = parse_logic_or(p);
+    Ast* expr = parse_statement(p);
     parser_eat(p, TOKEN_RPAREN);
     return ast_new_print(expr);
 }

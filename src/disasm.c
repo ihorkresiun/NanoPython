@@ -76,5 +76,33 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
         }
     }
 
+    fprintf(file, "\nConstants:\n");
+    for (int i = 0; i < bytecode->const_count; i++) {
+        Value constant = bytecode->constants[i];
+        fprintf(file, "%04d: ", i);
+        if (constant.type == VAL_INT) {
+            fprintf(file, "INT %d\n", (int)constant.as.integer);
+        } else if (constant.type == VAL_FLOAT) {
+            fprintf(file, "FLOAT %f\n", constant.as.floating);
+        } else if (constant.type == VAL_BOOL) {
+            fprintf(file, "BOOL %s\n", constant.as.boolean ? "True" : "False");
+        } else if (constant.type == VAL_NONE) {
+            fprintf(file, "NONE\n");
+        } else if (constant.type == VAL_OBJ) {
+            fprintf(file, "OBJ ");;
+            if (constant.as.object->type == OBJ_FUNCTION) {
+                fprintf(file, "Function\n");
+            } else if (constant.as.object->type == OBJ_STRING) {
+                fprintf(file, "String: \"%s\"\n", ((ObjString*)constant.as.object)->chars);
+            } else if (constant.as.object->type == OBJ_LIST) {
+                fprintf(file, "List\n");
+            } else {
+                fprintf(file, "Unknown Object Type %d\n", constant.as.object->type);
+            }
+        } else {
+            fprintf(file, "Unknown Constant Type %d\n", constant.type);
+        }
+    }
+
     fclose(file);
 }

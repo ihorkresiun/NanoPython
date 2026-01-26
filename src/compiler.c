@@ -41,6 +41,15 @@ static void patch_jump(Compiler* compiler, int jump_pos, int jump_target) {
 
 static int add_constant(Compiler* compiler, Value value) {
     Bytecode* bytecode = compiler->bytecode;
+
+    // Check for existing constant
+    for (int i = 0; i < bytecode->const_count; i++) {
+        Value constant = bytecode->constants[i];
+        if (value_equals(&constant, &value)) {
+            return i;
+        }
+    }
+
     if (bytecode->const_count >= bytecode->capacity) {
         bytecode->capacity *= 2;
         bytecode->constants = realloc(

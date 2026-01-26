@@ -96,6 +96,8 @@ Value make_none();
 
 void print_value(Value v);
 
+int value_equals(Value* a, Value* b);
+
 void free_var(Var* v);
 void free_scope(Scope* scope);
 

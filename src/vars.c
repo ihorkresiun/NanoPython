@@ -172,6 +172,36 @@ void print_value(Value v) {
     }
 }
 
+int value_equals(Value* a, Value* b) {
+    if (a->type != b->type) return 0;
+
+    switch (a->type) {
+        case VAL_INT:
+            return a->as.integer == b->as.integer;
+        case VAL_FLOAT:
+            return a->as.floating == b->as.floating;
+        case VAL_BOOL:
+            return a->as.boolean == b->as.boolean;
+        case VAL_NONE:
+            return 1; // Both are none
+        case VAL_OBJ: {
+            if (a->as.object->type != b->as.object->type) return 0;
+
+            if (a->as.object->type == OBJ_STRING) {
+                ObjString* str_a = (ObjString*)a->as.object;
+                ObjString* str_b = (ObjString*)b->as.object;
+                return strcmp(str_a->chars, str_b->chars) == 0;
+            }
+
+            return 0;
+
+        }
+
+        default:
+            return 0;
+    }
+}
+
 void free_var(Var* v) {
     if (!v) return;
 

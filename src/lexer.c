@@ -236,10 +236,3 @@ Token lexer_next(Lexer* l) {
     printf("Unknown char: %c\n", s);
     exit(1);
 }
-
-Token lexer_peek_next(Lexer* l) {
-    int saved_pos = l->pos;
-    Token tok = lexer_next(l);
-    l->pos = saved_pos;
-    return tok;
-}

@@ -1,0 +1,24 @@
+0000: CONST (OBJ)->Func
+0001: STORE test
+0002: JUMP 7
+0003: LOAD a
+0004: LOAD b
+0005: ADD
+0006: RET
+0007: CONST 2 (INT)
+0008: CONST 3 (INT)
+0009: LOAD test
+0010: CALL
+0011: STORE s
+0012: LOAD s
+0013: PRINT
+0014: HALT
+
+Constants:
+0000: OBJ Function
+0001: OBJ String: "test"
+0002: OBJ String: "a"
+0003: OBJ String: "b"
+0004: INT 2
+0005: INT 3
+0006: OBJ String: "s"

@@ -15,53 +15,58 @@ void parser_init(Parser* p, const char* input) {
     p->lexer->input = input;
     p->lexer->pos = 0;
     p->current = lexer_next(p->lexer);
+    p->next = lexer_next(p->lexer);
 }
 
 static void parser_eat(Parser* p, TokenType type) {
     if (p->current.type == type) {
-        p->current = lexer_next(p->lexer);
+        p->current = p->next;
+        p->next = lexer_next(p->lexer);
     } else {
-         printf("Unexpected token: expected %d, got %d\n", type, p->current.type);
+        printf("Unexpected token: expected %d, got %d\n", type, p->current.type);
         exit(1);
     }
 }
 
 static Ast* parse_factor(Parser* p) {
-    Token tok = p->current;
+    TokenType op = p->current.type;
 
-    if (tok.type == TOKEN_NUMBER) {
+    if (op == TOKEN_NUMBER) {
+        Ast* ret = ast_new_number(p->current.value.as.integer);
         parser_eat(p, TOKEN_NUMBER);
-        return ast_new_number(tok.value.as.integer);
+        return ret;
     }
 
-    if (tok.type == TOKEN_FLOAT) {
+    if (op == TOKEN_FLOAT) {
+        Ast* ret = ast_new_number_float(p->current.value.as.floating);
         parser_eat(p, TOKEN_FLOAT);
-        return ast_new_number_float(tok.value.as.floating);
+        return ret;
     }
 
-    if (tok.type == TOKEN_STRING) {
+    if (op == TOKEN_STRING) {
+        Ast* ret = ast_new_string(as_string(p->current.value)->chars);
         parser_eat(p, TOKEN_STRING);
-        return ast_new_string(as_string(tok.value)->chars);
+        return ret;
     }
 
-    if (tok.type == TOKEN_IDENT) {
+    if (op == TOKEN_IDENT) {
+        const char* ident_name = strdup(p->current.ident);
         parser_eat(p, TOKEN_IDENT);
-
         if (p->current.type == TOKEN_LPAREN) {
-            return parse_call(p, tok.ident);
+            return parse_call(p, ident_name);
         }
 
-        return ast_new_var(tok.ident);
+        return ast_new_var(ident_name);
     }
 
-    if (tok.type == TOKEN_LPAREN) {
+    if (op == TOKEN_LPAREN) {
         parser_eat(p, TOKEN_LPAREN);
         Ast* node = parse_logic_or(p);
         parser_eat(p, TOKEN_RPAREN);
         return node;
     }
 
-    if (tok.type == TOKEN_LBRACKET) {
+    if (op == TOKEN_LBRACKET) {
         parser_eat(p, TOKEN_LBRACKET);
         
         Ast** elements = NULL; 
@@ -82,8 +87,8 @@ static Ast* parse_factor(Parser* p) {
         parser_eat(p, TOKEN_RBRACKET);
         return ast_new_list(elements, count);
     }
-    printf("Invalid factor %d\n", tok.type);
-    exit(1);
+    printf("Unknown factor %d\n", op);
+    return NULL;
 }
 
 static Ast* parse_unary(Parser* p) {
@@ -107,10 +112,11 @@ static Ast* parse_unary(Parser* p) {
 static Ast* parse_term(Parser* p) {
     Ast* node = parse_unary(p);
 
-    while (p->current.type == TOKEN_STAR || p->current.type == TOKEN_SLASH || p->current.type == TOKEN_CARET) {
-        TokenType op = p->current.type;
+    TokenType op = p->current.type;
+    while (op == TOKEN_STAR || op == TOKEN_SLASH || op == TOKEN_CARET) {
         parser_eat(p, op);
         node = ast_new_binary_expr(op, node, parse_factor(p));
+        op = p->current.type;
     }
 
     return node;
@@ -119,10 +125,11 @@ static Ast* parse_term(Parser* p) {
 static Ast* parse_arithmetic(Parser* p) {
     Ast* node = parse_term(p);
 
-    while (p->current.type == TOKEN_PLUS || p->current.type == TOKEN_MINUS) {
-        TokenType op = p->current.type;
+    TokenType op = p->current.type;
+    while (op == TOKEN_PLUS || op == TOKEN_MINUS) {
         parser_eat(p, op);
         node = ast_new_binary_expr(op, node, parse_term(p));
+        op = p->current.type;
     }
 
     return node;
@@ -145,10 +152,12 @@ static Ast* parse_comparison(Parser* p) {
 static Ast* parse_logic_and(Parser* p) {
     Ast* left = parse_comparison(p);
 
-    while (p->current.type == TOKEN_AND) {
+    TokenType op = p->current.type;
+    while (op == TOKEN_AND) {
         parser_eat(p, TOKEN_AND);
         Ast* right = parse_comparison(p);
         left = ast_new_binary_expr(TOKEN_AND, left, right);
+        op = p->current.type;
     }
 
     return left;
@@ -157,10 +166,12 @@ static Ast* parse_logic_and(Parser* p) {
 static Ast* parse_logic_or(Parser* p) {
     Ast* left = parse_logic_and(p);
 
-    while (p->current.type == TOKEN_OR) {
+    TokenType op = p->current.type;
+    while (op == TOKEN_OR) {
         parser_eat(p, TOKEN_OR);
         Ast* right = parse_logic_and(p);
         left = ast_new_binary_expr(TOKEN_OR, left, right);
+        op = p->current.type;
     }
 
     return left;
@@ -170,7 +181,8 @@ static Ast* parse_block(Parser* p) {
     Ast** stmts = NULL;
     int count = 0;
 
-    while (p->current.type != TOKEN_DEDENT && p->current.type != TOKEN_EOF) {
+    TokenType op = p->current.type;
+    while (op != TOKEN_DEDENT && op != TOKEN_EOF) {
         if (p->current.type == TOKEN_NEWLINE) {
             parser_eat(p, TOKEN_NEWLINE);
             continue;
@@ -178,9 +190,10 @@ static Ast* parse_block(Parser* p) {
         Ast* stmt = parse_statement(p);
         stmts = realloc(stmts, sizeof(Ast*) * (count + 1));
         stmts[count++] = stmt;
+        op = p->current.type;
     }
 
-    if (p->current.type == TOKEN_DEDENT) {
+    if (op == TOKEN_DEDENT) {
         parser_eat(p, TOKEN_DEDENT);
     }
 
@@ -231,7 +244,6 @@ static Ast* parse_for(Parser* p) {
     const char* var_name = strdup(p->current.ident);
 
     parser_eat(p, TOKEN_IDENT);
-
     parser_eat(p, TOKEN_IN);
 
     Ast* iterable = parse_logic_or(p);
@@ -311,14 +323,14 @@ static Ast* parse_call(Parser* p, const char* func_name) {
     return ast_new_call(func_name, args, argc);
 }
 
-static int tocken_endline_or_eof(TokenType type) {
+static int token_endline_or_eof(TokenType type) {
     return type == TOKEN_NEWLINE || type == TOKEN_EOF || type == TOKEN_DEDENT;
 }
 
 static Ast* parse_return(Parser* p) {
     parser_eat(p, TOKEN_RETURN);
 
-    if (tocken_endline_or_eof(p->current.type)) {
+    if (token_endline_or_eof(p->current.type)) {
         return ast_new_return(NULL);
     }
 
@@ -339,7 +351,7 @@ static Ast* parse_continue(Parser* p) {
 static Ast* parse_ident(Parser* p) {
     Token tok = p->current;
     if (tok.type == TOKEN_IDENT) {
-        if (tocken_endline_or_eof(lexer_peek_next(p->lexer).type)) {
+        if (token_endline_or_eof(p->next.type)) {
             // Just a variable reference
             return ast_new_var(tok.ident);
         }
@@ -368,7 +380,6 @@ static Ast* parse_ident(Parser* p) {
         if (p->current.type == TOKEN_ASSIGN) {
             // Assignment to variable
             parser_eat(p, TOKEN_ASSIGN);
-
 
             // Parse the expression on the right side
             Ast* value = parse_logic_or(p);

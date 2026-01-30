@@ -9,66 +9,33 @@
 #include "vm.h"
 
 #include "string.h"
+#include "stdlib.h"
+#include "stdio.h"
 
-static void print_usage(const char* prog_name) {
-    printf("Usage: %s \"expression\"\n", prog_name);
-    printf("Evaluates the arithmetic expression provided as a command-line argument.\n");
-    printf("Example: %s \"3 + 4 * (2 - 1)\"\n", prog_name);
-}   
 
 int main(int argc, char** argv) {
-    // const char* source = "x = 10\nx=x+4\nprint(x + 12*2)\0";
-    // const char* source = "x = 10 + 2 * 3\nprint(x)\0";
+    if (argc < 2) {
+        // REPL mode or usage message
+    }
 
-    //const char* source = "x = 5\nif x > 10:\n    print(x)\nelse:\n    print(0)\0";
-    
-    // const char* source = "x = 10\nwhile x > 0:\n    print(x)\n    x = x - 1\0";
+    const char* source_file = argv[1];
 
-    /*
-    const char* source = "\
-x = 10\n\
-while x > 0:\n\
-    x = x - 1\n\
-    if x == 6:\n\
-        continue\n\
-    if x == 3:\n\
-        break\n\
-    print(x)\n\0\
-";
+    char* source = NULL;
+    FILE* file = fopen(source_file, "r");
+    if (file) {
+        fseek(file, 0, SEEK_END);
+        long fsize = ftell(file);
+        fseek(file, 0, SEEK_SET);
 
+        source = malloc(fsize + 1);
+        fread(source, 1, fsize, file);
+        source[fsize] = 0;
+        fclose(file);
+    } else {
+        printf("Error: Could not open file %s\n", source_file);
+        return 1;
+    }
 
-    const char* source = "\
-x = 5\n\
-if x>3:\n\
-    print(\"x is greater than 3\")\n\
-else:\n\
-    print(\"x is 3 or less\")\n\
-print(\"Done.\")\0\
-";
-
-    const char* source = "\
-def sum(a, b):\n\
-    return a + b\n\
-result = sum(3, 4)\n\
-print(result)\0\
-"; */
-    
-
-    const char* source = "\
-i = [1, 2, 3]\n\
-print(i)\n\
-c = 3\n\
-while c > 0:\n\
-    c = c - 1\n\
-    print(i[c])\n\
-\
-def sum(a, b):\n\
-    return a + b\n\
-result = sum(10, 20)\n\
-print(result)\0\
-";
-    
-    
     Lexer lexer = {0};
     Parser parser = {&lexer, {0}};
 
@@ -93,6 +60,7 @@ print(result)\0\
     VM vm;
     vm_init(&vm, bytecode);
     vm_run(&vm);
+    free(source);
 }
 
 #if 0

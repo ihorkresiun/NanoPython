@@ -25,7 +25,4 @@ typedef struct {
 void lexer_init(Lexer * lexer, const char * input);
 Token lexer_next(Lexer * lexer);
 
-// Peek at the next token without consuming it
-Token lexer_peek_next(Lexer* lexer);
-
 #endif // __INC_LEXER_H__

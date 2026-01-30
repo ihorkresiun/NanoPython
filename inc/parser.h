@@ -7,6 +7,7 @@
 typedef struct {
     Lexer* lexer;
     Token current;
+    Token next;
 } Parser;
 
 void parser_init(Parser* p, const char* input);

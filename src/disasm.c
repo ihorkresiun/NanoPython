@@ -26,21 +26,21 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             case OP_CONST:      {
                 Value constant = bytecode->constants[instr.operand];
                 if (constant.type == VAL_INT) {
-                    fprintf(file, "CONST %d (INT)\n", (int)constant.as.integer);
+                    fprintf(file, "CONST [%d]=(INT)%d\n", instr.operand, (int)constant.as.integer);
                 } else if (constant.type == VAL_FLOAT) {
-                    fprintf(file, "CONST %f (FLT)\n", constant.as.floating);
+                    fprintf(file, "CONST [%d]=(FLT)%f\n", instr.operand, constant.as.floating);
                 } else if (constant.type == VAL_BOOL) {
-                    fprintf(file, "CONST %s (BOOL)\n", constant.as.boolean ? "True" : "False");
+                    fprintf(file, "CONST [%d]=(BOOL)%s\n", instr.operand, constant.as.boolean ? "True" : "False");
                 } else if (constant.type == VAL_NONE) {
                     fprintf(file, "CONST None\n");
                 } else if (constant.type == VAL_OBJ) {
-                    fprintf(file, "CONST (OBJ)");
+                    fprintf(file, "CONST [%d]=(OBJ->", instr.operand);
                     if (constant.as.object->type == OBJ_FUNCTION) {
-                        fprintf(file, "->Func\n");
+                        fprintf(file, "Func)\n");
                     } else if (constant.as.object->type == OBJ_STRING) {
-                        fprintf(file, "->Str: \"%s\"\n", ((ObjString*)constant.as.object)->chars);
+                        fprintf(file, "Str)\"%s\"\n", ((ObjString*)constant.as.object)->chars);
                     } else if (constant.as.object->type == OBJ_LIST) {
-                        fprintf(file, "->List\n");
+                        fprintf(file, "List)\n");
                     } else {
                         fprintf(file, "->Unknown Object Type %d\n", constant.as.object->type);
                     }                }
@@ -50,8 +50,8 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             case OP_PRINT:      fprintf(file, "PRINT\n"); break;
             case OP_STORE: {
                 Value name = bytecode->constants[instr.operand];
-                if (name.type == VAL_OBJ) {
-                    fprintf(file, "STORE %s\n", ((ObjString*)name.as.object)->chars);
+                if (name.type == VAL_OBJ && name.as.object->type == OBJ_STRING) {
+                    fprintf(file, "STORE [%d]=(OBJ->Str)\"%s\"\n", instr.operand, ((ObjString*)name.as.object)->chars);
                 } else {
                     fprintf(file, "STORE %d\n", instr.operand);
                 }
@@ -59,8 +59,8 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             }
             case OP_LOAD: {
                 Value name = bytecode->constants[instr.operand];
-                if (name.type == VAL_OBJ) {
-                    fprintf(file, "LOAD %s\n", ((ObjString*)name.as.object)->chars);
+                if (name.type == VAL_OBJ && name.as.object->type == OBJ_STRING) {
+                    fprintf(file, "LOAD [%d]=(OBJ->Str)\"%s\"\n", instr.operand, ((ObjString*)name.as.object)->chars);
                 } else {
                     fprintf(file, "LOAD %d\n", instr.operand);
                 }

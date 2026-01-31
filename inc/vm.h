@@ -70,5 +70,6 @@ typedef struct {
 
 void vm_run(VM* vm);
 void vm_init(VM* vm, Bytecode* bytecode);
+void vm_register_native_functions(VM* vm, const char* name, NativeFn function);
 
 #endif /* __INC_VM_H__ */

@@ -100,6 +100,17 @@ Value make_function(ObjFunction* fn) {
     return v;
 }
 
+Value make_native_function(const char* name, NativeFn function) {
+    ObjNativeFunction* native_fn = malloc(sizeof(ObjNativeFunction));
+    native_fn->obj.type = OBJ_NATIVE_FUNCTION;
+    native_fn->function = function;
+    native_fn->name = strdup(name);
+    Value v = {0};
+    v.type = VAL_OBJ;
+    v.as.object = (Obj*)native_fn;
+    return v;
+}
+
 Value make_none() {
     return (Value){.type = VAL_NONE};
 }

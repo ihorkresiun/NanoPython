@@ -70,6 +70,11 @@ void vm_init(VM* vm, Bytecode* bytecode) {
     vm->scope = global_scope;
 }
 
+void vm_register_native_functions(VM* vm, const char* name, NativeFn function) {
+    Value native_fn_val = make_native_function(name, function);
+    scope_set(vm->scope, name, native_fn_val);
+}
+
 static void vm_push(VM* vm, Value value) {
     if (vm->sp >= VM_STACK_SIZE - 1) {
         printf("Stack overflow\n");

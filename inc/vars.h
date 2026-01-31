@@ -94,6 +94,7 @@ Value make_bool(int b);
 Value make_list();
 Value make_string(const char* s);
 Value make_function(ObjFunction* fn);
+Value make_native_function(const char* name, NativeFn function);
 
 Value make_none();
 

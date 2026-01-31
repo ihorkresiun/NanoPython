@@ -20,37 +20,13 @@ void register_native_functions(Scope* scope, const char* name, NativeFn function
     scope_set(scope, name, native_fn_val);
 }
 
-Value native_helllo(int arg_count, Value* args) {
-    printf("Hello from native function!\n");
-    return make_none();
-}
-
-Value native_with_args(int arg_count, Value* args) {
-    printf("Native function called with %d arguments:\n", arg_count);
+Value native_print(int arg_count, Value* args) {
     for (int i = 0; i < arg_count; i++) {
-        printf(" Arg %d: ", i);
         print_value(args[i]);
-        printf("\n");
+        if (i < arg_count - 1) {
+            printf(" ");
+        }
     }
+    printf("\n");
     return make_none();
-}
-
-Value native_factorial(int arg_count, Value* args) {
-    if (arg_count != 1 || args[0].type != VAL_INT) {
-        printf("factorial expects one integer argument\n");
-        return make_none();
-    }
-
-    long n = args[0].as.integer;
-    if (n < 0) {
-        printf("factorial not defined for negative numbers\n");
-        return make_none();
-    }
-
-    long result = 1;
-    for (long i = 2; i <= n; i++) {
-        result *= i;
-    }
-
-    return make_number_int(result);
 }

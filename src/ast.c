@@ -163,13 +163,6 @@ Ast* ast_new_continue() {
     return node;
 }
 
-Ast* ast_new_print(Ast* expr) {
-    Ast* node = ast_new();
-    node->type = AST_PRINT;
-    node->Print.expr = expr;
-    return node;
-}
-
 void ast_free(Ast* node) {
     if (node == NULL) return;
 
@@ -255,10 +248,7 @@ void ast_free(Ast* node) {
         case AST_CONTINUE:
             // Nothing to free
         break;
-        case AST_PRINT:
-            ast_free(node->Print.expr);
-        break;
-        
+
         default:
             printf("Unknown AST node type in ast_free: %d\n", node->type);
             exit(1);

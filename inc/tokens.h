@@ -38,7 +38,6 @@ typedef enum {
     TOKEN_NEWLINE,
     TOKEN_INDENT,
     TOKEN_DEDENT,
-    TOKEN_PRINT,
     TOKEN_AND,
     TOKEN_OR,
     TOKEN_NOT

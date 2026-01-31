@@ -64,7 +64,6 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
                 break;
             }
             case OP_POP:        fprintf(file, "POP\n"); break;
-            case OP_PRINT:      fprintf(file, "PRINT\n"); break;
             case OP_STORE: {
                 Value name = bytecode->constants[instr.operand];
                 if (name.type == VAL_OBJ && name.as.object->type == OBJ_STRING) {

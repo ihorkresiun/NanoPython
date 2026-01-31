@@ -15,7 +15,6 @@ static Keyword keywords[] = {
     {"else", TOKEN_ELSE},
     {"def", TOKEN_DEF},
     {"while", TOKEN_WHILE},
-    {"print", TOKEN_PRINT},
     {"and", TOKEN_AND},
     {"or", TOKEN_OR},
     {"not", TOKEN_NOT},

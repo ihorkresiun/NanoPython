@@ -390,12 +390,6 @@ static Ast* parse_ident(Parser* p) {
     }
 }
 
-static Ast* parse_print(Parser* p) {
-    parser_eat(p, TOKEN_PRINT);
-    Ast* expr = parse_statement(p);
-    return ast_new_print(expr);
-}
-
 Ast* parse_statement(Parser* p) {
     switch(p->current.type) {
         case TOKEN_IF:
@@ -415,8 +409,6 @@ Ast* parse_statement(Parser* p) {
         case TOKEN_IDENT:
             // Identifier or assignment
             return parse_ident(p);
-        case TOKEN_PRINT:
-            return parse_print(p);
         default:
             // Start parsing an expression
             // parse_logic_or -> 

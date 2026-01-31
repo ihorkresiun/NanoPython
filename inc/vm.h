@@ -24,8 +24,6 @@ typedef enum {
     OP_CONST,
     OP_POP,
 
-    OP_PRINT,
-
     OP_CALL,
     OP_RET,
 

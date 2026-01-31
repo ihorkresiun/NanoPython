@@ -24,7 +24,6 @@ typedef enum {
     AST_RETURN,
     AST_BREAK,
     AST_CONTINUE,
-    AST_PRINT
 } AstType;
 
 typedef struct Ast {

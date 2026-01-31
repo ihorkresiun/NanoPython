@@ -12,7 +12,6 @@ static void op_add(VM* vm);
 static void op_sub(VM* vm);
 static void op_mul(VM* vm);
 static void op_div(VM* vm);
-static void op_print(VM* vm);
 static void op_store_global(VM* vm, int operand);
 static void op_load_global(VM* vm, int operand);
 static void op_jump_if_zero(VM* vm, int operand);
@@ -36,7 +35,6 @@ void vm_run(VM* vm)
             case OP_SUB: op_sub(vm); break;
             case OP_MUL: op_mul(vm); break;
             case OP_DIV: op_div(vm); break;
-            case OP_PRINT: op_print(vm); break;
             case OP_STORE: op_store_global(vm, instr.operand); break;
             case OP_LOAD: op_load_global(vm, instr.operand); break;
             case OP_JUMP_IF_ZERO: op_jump_if_zero(vm, instr.operand); break;
@@ -150,12 +148,6 @@ static void op_div(VM* vm) {
         result = make_number_int(a.as.integer / b.as.integer);
     }
     vm_push(vm, result);
-}
-
-static void op_print(VM* vm) {
-    Value v = vm_pop(vm);
-    print_value(v);
-    printf("\n");
 }
 
 static void op_store_global(VM* vm, int operand) {

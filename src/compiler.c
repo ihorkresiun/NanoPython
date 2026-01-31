@@ -245,12 +245,6 @@ static void compile_node(Compiler* compiler, Ast* node) {
         }
         break;
 
-        case AST_PRINT: {
-            compile_node(compiler, node->Print.expr);
-            emit(compiler, OP_PRINT, 0);
-        }
-        break;
-
         case AST_FUNCDEF: {
             // 1. Put function object in constants
             // 2. Store function object in global scope

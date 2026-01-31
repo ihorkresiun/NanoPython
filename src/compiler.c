@@ -278,6 +278,10 @@ static void compile_node(Compiler* compiler, Ast* node) {
             
             compile_node(compiler, node->FuncDef.body);
 
+            // Ensure function ends with a return
+            emit(compiler, OP_CONST, add_constant(compiler, (Value){.type = VAL_NONE}));
+            emit(compiler, OP_RET, 0);
+
             patch_jump(compiler, jump_over_func, compiler->bytecode->count);
         }
         break;

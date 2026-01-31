@@ -19,7 +19,7 @@ static void op_jump_if_zero(VM* vm, int operand);
 static void op_equal(VM* vm);
 static void op_less_than(VM* vm);
 static void op_greater_than(VM* vm);
-static void op_call(VM* vm);
+static void op_call(VM* vm, int operand);
 static void op_return(VM* vm);
 static void op_make_list(VM* vm, int operand);
 static void op_list_get(VM* vm);
@@ -45,7 +45,7 @@ void vm_run(VM* vm)
             case OP_GT: op_greater_than(vm); break;
             case OP_JUMP: vm->ip = instr.operand; break;
             case OP_NOP: break;
-            case OP_CALL: op_call(vm); break;
+            case OP_CALL: op_call(vm, instr.operand); break;
             case OP_RET: op_return(vm); break;
             case OP_MAKE_LIST: op_make_list(vm, instr.operand); break;
             case OP_LIST_GET: op_list_get(vm); break;
@@ -210,7 +210,7 @@ static void op_greater_than(VM* vm) {
     vm_push(vm, result);
 }
 
-static void op_call(VM* vm) 
+static void op_call(VM* vm, int operand) 
 {
     Value func_val = vm_pop(vm);
     if (func_val.type != VAL_OBJ) {
@@ -225,7 +225,8 @@ static void op_call(VM* vm)
     if (func_val.as.object->type == OBJ_NATIVE_FUNCTION) {
         ObjNativeFunction* native_fn = (ObjNativeFunction*)func_val.as.object;
         // For simplicity, assume no arguments for native functions
-        Value result = native_fn->function(0, NULL);
+        int arg_count = operand;
+        Value result = native_fn->function(arg_count, &vm->stack[vm->sp - arg_count]);
         vm_push(vm, result);
         return;
     }

@@ -61,6 +61,8 @@ int main(int argc, char** argv) {
     VM vm;
     vm_init(&vm, bytecode);
     register_native_functions(vm.scope, "hello", native_helllo);
+    register_native_functions(vm.scope, "print_args", native_with_args);
+    register_native_functions(vm.scope, "factorial", native_factorial);
     vm_run(&vm);
     free(source);
 }

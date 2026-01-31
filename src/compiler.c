@@ -292,7 +292,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
             }
             int fn_idx_name = add_constant(compiler, make_string(node->Call.name));
             emit(compiler, OP_LOAD, fn_idx_name);
-            emit(compiler, OP_CALL, 0);
+            emit(compiler, OP_CALL, node->Call.argc);
         }
         break;
 

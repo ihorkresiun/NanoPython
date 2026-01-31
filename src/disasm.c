@@ -1,6 +1,9 @@
 #include "disasm.h"
 
 #include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+#include "stdint.h"
 
 void store_disasm(Bytecode* bytecode, const char* filename) {
     FILE* file = fopen(filename, "w");
@@ -9,9 +12,23 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
         return;
     }
 
+    uint8_t* jump_addresses = malloc(sizeof(uint8_t) * bytecode->count);
+    memset(jump_addresses, 0, sizeof(uint8_t) * bytecode->count);
+    // Find jumps addresses
     for (int i = 0; i < bytecode->count; i++) {
         Instruction instr = bytecode->instructions[i];
-        fprintf(file, "%04d: ", i);
+        if (instr.opcode == OP_JUMP || instr.opcode == OP_JUMP_IF_ZERO) {
+            jump_addresses[instr.operand] = 1;
+        }
+    }
+
+
+    for (int i = 0; i < bytecode->count; i++) {
+        Instruction instr = bytecode->instructions[i];
+        if (jump_addresses[i]) {
+            fprintf(file, "LABEL_%04d:\n", i);
+        }
+        fprintf(file, "\t%04d ", i);
         switch (instr.opcode) {
             case OP_NOP:         fprintf(file, "NOP\n"); break;
             case OP_ADD:         fprintf(file, "ADD\n"); break;
@@ -21,8 +38,8 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             case OP_EQ:          fprintf(file, "EQ\n"); break;
             case OP_LT:          fprintf(file, "LT\n"); break;
             case OP_GT:          fprintf(file, "GT\n"); break;
-            case OP_JUMP:        fprintf(file, "JUMP %d\n", instr.operand); break;
-            case OP_JUMP_IF_ZERO:fprintf(file, "JUMP_IF_ZERO %d\n", instr.operand); break;
+            case OP_JUMP:        fprintf(file, "JUMP LABEL_%04d\n", instr.operand); break;
+            case OP_JUMP_IF_ZERO:fprintf(file, "JUMP_IF_ZERO LABEL_%04d\n", instr.operand); break;
             case OP_CONST:      {
                 Value constant = bytecode->constants[instr.operand];
                 if (constant.type == VAL_INT) {
@@ -105,4 +122,5 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
     }
 
     fclose(file);
+    free(jump_addresses);
 }

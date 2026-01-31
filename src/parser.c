@@ -185,6 +185,7 @@ static Ast* parse_block(Parser* p) {
     while (op != TOKEN_DEDENT && op != TOKEN_EOF) {
         if (p->current.type == TOKEN_NEWLINE) {
             parser_eat(p, TOKEN_NEWLINE);
+            op = p->current.type;
             continue;
         }
         Ast* stmt = parse_statement(p);
@@ -193,9 +194,7 @@ static Ast* parse_block(Parser* p) {
         op = p->current.type;
     }
 
-    if (op == TOKEN_DEDENT) {
-        parser_eat(p, TOKEN_DEDENT);
-    }
+    parser_eat(p, TOKEN_DEDENT);
 
     return ast_new_block(stmts, count);
 }
@@ -212,7 +211,7 @@ static Ast* parse_if(Parser* p) {
     Ast* else_block = NULL;
     if (p->current.type == TOKEN_ELSE) {
         parser_eat(p, TOKEN_ELSE);
-        parser_eat(p, TOKEN_COLON);
+        parser_eat(p, TOKEN_COLON); 
         parser_eat(p, TOKEN_NEWLINE);
         parser_eat(p, TOKEN_INDENT);
         else_block = parse_block(p);
@@ -351,15 +350,14 @@ static Ast* parse_continue(Parser* p) {
 static Ast* parse_ident(Parser* p) {
     Token tok = p->current;
     if (tok.type == TOKEN_IDENT) {
+
         if (token_endline_or_eof(p->next.type)) {
             // Just a variable reference
             return ast_new_var(tok.ident);
         }
 
-        parser_eat(p, TOKEN_IDENT);
-
-        if (p->current.type == TOKEN_LBRACKET) {
-            
+        if (p->next.type == TOKEN_LBRACKET) {
+            parser_eat(p, TOKEN_IDENT);
             parser_eat(p, TOKEN_LBRACKET);
             Ast* index = parse_logic_or(p);
             parser_eat(p, TOKEN_RBRACKET);
@@ -377,17 +375,14 @@ static Ast* parse_ident(Parser* p) {
             return ast_new_assign_index(target, index, value);
         }
 
-        if (p->current.type == TOKEN_ASSIGN) {
+        if (p->next.type == TOKEN_ASSIGN) {
             // Assignment to variable
+            parser_eat(p, TOKEN_IDENT);
             parser_eat(p, TOKEN_ASSIGN);
 
             // Parse the expression on the right side
             Ast* value = parse_logic_or(p);
             return ast_new_assign(tok.ident, value);
-        }
-
-        if (p->current.type == TOKEN_RPAREN) {
-            return ast_new_var(tok.ident);
         }
         
         // Not an assignment, parse as expression, a + b, a + 1 etc.
@@ -397,9 +392,7 @@ static Ast* parse_ident(Parser* p) {
 
 static Ast* parse_print(Parser* p) {
     parser_eat(p, TOKEN_PRINT);
-    parser_eat(p, TOKEN_LPAREN);
     Ast* expr = parse_statement(p);
-    parser_eat(p, TOKEN_RPAREN);
     return ast_new_print(expr);
 }
 

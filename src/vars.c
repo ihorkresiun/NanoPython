@@ -68,37 +68,6 @@ ObjString* as_string(Value v) {
     return (ObjString*)v.as.object;
 }
 
-ObjString* new_string(const char* chars)
-{
-    ObjString* string = malloc(sizeof(ObjString));
-    string->obj.type = OBJ_STRING;
-    string->length = strlen(chars);
-    string->chars = strdup(chars);
-    return string;
-}
-
-ObjList* new_list(int capacity)
-{
-    ObjList* list = malloc(sizeof(ObjList));
-    list->obj.type = OBJ_LIST;
-    list->count = 0;
-    list->capacity = capacity;
-    list->items = malloc(sizeof(Value) * list->capacity);
-    return list;
-}
-
-ObjFunction* new_function()
-{
-    ObjFunction* function = malloc(sizeof(ObjFunction));
-    function->obj.type = OBJ_FUNCTION;
-    function->addr = 0;
-    function->name = NULL;
-    function->params = NULL;
-    function->param_count = 0;
-    function->scope = NULL;
-    return function;
-}
-
 Value make_list() {
     ObjList* l = malloc(sizeof(ObjList));
     l->obj.type = OBJ_LIST;
@@ -114,7 +83,13 @@ Value make_list() {
 Value make_string(const char* s) {
     Value v;
     v.type = VAL_OBJ;
-    v.as.object = (Obj*)new_string(s);
+
+    ObjString* string = malloc(sizeof(ObjString));
+    string->obj.type = OBJ_STRING;
+    string->length = strlen(s);
+    string->chars = strdup(s);
+
+    v.as.object = (Obj*)string;
     return v;
 }
 
@@ -222,6 +197,10 @@ void free_var(Var* v) {
             }
             free(fn->params);
             free(fn);
+        } else if (is_obj_type(v->value, OBJ_NATIVE_FUNCTION)) {
+            ObjNativeFunction* native_fn = (ObjNativeFunction*)v->value.as.object;
+            free(native_fn->name);
+            free(native_fn);
         }
     }
 

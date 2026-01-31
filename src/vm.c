@@ -213,13 +213,21 @@ static void op_greater_than(VM* vm) {
 static void op_call(VM* vm) 
 {
     Value func_val = vm_pop(vm);
-    if (!is_obj_type(func_val, OBJ_FUNCTION)) {
+    if (func_val.type != VAL_OBJ) {
         printf("Attempted to call a non-function value\n");
         exit(1);
     }
     if (vm->frame_count >= MAX_CALL_STACK_SIZE) {
         printf("Call stack overflow\n");
         exit(1);
+    }
+
+    if (func_val.as.object->type == OBJ_NATIVE_FUNCTION) {
+        ObjNativeFunction* native_fn = (ObjNativeFunction*)func_val.as.object;
+        // For simplicity, assume no arguments for native functions
+        Value result = native_fn->function(0, NULL);
+        vm_push(vm, result);
+        return;
     }
 
     ObjFunction* fn = (ObjFunction*)func_val.as.object;

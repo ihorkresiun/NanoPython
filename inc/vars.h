@@ -59,6 +59,14 @@ typedef struct ObjFunction {
     Scope* scope; // Closure scope
 } ObjFunction;
 
+typedef Value (*NativeFn)(int arg_count, Value* args);
+
+typedef struct ObjNativeFunction {
+    Obj obj;
+    NativeFn function;
+    char* name;
+} ObjNativeFunction;
+
 typedef struct Var {
     const char* name;
     Value value;
@@ -76,17 +84,12 @@ Var * scope_find(Scope* scope, const char* name);
 void scope_set(Scope* scope, const char* name, Value value);
 
 int is_true(Value v);
+int is_obj_type(Value v, ObjectType type);
+ObjString* as_string(Value v);
 
 Value make_number_int(int x);
 Value make_number_float(double x);
 Value make_bool(int b);
-
-ObjString* new_string(const char* chars);
-ObjList* new_list(int capacity);
-ObjFunction* new_function();
-
-int is_obj_type(Value v, ObjectType type);
-ObjString* as_string(Value v);
 
 Value make_list();
 Value make_string(const char* s);

@@ -1,5 +1,4 @@
 #include "lexer.h"
-#include "vars.h"
 
 #include "string.h"
 #include "stdlib.h"

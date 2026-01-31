@@ -5,6 +5,7 @@
 #include "disasm.h"
 #include "eval.h"
 #include "lexer.h"
+#include "native_func.h"
 #include "parser.h"
 #include "vm.h"
 
@@ -59,6 +60,7 @@ int main(int argc, char** argv) {
 
     VM vm;
     vm_init(&vm, bytecode);
+    register_native_functions(vm.scope, "hello", native_helllo);
     vm_run(&vm);
     free(source);
 }

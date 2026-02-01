@@ -17,6 +17,7 @@ typedef enum {
     AST_FOR,
     AST_BLOCK,
     AST_LIST,
+    AST_DICT,
     AST_INDEX,
     AST_ASSIGN_INDEX,
     AST_FUNCDEF,
@@ -41,6 +42,12 @@ typedef struct Ast {
             struct Ast** elements;
             int count;
         }List;
+
+        struct  {
+            struct Ast** keys;
+            struct Ast** values;
+            int count;
+        }Dict;
 
         struct {
             struct Ast* target;
@@ -134,6 +141,7 @@ Ast* ast_new_while(Ast* condition, Ast* body);
 Ast* ast_new_for(const char* var, Ast* iterable, Ast* body);
 Ast* ast_new_block(Ast** statements, int count);
 Ast* ast_new_list(Ast** elements, int count);
+Ast* ast_new_dict(Ast** keys, Ast** values, int count);
 Ast* ast_new_index(Ast* target, Ast* index);
 Ast* ast_new_assign_index(Ast* target, Ast* index, Ast* value);
 Ast* ast_new_funcdef(const char* name, char** args, int argc, Ast* body);

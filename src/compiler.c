@@ -310,17 +310,26 @@ static void compile_node(Compiler* compiler, Ast* node) {
         }
         break;
 
+        case AST_DICT: {
+            for (int i = 0; i < node->Dict.count; i++) {
+                compile_node(compiler, node->Dict.keys[i]);
+                compile_node(compiler, node->Dict.values[i]);
+            }
+            emit(compiler, OP_MAKE_DICT, node->Dict.count);
+        }
+        break;
+
         case AST_INDEX: {
             compile_node(compiler, node->Index.target);
             compile_node(compiler, node->Index.index);
-            emit(compiler, OP_LIST_GET, 0);}
+            emit(compiler, OP_IDX_GET, 0);}
         break;
 
         case AST_ASSIGN_INDEX: {
             compile_node(compiler, node->AssignIndex.target);
             compile_node(compiler, node->AssignIndex.index);
             compile_node(compiler, node->AssignIndex.value);
-            emit(compiler, OP_LIST_SET, 0);
+            emit(compiler, OP_IDX_SET, 0);
         }
         break;
 

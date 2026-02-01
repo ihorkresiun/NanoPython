@@ -227,6 +227,8 @@ Token lexer_next(Lexer* l) {
         case ')': tok.type=TOKEN_RPAREN;    l->pos++; return tok;
         case '[': tok.type=TOKEN_LBRACKET;  l->pos++; return tok;
         case ']': tok.type=TOKEN_RBRACKET;  l->pos++; return tok;
+        case '{': tok.type=TOKEN_LBRACE;    l->pos++; return tok;
+        case '}': tok.type=TOKEN_RBRACE;    l->pos++; return tok;
         case ',': tok.type=TOKEN_COMMA;     l->pos++; return tok;
         case ':': tok.type=TOKEN_COLON;     l->pos++; return tok;
     }

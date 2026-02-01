@@ -17,6 +17,7 @@ typedef enum {
 typedef enum {
     OBJ_STRING,
     OBJ_LIST,
+    OBJ_DICT,
     OBJ_FUNCTION,
     OBJ_NATIVE_FUNCTION,
 }ObjectType;
@@ -48,6 +49,14 @@ typedef struct ObjList {
     int capacity;
     Value* items;
 } ObjList;
+
+typedef struct ObjDict {
+    Obj obj;
+    int count;
+    int capacity;
+    char** keys;
+    Value* values;
+} ObjDict;
 
 typedef struct ObjFunction {
     Obj obj;
@@ -91,8 +100,9 @@ Value make_number_int(int x);
 Value make_number_float(double x);
 Value make_bool(int b);
 
-Value make_list();
 Value make_string(const char* s);
+Value make_list();
+Value make_dict();
 Value make_function(ObjFunction* fn);
 Value make_native_function(const char* name, NativeFn function);
 

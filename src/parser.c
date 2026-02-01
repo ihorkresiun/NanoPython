@@ -85,6 +85,7 @@ static Ast* parse_factor(Parser* p) {
     }
 
     if (op == TOKEN_LBRACKET) {
+        // List literal
         parser_eat(p, TOKEN_LBRACKET);
         
         Ast** elements = NULL; 
@@ -105,6 +106,37 @@ static Ast* parse_factor(Parser* p) {
         parser_eat(p, TOKEN_RBRACKET);
         return ast_new_list(elements, count);
     }
+
+    if (op == TOKEN_LBRACE) {
+        // Dictionary literal
+        parser_eat(p, TOKEN_LBRACE);
+        
+        Ast** keys = NULL; 
+        Ast** values = NULL;
+        int count = 0;
+
+        while (p->current.type != TOKEN_RBRACE) {
+            Ast* key = parse_logic_or(p);
+            parser_eat(p, TOKEN_COLON);
+            Ast* value = parse_logic_or(p);
+
+            keys = realloc(keys, sizeof(Ast*) * (count + 1));
+            values = realloc(values, sizeof(Ast*) * (count + 1));
+            keys[count] = key;
+            values[count] = value;
+            count++;
+
+            if (p->current.type == TOKEN_COMMA) {
+                parser_eat(p, TOKEN_COMMA);
+            } else {
+                break;
+            }
+        }
+    
+        parser_eat(p, TOKEN_RBRACE);
+        return ast_new_dict(keys, values, count);
+    }
+
     printf("Unknown factor %d\n", op);
     return NULL;
 }

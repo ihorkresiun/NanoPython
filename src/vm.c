@@ -21,8 +21,9 @@ static void op_greater_than(VM* vm);
 static void op_call(VM* vm, int operand);
 static void op_return(VM* vm);
 static void op_make_list(VM* vm, int operand);
-static void op_list_get(VM* vm);
-static void op_list_set(VM* vm);
+static void op_make_dict(VM* vm, int count);
+static void op_index_get(VM* vm);
+static void op_index_set(VM* vm);
 
 void vm_run(VM* vm) 
 {
@@ -46,8 +47,9 @@ void vm_run(VM* vm)
             case OP_CALL: op_call(vm, instr.operand); break;
             case OP_RET: op_return(vm); break;
             case OP_MAKE_LIST: op_make_list(vm, instr.operand); break;
-            case OP_LIST_GET: op_list_get(vm); break;
-            case OP_LIST_SET: op_list_set(vm); break;
+            case OP_MAKE_DICT: op_make_dict(vm, instr.operand); break;
+            case OP_IDX_GET: op_index_get(vm); break;
+            case OP_IDX_SET: op_index_set(vm); break;
             case OP_HALT: return;
 
             default:
@@ -284,38 +286,117 @@ void op_make_list(VM* vm, int count) {
     vm_push(vm, list_val);
 }
 
-void op_list_get(VM* vm) {
-    Value index_val = vm_pop(vm);
-    Value list_val = vm_pop(vm);
-    if (!is_obj_type(list_val, OBJ_LIST)) {
-        printf("LIST_GET expects a list value\n");
-        exit(1);
+static void op_make_dict(VM* vm, int count) {
+    ObjDict* dict = malloc(sizeof(ObjDict));
+    dict->count = count;
+    dict->capacity = count;
+    dict->keys = malloc(sizeof(char*) * count);
+    dict->values = malloc(sizeof(Value) * count);
+
+    for (int i = count - 1; i >= 0; i--) {
+        Value val = vm_pop(vm);
+        Value key = vm_pop(vm);
+
+        if (!is_obj_type(key, OBJ_STRING)) {
+            printf("Dictionary keys must be strings\n");
+            exit(1);
+        }
+        dict->keys[i] = strdup(as_string(key)->chars);
+        dict->values[i] = val;
     }
 
-    ObjList* list = (ObjList*)list_val.as.object;
-    int index = (int)index_val.as.integer;
-    if (index < 0 || index >= list->count) {
-        printf("LIST_GET index out of bounds\n");
-        exit(1);
-    }
-    Value item = list->items[index];
-    vm_push(vm, item);
+    Value dict_val;
+    dict_val.type = VAL_OBJ;
+    dict_val.as.object = (Obj*)dict;
+    dict_val.as.object->type = OBJ_DICT;
+    vm_push(vm, dict_val);
 }
 
-void op_list_set(VM* vm) {
+static int find_by_key(const ObjDict* dict, const char* key) {
+    for (int i = 0; i < dict->count; i++) {
+        if (strcmp(dict->keys[i], key) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static void op_index_get(VM* vm) {
+    Value index_val = vm_pop(vm);
+    Value list_val = vm_pop(vm);
+    if (is_obj_type(list_val, OBJ_LIST)) {
+
+        ObjList* list = (ObjList*)list_val.as.object;
+        int index = (int)index_val.as.integer;
+        if (index < 0 || index >= list->count) {
+            printf("LIST_GET index out of bounds\n");
+            exit(1);
+        }
+        Value item = list->items[index];
+        vm_push(vm, item);
+    }
+
+    if (is_obj_type(list_val, OBJ_DICT)) {
+        ObjDict* dict = (ObjDict*)list_val.as.object;
+        if (!is_obj_type(index_val, OBJ_STRING)) {
+            printf("DICT_GET expects a string key\n");
+            exit(1);
+        }
+        const char* key = as_string(index_val)->chars;
+        int idx = find_by_key(dict, key);
+        if (idx != -1) {
+            vm_push(vm, dict->values[idx]);
+            return;
+        }
+        printf("Key not found in dictionary: %s\n", key);
+        exit(1);
+    }
+
+    printf("IDX_GET expects a list or dictionary value\n");
+    exit(1);
+    
+}
+
+static void op_index_set(VM* vm) {
     Value value = vm_pop(vm);
     Value index_val = vm_pop(vm);
     Value list_val = vm_pop(vm);
-    if (!is_obj_type(list_val, OBJ_LIST)) {
-        printf("LIST_SET expects a list value\n");
-        exit(1);
+    if (is_obj_type(list_val, OBJ_LIST)) {
+
+        ObjList* list = (ObjList*)list_val.as.object;
+        int index = (int)index_val.as.integer;
+        if (index < 0 || index >= list->count) {
+            printf("LIST_SET index out of bounds\n");
+            exit(1);
+        }
+        list->items[index] = value;
     }
 
-    ObjList* list = (ObjList*)list_val.as.object;
-    int index = (int)index_val.as.integer;
-    if (index < 0 || index >= list->count) {
-        printf("LIST_SET index out of bounds\n");
-        exit(1);
+    if (is_obj_type(list_val, OBJ_DICT)) {
+        ObjDict* dict = (ObjDict*)list_val.as.object;
+        if (!is_obj_type(index_val, OBJ_STRING)) {
+            printf("DICT_SET expects a string key\n");
+            exit(1);
+        }
+
+        const char* key = as_string(index_val)->chars;
+        int idx = find_by_key(dict, key);
+        if (idx != -1) {
+            dict->values[idx] = value;
+            return;
+        }
+
+        // Key not found, add new key-value pair
+        if (dict->count >= dict->capacity) {
+            dict->capacity *= 2;
+            dict->keys = realloc(dict->keys, sizeof(char*) * dict->capacity);
+            dict->values = realloc(dict->values, sizeof(Value) * dict->capacity);
+        }
+        dict->keys[dict->count] = strdup(key);
+        dict->values[dict->count] = value;
+        dict->count++;
+        return;
     }
-    list->items[index] = value;
+    printf("IDX_SET expects a list or dictionary value\n");
+    exit(1);
 }

@@ -4,7 +4,7 @@
 #include "stdio.h"
 #include "string.h"
 
-static Ast* ast_new() {
+static Ast* ast_new_node() {
     Ast* node = malloc(sizeof(Ast));
     if (!node) {
         printf("Out of memory!\n");
@@ -14,28 +14,28 @@ static Ast* ast_new() {
 }
 
 Ast* ast_new_number(int value) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_NUMBER;
     node->NumberInt.value = value;
     return node;
 }
 
 Ast* ast_new_number_float(double value) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_FLOAT;
     node->NumberFloat.value = value;
     return node;
 }
 
 Ast* ast_new_string(const char* value) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_STRING;
     node->String.value = strdup(value);
     return node;
 }
 
 Ast* ast_new_binary_expr(TokenType type, Ast* left, Ast* right) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_BINARY;
     node->Binary.left = left;
     node->Binary.right = right;
@@ -44,7 +44,7 @@ Ast* ast_new_binary_expr(TokenType type, Ast* left, Ast* right) {
 }
 
 Ast* ast_new_unary_expr(TokenType type, Ast* value) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_UNARY;
     node->Unary.value = value;
     node->Unary.op = type;
@@ -52,14 +52,14 @@ Ast* ast_new_unary_expr(TokenType type, Ast* value) {
 }
 
 Ast* ast_new_var(const char* name) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_VAR;
     node->Variable.name = strdup(name);
     return node;
 }
 
 Ast* ast_new_assign(const char* name, Ast* value) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_ASSIGN;
     node->Assign.name = strdup(name);
     node->Assign.value = value;
@@ -67,7 +67,7 @@ Ast* ast_new_assign(const char* name, Ast* value) {
 }
 
 Ast* ast_new_if(Ast* condition, Ast* then_block, Ast* else_block) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_IF;
     node->If.condition = condition;
     node->If.then_branch = then_block;
@@ -76,7 +76,7 @@ Ast* ast_new_if(Ast* condition, Ast* then_block, Ast* else_block) {
 }
 
 Ast* ast_new_while(Ast* condition, Ast* body) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_WHILE;
     node->While.condition = condition;
     node->While.body = body;
@@ -84,7 +84,7 @@ Ast* ast_new_while(Ast* condition, Ast* body) {
 }
 
 Ast* ast_new_for(const char* var, Ast* iterable, Ast* body) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_FOR;
     node->For.var = strdup(var);
     node->For.iterable = iterable;
@@ -93,7 +93,7 @@ Ast* ast_new_for(const char* var, Ast* iterable, Ast* body) {
 }
 
 Ast* ast_new_block(Ast** statements, int count) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_BLOCK;
     node->Block.statements = statements;
     node->Block.count = count;
@@ -101,15 +101,24 @@ Ast* ast_new_block(Ast** statements, int count) {
 }
 
 Ast* ast_new_list(Ast** elements, int count) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_LIST;
     node->List.elements = elements;
     node->List.count = count;
     return node;
 }
 
+Ast* ast_new_dict(Ast** keys, Ast** values, int count) {
+    Ast* node = ast_new_node();
+    node->type = AST_DICT;
+    node->Dict.keys = keys;
+    node->Dict.values = values;
+    node->Dict.count = count;
+    return node;
+}
+
 Ast* ast_new_index(Ast* target, Ast* index) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_INDEX;
     node->Index.target = target;
     node->Index.index = index;
@@ -117,7 +126,7 @@ Ast* ast_new_index(Ast* target, Ast* index) {
 }
 
 Ast* ast_new_assign_index(Ast* target, Ast* index, Ast* value) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_ASSIGN_INDEX;
     node->AssignIndex.target = target;
     node->AssignIndex.index = index;
@@ -126,7 +135,7 @@ Ast* ast_new_assign_index(Ast* target, Ast* index, Ast* value) {
 }
 
 Ast* ast_new_funcdef(const char* name, char** args, int argc, Ast* body) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_FUNCDEF;
     node->FuncDef.name = strdup(name);
     node->FuncDef.args = args;
@@ -136,7 +145,7 @@ Ast* ast_new_funcdef(const char* name, char** args, int argc, Ast* body) {
 }
 
 Ast* ast_new_call(const char* name, Ast** args, int argc) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_CALL;
     node->Call.name = strdup(name);
     node->Call.args = args;
@@ -145,20 +154,20 @@ Ast* ast_new_call(const char* name, Ast** args, int argc) {
 }
 
 Ast* ast_new_return(Ast* value) {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_RETURN;
     node->Return.value = value;
     return node;
 }
 
 Ast* ast_new_break() {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_BREAK;
     return node;
 }
 
 Ast* ast_new_continue() {
-    Ast* node = ast_new();
+    Ast* node = ast_new_node();
     node->type = AST_CONTINUE;
     return node;
 }
@@ -216,6 +225,14 @@ void ast_free(Ast* node) {
                 ast_free(node->List.elements[i]);
             }
             free(node->List.elements);
+        break;
+        case AST_DICT:
+            for (int i = 0; i < node->Dict.count; i++) {
+                ast_free(node->Dict.keys[i]);
+                ast_free(node->Dict.values[i]);
+            }
+            free(node->Dict.keys);
+            free(node->Dict.values);
         break;
         case AST_INDEX:
             ast_free(node->Index.target);

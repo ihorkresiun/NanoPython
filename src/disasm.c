@@ -14,6 +14,8 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
 
     uint8_t* jump_addresses = malloc(sizeof(uint8_t) * bytecode->count);
     memset(jump_addresses, 0, sizeof(uint8_t) * bytecode->count);
+    // Mark entry point
+    jump_addresses[0] = 1;
     // Find jumps addresses
     for (int i = 0; i < bytecode->count; i++) {
         Instruction instr = bytecode->instructions[i];
@@ -86,8 +88,9 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             case OP_CALL:        fprintf(file, "CALL %d\n", instr.operand); break;
             case OP_RET:         fprintf(file, "RET\n"); break;
             case OP_MAKE_LIST:   fprintf(file, "MAKE_LIST %d\n", instr.operand); break;
-            case OP_LIST_GET:    fprintf(file, "LIST_GET\n"); break;
-            case OP_LIST_SET:    fprintf(file, "LIST_SET\n"); break;
+            case OP_MAKE_DICT:   fprintf(file, "MAKE_DICT %d\n", instr.operand); break;
+            case OP_IDX_GET:     fprintf(file, "INDEX_GET\n"); break;
+            case OP_IDX_SET:     fprintf(file, "INDEX_SET\n"); break;
             default:             fprintf(file, "UNKNOWN OPCODE %d\n", instr.opcode); break;
         }
     }

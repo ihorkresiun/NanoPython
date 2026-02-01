@@ -80,6 +80,19 @@ Value make_list() {
     return v;
 }
 
+Value make_dict() {
+    ObjDict* d = malloc(sizeof(ObjDict));
+    d->obj.type = OBJ_DICT;
+    d->count = 0;
+    d->capacity = 4;
+    d->keys = malloc(sizeof(char*) * d->capacity);
+    d->values = malloc(sizeof(Value) * d->capacity);
+    Value v;
+    v.type = VAL_OBJ;
+    v.as.object = (Obj*)d; // Initialize as needed
+    return v;
+}
+
 Value make_string(const char* s) {
     Value v;
     v.type = VAL_OBJ;
@@ -144,7 +157,17 @@ void print_value(Value v) {
                     }
                 }
                 printf("]");
-                break;
+            } else if (v.as.object->type == OBJ_DICT) {
+                ObjDict* dict = (ObjDict*)v.as.object;
+                printf("{");
+                for (int i = 0; i < dict->count; i++) {
+                    printf("\"%s\": ", dict->keys[i]);
+                    print_value(dict->values[i]);
+                    if (i < dict->count - 1) {
+                        printf(", ");
+                    }
+                }
+                printf("}");
             } else if (v.as.object->type == OBJ_FUNCTION) {
                 printf("<function>");
             } else {

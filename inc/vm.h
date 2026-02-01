@@ -28,8 +28,10 @@ typedef enum {
     OP_RET,
 
     OP_MAKE_LIST,
-    OP_LIST_GET,
-    OP_LIST_SET,
+    OP_MAKE_DICT,
+
+    OP_IDX_GET,
+    OP_IDX_SET,
 
     OP_HALT
 } Opcode;

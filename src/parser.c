@@ -56,6 +56,24 @@ static Ast* parse_factor(Parser* p) {
             return parse_call(p, ident_name);
         }
 
+        if (p->current.type == TOKEN_LBRACKET) {
+            parser_eat(p, TOKEN_LBRACKET);
+            Ast* index = parse_logic_or(p);
+            parser_eat(p, TOKEN_RBRACKET);
+
+            if (p->current.type != TOKEN_ASSIGN) {
+                // Just a list index access a[0]
+                Ast* target = ast_new_var(ident_name);
+                return ast_new_index(target, index);
+            }
+
+            parser_eat(p, TOKEN_ASSIGN);
+            // Assignment to list index a[0] = 5
+            Ast* value = parse_logic_or(p);
+            Ast* target = ast_new_var(ident_name);
+            return ast_new_assign_index(target, index, value);
+        }
+
         return ast_new_var(ident_name);
     }
 
@@ -354,25 +372,6 @@ static Ast* parse_ident(Parser* p) {
         if (token_endline_or_eof(p->next.type)) {
             // Just a variable reference
             return ast_new_var(tok.ident);
-        }
-
-        if (p->next.type == TOKEN_LBRACKET) {
-            parser_eat(p, TOKEN_IDENT);
-            parser_eat(p, TOKEN_LBRACKET);
-            Ast* index = parse_logic_or(p);
-            parser_eat(p, TOKEN_RBRACKET);
-
-            if (p->current.type != TOKEN_ASSIGN) {
-                // Just a list index access a[0]
-                Ast* target = ast_new_var(tok.ident);
-                return ast_new_index(target, index);
-            }
-
-            parser_eat(p, TOKEN_ASSIGN);
-            // Assignment to list index a[0] = 5
-            Ast* value = parse_logic_or(p);
-            Ast* target = ast_new_var(tok.ident);
-            return ast_new_assign_index(target, index, value);
         }
 
         if (p->next.type == TOKEN_ASSIGN) {

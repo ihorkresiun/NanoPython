@@ -1,5 +1,7 @@
 #include "vm.h"
 
+#include "hashmap.h"
+
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
@@ -290,8 +292,8 @@ static void op_make_dict(VM* vm, int count) {
     ObjDict* dict = malloc(sizeof(ObjDict));
     dict->count = count;
     dict->capacity = count;
-    dict->keys = malloc(sizeof(char*) * count);
-    dict->values = malloc(sizeof(Value) * count);
+    dict->map = malloc(sizeof(HashMap));
+    hash_init(dict->map, count);
 
     for (int i = count - 1; i >= 0; i--) {
         Value val = vm_pop(vm);
@@ -301,8 +303,7 @@ static void op_make_dict(VM* vm, int count) {
             printf("Dictionary keys must be strings\n");
             exit(1);
         }
-        dict->keys[i] = strdup(as_string(key)->chars);
-        dict->values[i] = val;
+        hash_set(dict->map, as_string(key)->chars, val);
     }
 
     Value dict_val;
@@ -310,15 +311,6 @@ static void op_make_dict(VM* vm, int count) {
     dict_val.as.object = (Obj*)dict;
     dict_val.as.object->type = OBJ_DICT;
     vm_push(vm, dict_val);
-}
-
-static int find_by_key(const ObjDict* dict, const char* key) {
-    for (int i = 0; i < dict->count; i++) {
-        if (strcmp(dict->keys[i], key) == 0) {
-            return i;
-        }
-    }
-    return -1;
 }
 
 static void op_index_get(VM* vm) {
@@ -343,9 +335,9 @@ static void op_index_get(VM* vm) {
             exit(1);
         }
         const char* key = as_string(index_val)->chars;
-        int idx = find_by_key(dict, key);
-        if (idx != -1) {
-            vm_push(vm, dict->values[idx]);
+        Value val;
+        if (hash_get(dict->map, key, &val)) {
+            vm_push(vm, val);
             return;
         }
         printf("Key not found in dictionary: %s\n", key);
@@ -354,16 +346,15 @@ static void op_index_get(VM* vm) {
 
     printf("IDX_GET expects a list or dictionary value\n");
     exit(1);
-    
 }
 
 static void op_index_set(VM* vm) {
     Value value = vm_pop(vm);
     Value index_val = vm_pop(vm);
-    Value list_val = vm_pop(vm);
-    if (is_obj_type(list_val, OBJ_LIST)) {
+    Value container = vm_pop(vm);
+    if (is_obj_type(container, OBJ_LIST)) {
 
-        ObjList* list = (ObjList*)list_val.as.object;
+        ObjList* list = (ObjList*)container.as.object;
         int index = (int)index_val.as.integer;
         if (index < 0 || index >= list->count) {
             printf("LIST_SET index out of bounds\n");
@@ -372,29 +363,17 @@ static void op_index_set(VM* vm) {
         list->items[index] = value;
     }
 
-    if (is_obj_type(list_val, OBJ_DICT)) {
-        ObjDict* dict = (ObjDict*)list_val.as.object;
+    if (is_obj_type(container, OBJ_DICT)) {
+        ObjDict* dict = (ObjDict*)container.as.object;
         if (!is_obj_type(index_val, OBJ_STRING)) {
             printf("DICT_SET expects a string key\n");
             exit(1);
         }
 
         const char* key = as_string(index_val)->chars;
-        int idx = find_by_key(dict, key);
-        if (idx != -1) {
-            dict->values[idx] = value;
-            return;
-        }
 
-        // Key not found, add new key-value pair
-        if (dict->count >= dict->capacity) {
-            dict->capacity *= 2;
-            dict->keys = realloc(dict->keys, sizeof(char*) * dict->capacity);
-            dict->values = realloc(dict->values, sizeof(Value) * dict->capacity);
-        }
-        dict->keys[dict->count] = strdup(key);
-        dict->values[dict->count] = value;
-        dict->count++;
+        hash_set(dict->map, key, value);
+
         return;
     }
     printf("IDX_SET expects a list or dictionary value\n");

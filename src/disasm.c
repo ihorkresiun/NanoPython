@@ -83,7 +83,7 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
                 break;
             }
             case OP_HALT:        fprintf(file, "HALT\n"); break;
-            case OP_CALL:        fprintf(file, "CALL\n"); break;
+            case OP_CALL:        fprintf(file, "CALL %d\n", instr.operand); break;
             case OP_RET:         fprintf(file, "RET\n"); break;
             case OP_MAKE_LIST:   fprintf(file, "MAKE_LIST %d\n", instr.operand); break;
             case OP_LIST_GET:    fprintf(file, "LIST_GET\n"); break;

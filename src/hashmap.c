@@ -29,6 +29,11 @@ void hash_set(HashMap* map, const char* key, Value value) {
     uint32_t index = hash_string(key) % map->capacity;
     HashNode* node = &map->nodes[index];
 
+    if (map->count == 0) {
+        map->first = node;
+    }
+
+
     // Handle collisions with chaining
     while (node->key != NULL) {
         if (strcmp(node->key, key) == 0) {
@@ -68,4 +73,18 @@ int hash_get(HashMap* map, const char* key, Value* out_value) {
         node = node->next;
     }
     return 0; // Not found
+}
+
+HashNode* hash_next(HashIter* it) {
+    while (it->node == NULL) {
+        if (it->bucket >= it->map->capacity) {
+            return NULL;
+        }
+        it->node = &it->map->nodes[it->bucket++];
+    }
+
+    HashNode* current = it->node;
+    it->node = it->node->next;
+    return current;
+    
 }

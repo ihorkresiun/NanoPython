@@ -1,5 +1,7 @@
 #include "vars.h"
 
+#include "hashmap.h"
+
 #include "string.h"
 #include "stdio.h"
 #include "stdlib.h"
@@ -85,8 +87,7 @@ Value make_dict() {
     d->obj.type = OBJ_DICT;
     d->count = 0;
     d->capacity = 4;
-    d->keys = malloc(sizeof(char*) * d->capacity);
-    d->values = malloc(sizeof(Value) * d->capacity);
+    d->map = NULL; // Initialize as needed
     Value v;
     v.type = VAL_OBJ;
     v.as.object = (Obj*)d; // Initialize as needed
@@ -128,6 +129,25 @@ Value make_none() {
     return (Value){.type = VAL_NONE};
 }
 
+static void print_dict(ObjDict* dict) {
+    HashIter it = {.map = dict->map, .bucket = 0, .node = NULL};
+
+    HashNode* node = hash_next(&it);
+
+    printf("{");
+    
+    while (node) {
+        printf("\"%s\": ", node->key);
+        print_value(node->value);
+        node = hash_next(&it);
+        if (node) {
+            printf(", ");
+        }
+    }
+
+    printf("}");
+}
+
 void print_value(Value v) {
     switch (v.type) {
         case VAL_INT:
@@ -159,15 +179,10 @@ void print_value(Value v) {
                 printf("]");
             } else if (v.as.object->type == OBJ_DICT) {
                 ObjDict* dict = (ObjDict*)v.as.object;
-                printf("{");
-                for (int i = 0; i < dict->count; i++) {
-                    printf("\"%s\": ", dict->keys[i]);
-                    print_value(dict->values[i]);
-                    if (i < dict->count - 1) {
-                        printf(", ");
-                    }
-                }
-                printf("}");
+                print_dict(dict);
+            } else if (v.as.object->type == OBJ_NATIVE_FUNCTION) {
+                ObjNativeFunction* native_fn = (ObjNativeFunction*)v.as.object;
+                printf("<native function %s>", native_fn->name);
             } else if (v.as.object->type == OBJ_FUNCTION) {
                 printf("<function>");
             } else {

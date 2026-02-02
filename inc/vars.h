@@ -6,6 +6,8 @@
 typedef struct Ast Ast; // forward declaration
 typedef struct Scope Scope; // forward declaration
 
+typedef struct HashMap HashMap; // forward declaration
+
 typedef enum {
     VAL_NONE,
     VAL_INT,
@@ -54,8 +56,7 @@ typedef struct ObjDict {
     Obj obj;
     int count;
     int capacity;
-    char** keys;
-    Value* values;
+    HashMap* map;
 } ObjDict;
 
 typedef struct ObjFunction {

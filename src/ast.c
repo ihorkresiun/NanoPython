@@ -294,6 +294,18 @@ void ast_free(Ast* node) {
             free(node->Dict.keys);
             free(node->Dict.values);
         break;
+        case AST_SET:
+            for (int i = 0; i < node->Set.count; i++) {
+                ast_free(node->Set.elements[i]);
+            }
+            free(node->Set.elements);
+        break;
+        case AST_TUPLE:
+            for (int i = 0; i < node->Tuple.count; i++) {
+                ast_free(node->Tuple.elements[i]);
+            }
+            free(node->Tuple.elements);
+        break;
         case AST_INDEX:
             ast_free(node->Index.target);
             ast_free(node->Index.index);

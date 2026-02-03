@@ -12,7 +12,6 @@ typedef struct HashNode {
 
 typedef struct HashMap {
     HashNode* nodes;
-    HashNode* first;
     int capacity;
     int count;
 } HashMap;

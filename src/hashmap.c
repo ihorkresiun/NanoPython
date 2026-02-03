@@ -29,11 +29,6 @@ void hash_set(HashMap* map, const char* key, Value value) {
     uint32_t index = hash_string(key) % map->capacity;
     HashNode* node = &map->nodes[index];
 
-    if (map->count == 0) {
-        map->first = node;
-    }
-
-
     // Handle collisions with chaining
     while (node->key != NULL) {
         if (strcmp(node->key, key) == 0) {

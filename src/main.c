@@ -16,7 +16,85 @@
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        // REPL mode or usage message
+        // REPL mode
+        printf("NanoPython REPL v0.1\n");
+        printf("Type 'exit()' to quit\n\n");
+        
+        char line[1024];
+        VM vm;
+        int vm_initialized = 0;
+        
+        while (1) {
+            printf(">>> ");
+            fflush(stdout);
+            
+            if (!fgets(line, sizeof(line), stdin)) {
+                break;
+            }
+            
+            // Remove trailing newline
+            size_t len = strlen(line);
+            if (len > 0 && line[len - 1] == '\n') {
+                line[len - 1] = '\0';
+            }
+            
+            // Skip empty lines
+            if (strlen(line) == 0) {
+                continue;
+            }
+            
+            // Parse and execute
+            Lexer lexer = {0};
+            Parser parser = {&lexer, {0}};
+            
+            lexer_init(&lexer, line);
+            parser_init(&parser, line);
+            Ast* tree = parse_program(&parser);
+            
+            if (!tree) {
+                printf("Syntax error\n");
+                continue;
+            }
+            
+            Compiler compiler;
+            compiler_init(&compiler);
+            Bytecode* bytecode = compile(&compiler, tree);
+            
+            if (!bytecode) {
+                printf("Compilation error\n");
+                ast_free(tree);
+                continue;
+            }
+            
+            // Initialize VM on first use, otherwise reuse it
+            if (!vm_initialized) {
+                vm_init(&vm, bytecode);
+                vm_register_native_functions(&vm, "print", native_print);
+                vm_register_native_functions(&vm, "len", native_len);
+                vm_register_native_functions(&vm, "time", native_clock);
+                vm_register_native_functions(&vm, "exit", native_exit);
+                vm_initialized = 1;
+            }
+            
+            // Update VM to use new bytecode
+            vm.bytecode = bytecode;
+            vm.ip = 0;
+            
+            // Execute and check if value left on stack
+            int old_sp = vm.sp;
+            vm_run(&vm);
+            
+            // If expression left a value, print it
+            if (vm.sp > old_sp && vm.sp > 0) {
+                print_value(vm.stack[vm.sp - 1]);
+                printf("\n");
+                vm.sp--;  // Pop the result
+            }
+            
+            ast_free(tree);
+        }
+        
+        return 0;
     }
 
     const char* source_file = argv[1];

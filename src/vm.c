@@ -26,6 +26,8 @@ static void op_call(VM* vm, int operand);
 static void op_return(VM* vm);
 static void op_make_list(VM* vm, int operand);
 static void op_make_dict(VM* vm, int count);
+static void op_make_tuple(VM* vm, int count);
+static void op_make_set(VM* vm, int count);
 static void op_index_get(VM* vm);
 static void op_index_set(VM* vm);
 static void op_make_class(VM* vm, int operand);
@@ -57,6 +59,8 @@ void vm_run(VM* vm)
             case OP_RET: op_return(vm); break;
             case OP_MAKE_LIST: op_make_list(vm, instr.operand); break;
             case OP_MAKE_DICT: op_make_dict(vm, instr.operand); break;
+            case OP_MAKE_TUPLE: op_make_tuple(vm, instr.operand); break;
+            case OP_MAKE_SET: op_make_set(vm, instr.operand); break;
             case OP_IDX_GET: op_index_get(vm); break;
             case OP_IDX_SET: op_index_set(vm); break;
             case OP_MAKE_CLASS: op_make_class(vm, instr.operand); break;
@@ -389,6 +393,59 @@ static void op_make_dict(VM* vm, int count) {
     vm_push(vm, dict_val);
 }
 
+static void op_make_tuple(VM* vm, int count) {
+    ObjTuple* tuple = malloc(sizeof(ObjTuple));
+    tuple->count = count;
+    tuple->items = malloc(sizeof(Value) * count);
+    for (int i = count - 1; i >= 0; i--) {
+        tuple->items[i] = vm_pop(vm);
+    }
+    Value tuple_val;
+    tuple_val.type = VAL_OBJ;
+    tuple_val.as.object = (Obj*)tuple;
+    tuple_val.as.object->type = OBJ_TUPLE;
+    vm_push(vm, tuple_val);
+}
+
+static void op_make_set(VM* vm, int count) {
+    ObjSet* set = malloc(sizeof(ObjSet));
+    set->count = count;
+    set->capacity = count > 0 ? count * 2 : 4;
+    set->map = malloc(sizeof(HashMap));
+    hash_init(set->map, set->capacity);
+
+    // Pop elements from stack and add to set
+    for (int i = 0; i < count; i++) {
+        Value val = vm_pop(vm);
+        
+        // Use string representation as key for set membership
+        // In a real implementation, you'd want a proper hash of the value
+        char key[64];
+        if (val.type == VAL_INT) {
+            snprintf(key, sizeof(key), "%ld", val.as.integer);
+        } else if (val.type == VAL_FLOAT) {
+            snprintf(key, sizeof(key), "%g", val.as.floating);
+        } else if (is_obj_type(val, OBJ_STRING)) {
+            snprintf(key, sizeof(key), "%s", as_string(val)->chars);
+        } else {
+            snprintf(key, sizeof(key), "obj_%p", (void*)val.as.object);
+        }
+        
+        ObjString* key_str = malloc(sizeof(ObjString));
+        key_str->obj.type = OBJ_STRING;
+        key_str->chars = strdup(key);
+        key_str->length = strlen(key);
+        
+        hash_set(set->map, key_str, val);
+    }
+
+    Value set_val;
+    set_val.type = VAL_OBJ;
+    set_val.as.object = (Obj*)set;
+    set_val.as.object->type = OBJ_SET;
+    vm_push(vm, set_val);
+}
+
 static void op_index_get(VM* vm) {
     Value index_val = vm_pop(vm);
     Value list_val = vm_pop(vm);
@@ -402,6 +459,19 @@ static void op_index_get(VM* vm) {
         }
         Value item = list->items[index];
         vm_push(vm, item);
+        return;
+    }
+
+    if (is_obj_type(list_val, OBJ_TUPLE)) {
+        ObjTuple* tuple = (ObjTuple*)list_val.as.object;
+        int index = (int)index_val.as.integer;
+        if (index < 0 || index >= tuple->count) {
+            printf("TUPLE_GET index out of bounds\n");
+            exit(1);
+        }
+        Value item = tuple->items[index];
+        vm_push(vm, item);
+        return;
     }
 
     if (is_obj_type(list_val, OBJ_DICT)) {
@@ -420,7 +490,7 @@ static void op_index_get(VM* vm) {
         exit(1);
     }
 
-    printf("IDX_GET expects a list or dictionary value\n");
+    printf("IDX_GET expects a list, tuple, or dictionary value\n");
     exit(1);
 }
 

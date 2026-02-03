@@ -86,6 +86,29 @@ Value make_dict() {
     return v;
 }
 
+Value make_tuple() {
+    ObjTuple* t = malloc(sizeof(ObjTuple));
+    t->obj.type = OBJ_TUPLE;
+    t->count = 0;
+    t->items = NULL;
+    Value v;
+    v.type = VAL_OBJ;
+    v.as.object = (Obj*)t;
+    return v;
+}
+
+Value make_set() {
+    ObjSet* s = malloc(sizeof(ObjSet));
+    s->obj.type = OBJ_SET;
+    s->count = 0;
+    s->capacity = 4;
+    s->map = NULL;
+    Value v;
+    v.type = VAL_OBJ;
+    v.as.object = (Obj*)s;
+    return v;
+}
+
 Value make_string(const char* s) {
     Value v;
     v.type = VAL_OBJ;
@@ -197,6 +220,49 @@ void print_value(Value v) {
             } else if (v.as.object->type == OBJ_DICT) {
                 ObjDict* dict = (ObjDict*)v.as.object;
                 print_dict(dict);
+            } else if (v.as.object->type == OBJ_TUPLE) {
+                ObjTuple* tuple = (ObjTuple*)v.as.object;
+                printf("(");
+                for (int i = 0; i < tuple->count; i++) {
+                    print_value(tuple->items[i]);
+                    if (i < tuple->count - 1) {
+                        printf(", ");
+                    }
+                }
+                // Special case for single element tuple
+                if (tuple->count == 1) {
+                    printf(",");
+                }
+                printf(")");
+            } else if (v.as.object->type == OBJ_SET) {
+                ObjSet* set = (ObjSet*)v.as.object;
+                if (set->count == 0) {
+                    printf("set()");
+                } else {
+                    printf("{");
+                    int printed = 0;
+                    // Iterate through set's hashmap
+                    if (set->map) {
+                        for (int i = 0; i < set->map->capacity; i++) {
+                            HashNode* node = &set->map->nodes[i];
+                            if (node->key != NULL) {
+                                if (printed > 0) printf(", ");
+                                print_value(node->value);
+                                printed++;
+                                
+                                // Follow the chain
+                                HashNode* next = node->next;
+                                while (next != NULL) {
+                                    if (printed > 0) printf(", ");
+                                    print_value(next->value);
+                                    printed++;
+                                    next = next->next;
+                                }
+                            }
+                        }
+                    }
+                    printf("}");
+                }
             } else if (v.as.object->type == OBJ_NATIVE_FUNCTION) {
                 ObjNativeFunction* native_fn = (ObjNativeFunction*)v.as.object;
                 printf("<native function %s>", native_fn->name);

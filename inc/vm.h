@@ -30,6 +30,8 @@ typedef enum {
 
     OP_MAKE_LIST,
     OP_MAKE_DICT,
+    OP_MAKE_TUPLE,
+    OP_MAKE_SET,
 
     OP_IDX_GET,
     OP_IDX_SET,

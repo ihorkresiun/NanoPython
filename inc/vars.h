@@ -20,6 +20,8 @@ typedef enum {
     OBJ_STRING,
     OBJ_LIST,
     OBJ_DICT,
+    OBJ_TUPLE,
+    OBJ_SET,
     OBJ_FUNCTION,
     OBJ_NATIVE_FUNCTION,
     OBJ_CLASS,
@@ -60,6 +62,19 @@ typedef struct ObjDict {
     int capacity;
     HashMap* map;
 } ObjDict;
+
+typedef struct ObjTuple {
+    Obj obj;
+    int count;
+    Value* items;
+} ObjTuple;
+
+typedef struct ObjSet {
+    Obj obj;
+    int count;
+    int capacity;
+    HashMap* map;
+} ObjSet;
 
 typedef struct ObjFunction {
     Obj obj;
@@ -115,6 +130,8 @@ Value make_bool(int b);
 Value make_string(const char* s);
 Value make_list();
 Value make_dict();
+Value make_tuple();
+Value make_set();
 Value make_function(ObjFunction* fn);
 Value make_native_function(const char* name, NativeFn function);
 Value make_class(const char* name, ObjClass* parent);

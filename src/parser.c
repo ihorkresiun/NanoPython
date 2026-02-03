@@ -128,9 +128,51 @@ static Ast* parse_factor(Parser* p) {
 
     if (op == TOKEN_LPAREN) {
         parser_eat(p, TOKEN_LPAREN);
-        Ast* node = parse_logic_or(p);
-        parser_eat(p, TOKEN_RPAREN);
-        return node;
+        
+        // Empty tuple ()
+        if (p->current.type == TOKEN_RPAREN) {
+            parser_eat(p, TOKEN_RPAREN);
+            return ast_new_tuple(NULL, 0);
+        }
+        
+        // Parse first element
+        Ast* first = parse_logic_or(p);
+        
+        // Check if it's a tuple (has comma) or just parenthesized expression
+        if (p->current.type == TOKEN_COMMA) {
+            // It's a tuple
+            Ast** elements = malloc(sizeof(Ast*));
+            elements[0] = first;
+            int count = 1;
+            
+            parser_eat(p, TOKEN_COMMA);
+            
+            // Allow trailing comma for single element tuple: (1,)
+            if (p->current.type != TOKEN_RPAREN) {
+                while (1) {
+                    Ast* elem = parse_logic_or(p);
+                    elements = realloc(elements, sizeof(Ast*) * (count + 1));
+                    elements[count++] = elem;
+
+                    if (p->current.type == TOKEN_COMMA) {
+                        parser_eat(p, TOKEN_COMMA);
+                        // Allow trailing comma
+                        if (p->current.type == TOKEN_RPAREN) {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+            
+            parser_eat(p, TOKEN_RPAREN);
+            return ast_new_tuple(elements, count);
+        } else {
+            // Just a parenthesized expression
+            parser_eat(p, TOKEN_RPAREN);
+            return first;
+        }
     }
 
     if (op == TOKEN_LBRACKET) {
@@ -157,33 +199,78 @@ static Ast* parse_factor(Parser* p) {
     }
 
     if (op == TOKEN_LBRACE) {
-        // Dictionary literal
+        // Dictionary or Set literal
         parser_eat(p, TOKEN_LBRACE);
         
-        Ast** keys = NULL; 
-        Ast** values = NULL;
-        int count = 0;
-
-        while (p->current.type != TOKEN_RBRACE) {
-            Ast* key = parse_logic_or(p);
+        // Empty dict {}
+        if (p->current.type == TOKEN_RBRACE) {
+            parser_eat(p, TOKEN_RBRACE);
+            return ast_new_dict(NULL, NULL, 0);
+        }
+        
+        // Parse first element to determine if it's a dict or set
+        Ast* first = parse_logic_or(p);
+        
+        if (p->current.type == TOKEN_COLON) {
+            // It's a dictionary {key: value, ...}
             parser_eat(p, TOKEN_COLON);
-            Ast* value = parse_logic_or(p);
-
-            keys = realloc(keys, sizeof(Ast*) * (count + 1));
-            values = realloc(values, sizeof(Ast*) * (count + 1));
-            keys[count] = key;
-            values[count] = value;
-            count++;
+            Ast* first_value = parse_logic_or(p);
+            
+            Ast** keys = malloc(sizeof(Ast*));
+            Ast** values = malloc(sizeof(Ast*));
+            keys[0] = first;
+            values[0] = first_value;
+            int count = 1;
 
             if (p->current.type == TOKEN_COMMA) {
                 parser_eat(p, TOKEN_COMMA);
-            } else {
-                break;
+                
+                while (p->current.type != TOKEN_RBRACE) {
+                    Ast* key = parse_logic_or(p);
+                    parser_eat(p, TOKEN_COLON);
+                    Ast* value = parse_logic_or(p);
+
+                    keys = realloc(keys, sizeof(Ast*) * (count + 1));
+                    values = realloc(values, sizeof(Ast*) * (count + 1));
+                    keys[count] = key;
+                    values[count] = value;
+                    count++;
+
+                    if (p->current.type == TOKEN_COMMA) {
+                        parser_eat(p, TOKEN_COMMA);
+                    } else {
+                        break;
+                    }
+                }
             }
+        
+            parser_eat(p, TOKEN_RBRACE);
+            return ast_new_dict(keys, values, count);
+        } else {
+            // It's a set {elem1, elem2, ...}
+            Ast** elements = malloc(sizeof(Ast*));
+            elements[0] = first;
+            int count = 1;
+
+            if (p->current.type == TOKEN_COMMA) {
+                parser_eat(p, TOKEN_COMMA);
+                
+                while (p->current.type != TOKEN_RBRACE) {
+                    Ast* elem = parse_logic_or(p);
+                    elements = realloc(elements, sizeof(Ast*) * (count + 1));
+                    elements[count++] = elem;
+
+                    if (p->current.type == TOKEN_COMMA) {
+                        parser_eat(p, TOKEN_COMMA);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        
+            parser_eat(p, TOKEN_RBRACE);
+            return ast_new_set(elements, count);
         }
-    
-        parser_eat(p, TOKEN_RBRACE);
-        return ast_new_dict(keys, values, count);
     }
 
     printf("Unknown factor %d\n", op);

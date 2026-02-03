@@ -320,6 +320,22 @@ static void compile_node(Compiler* compiler, Ast* node) {
         }
         break;
 
+        case AST_TUPLE: {
+            for (int i = 0; i < node->Tuple.count; i++) {
+                compile_node(compiler, node->Tuple.elements[i]);
+            }
+            emit(compiler, OP_MAKE_TUPLE, node->Tuple.count);
+        }
+        break;
+
+        case AST_SET: {
+            for (int i = 0; i < node->Set.count; i++) {
+                compile_node(compiler, node->Set.elements[i]);
+            }
+            emit(compiler, OP_MAKE_SET, node->Set.count);
+        }
+        break;
+
         case AST_DICT: {
             for (int i = 0; i < node->Dict.count; i++) {
                 compile_node(compiler, node->Dict.keys[i]);

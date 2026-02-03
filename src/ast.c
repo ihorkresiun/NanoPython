@@ -108,6 +108,22 @@ Ast* ast_new_list(Ast** elements, int count) {
     return node;
 }
 
+Ast* ast_new_tuple(Ast** elements, int count) {
+    Ast* node = ast_new_node();
+    node->type = AST_TUPLE;
+    node->Tuple.elements = elements;
+    node->Tuple.count = count;
+    return node;
+}
+
+Ast* ast_new_set(Ast** elements, int count) {
+    Ast* node = ast_new_node();
+    node->type = AST_SET;
+    node->Set.elements = elements;
+    node->Set.count = count;
+    return node;
+}
+
 Ast* ast_new_dict(Ast** keys, Ast** values, int count) {
     Ast* node = ast_new_node();
     node->type = AST_DICT;

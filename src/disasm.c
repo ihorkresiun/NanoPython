@@ -87,10 +87,15 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             case OP_HALT:        fprintf(file, "HALT\n"); break;
             case OP_CALL:        fprintf(file, "CALL %d\n", instr.operand); break;
             case OP_RET:         fprintf(file, "RET\n"); break;
+
             case OP_MAKE_LIST:   fprintf(file, "MAKE_LIST %d\n", instr.operand); break;
             case OP_MAKE_DICT:   fprintf(file, "MAKE_DICT %d\n", instr.operand); break;
+            case OP_MAKE_TUPLE:  fprintf(file, "MAKE_TUPLE %d\n", instr.operand); break;
+            case OP_MAKE_SET:    fprintf(file, "MAKE_SET %d\n", instr.operand); break;
+
             case OP_IDX_GET:     fprintf(file, "INDEX_GET\n"); break;
             case OP_IDX_SET:     fprintf(file, "INDEX_SET\n"); break;
+            
             case OP_MAKE_CLASS:  {
                 Value name = bytecode->constants[instr.operand];
                 if (name.type == VAL_OBJ && name.as.object->type == OBJ_STRING) {

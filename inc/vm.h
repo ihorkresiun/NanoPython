@@ -2,6 +2,7 @@
 #define __INC_VM_H__
 
 #include "vars.h"
+#include "hashmap.h"
 
 typedef enum {
     OP_NOP,
@@ -68,6 +69,7 @@ typedef struct {
     CallFrame call_stack[MAX_CALL_STACK_SIZE];
     int frame_count;
     Scope* scope;
+    HashMap strings; // For string interning
 } VM;
 
 void vm_run(VM* vm);

@@ -16,7 +16,7 @@ Scope* new_scope(const char* name, Scope* parent) {
     return scope;
 }
 
-Value scope_find(Scope* scope, const char* name) {
+Value scope_find(Scope* scope, ObjString* name) {
     while (scope) {
         Value ret;
         if (hash_get(scope->vars, name, &ret)) {
@@ -29,7 +29,7 @@ Value scope_find(Scope* scope, const char* name) {
     return (Value){.type = VAL_NONE};
 }
 
-void scope_set(Scope* scope, const char* name, Value value) {
+void scope_set(Scope* scope, ObjString* name, Value value) {
     hash_set(scope->vars, name, value);
 }
 
@@ -129,7 +129,7 @@ static void print_dict(ObjDict* dict) {
     printf("{");
     
     while (node) {
-        printf("\"%s\": ", node->key);
+        printf("\"%s\": ", node->key->chars);
         print_value(node->value);
         node = hash_next(&it);
         if (node) {
@@ -248,8 +248,7 @@ void free_value(Value v) {
 void free_scope(Scope* scope) {
     if (!scope) return;
 
-    // TODO: Free all variables in the scope
-
-    scope->vars = NULL;
+    hash_free(scope->vars);
+    free(scope->vars);
     free(scope);
 }

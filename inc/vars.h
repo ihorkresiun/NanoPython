@@ -86,8 +86,8 @@ typedef struct Scope {
 }Scope;
 
 Scope* new_scope(const char* name, Scope* parent);
-Value scope_find(Scope* scope, const char* name);
-void scope_set(Scope* scope, const char* name, Value value);
+Value scope_find(Scope* scope, ObjString* name);
+void scope_set(Scope* scope, ObjString* name, Value value);
 
 int is_true(Value v);
 int is_obj_type(Value v, ObjectType type);

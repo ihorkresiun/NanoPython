@@ -1,6 +1,8 @@
 #include "vm.h"
 
 #include "hashmap.h"
+#include "intern_string.h"
+#include "vars.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -68,11 +70,13 @@ void vm_init(VM* vm, Bytecode* bytecode) {
     vm->frame_count = 0;
     Scope* global_scope = new_scope("Global", NULL);
     vm->scope = global_scope;
+    hash_init(&vm->strings, 1024);
 }
 
 void vm_register_native_functions(VM* vm, const char* name, NativeFn function) {
     Value native_fn_val = make_native_function(name, function);
-    scope_set(vm->scope, name, native_fn_val);
+    ObjString* name_str = intern_const_string(vm, name, strlen(name));
+    scope_set(vm->scope, name_str, native_fn_val);
 }
 
 static void vm_push(VM* vm, Value value) {
@@ -162,7 +166,7 @@ static void op_store_global(VM* vm, int operand) {
         printf("STORE_GLOBAL expects a string constant as variable name\n");
         exit(1);
     }
-    scope_set(vm->scope, as_string(name_val)->chars, v);
+    scope_set(vm->scope, as_string(name_val), v);
 }
 
 static void op_load_global(VM* vm, int operand) {
@@ -171,7 +175,7 @@ static void op_load_global(VM* vm, int operand) {
         printf("LOAD_GLOBAL expects a string constant as variable name\n");
         exit(1);
     }
-    Value value = scope_find(vm->scope, as_string(name_val)->chars);
+    Value value = scope_find(vm->scope, as_string(name_val));
     if (value.type == VAL_NONE) {
         printf("Undefined global variable: %s\n", as_string(name_val)->chars);
         exit(1);
@@ -234,8 +238,8 @@ static void op_call(VM* vm, int operand)
     for (int i = fn->param_count - 1; i >= 0; i--) {
         Value arg_val = vm_pop(vm);
         const char* param_name = fn->params[i];
-
-        scope_set(scope, param_name, arg_val);
+        ObjString* param_name_str = intern_const_string(vm, param_name, strlen(param_name));
+        scope_set(scope, param_name_str, arg_val);
     }
 
     CallFrame* frame = &vm->call_stack[vm->frame_count++];
@@ -294,7 +298,7 @@ static void op_make_dict(VM* vm, int count) {
             printf("Dictionary keys must be strings\n");
             exit(1);
         }
-        hash_set(dict->map, as_string(key)->chars, val);
+        hash_set(dict->map, as_string(key), val);
     }
 
     Value dict_val;
@@ -325,13 +329,13 @@ static void op_index_get(VM* vm) {
             printf("DICT_GET expects a string key\n");
             exit(1);
         }
-        const char* key = as_string(index_val)->chars;
+        ObjString* key = as_string(index_val);
         Value val;
         if (hash_get(dict->map, key, &val)) {
             vm_push(vm, val);
             return;
         }
-        printf("Key not found in dictionary: %s\n", key);
+        printf("Key not found in dictionary: %s\n", key->chars);
         exit(1);
     }
 
@@ -361,7 +365,7 @@ static void op_index_set(VM* vm) {
             exit(1);
         }
 
-        const char* key = as_string(index_val)->chars;
+        ObjString* key = as_string(index_val);
 
         hash_set(dict->map, key, value);
 

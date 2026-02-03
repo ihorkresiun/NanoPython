@@ -15,7 +15,7 @@ void hash_init(HashMap* map, int initial_capacity) {
     }
 }
 
-static uint32_t hash_string(const char* str) {
+uint32_t hash_string(const char* str){
     // DJB2 hash function
     uint32_t hash = 5381;
     int c;
@@ -25,13 +25,13 @@ static uint32_t hash_string(const char* str) {
     return hash;
 }
 
-void hash_set(HashMap* map, const char* key, Value value) {
-    uint32_t index = hash_string(key) % map->capacity;
+void hash_set(HashMap* map, ObjString* key, Value value) {
+    uint32_t index = hash_string(key->chars) & (map->capacity - 1);
     HashNode* node = &map->nodes[index];
 
     // Handle collisions with chaining
     while (node->key != NULL) {
-        if (strcmp(node->key, key) == 0) {
+        if (strcmp(node->key->chars, key->chars) == 0) {
             // Key already exists, update value
             node->value = value;
             return;
@@ -42,13 +42,13 @@ void hash_set(HashMap* map, const char* key, Value value) {
 
     if (node->key == NULL) {
         // New key
-        node->key = strdup(key);
+        node->key = key;
         node->value = value;
         map->count++;
     } else {
         // Collision, add new node to the chain
         HashNode* new_node = malloc(sizeof(HashNode));
-        new_node->key = strdup(key);
+        new_node->key = key;
         new_node->value = value;
         new_node->next = NULL;
         node->next = new_node;
@@ -56,12 +56,12 @@ void hash_set(HashMap* map, const char* key, Value value) {
     }
 }
 
-int hash_get(HashMap* map, const char* key, Value* out_value) {
-    uint32_t index = hash_string(key) % map->capacity;
+int hash_get(HashMap* map, ObjString* key, Value* out_value) {
+    uint32_t index = hash_string(key->chars) & (map->capacity - 1);
     HashNode* node = &map->nodes[index];
 
     while (node != NULL && node->key != NULL) {
-        if (strcmp(node->key, key) == 0) {
+        if (strcmp(node->key->chars, key->chars) == 0) {
             *out_value = node->value;
             return 1; // Found
         }
@@ -82,4 +82,22 @@ HashNode* hash_next(HashIter* it) {
     it->node = it->node->next;
     return current;
     
+}
+
+void hash_free(HashMap* map) {
+    for (int i = 0; i < map->capacity; i++) {
+        HashNode* node = &map->nodes[i];
+        while (node != NULL) {
+            HashNode* next = node->next;
+            if (node->key != NULL) {
+                free((void*)node->key->chars);
+                free(node->key);
+            }
+            if (node != &map->nodes[i]) {
+                free(node);
+            }
+            node = next;
+        }
+    }
+    free(map->nodes);
 }

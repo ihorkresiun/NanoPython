@@ -3,8 +3,10 @@
 
 #include "vars.h"
 
+#include "stdint.h"
+
 typedef struct HashNode {
-    const char* key;
+    ObjString* key;
     Value value;
     
     struct HashNode* next;
@@ -23,9 +25,13 @@ typedef struct {
 } HashIter;
 
 void hash_init(HashMap* map, int initial_capacity);
-void hash_set(HashMap* map, const char* key, Value value);
-int hash_get(HashMap* map, const char* key, Value* out_value);
+void hash_set(HashMap* map, ObjString* key, Value value);
+int hash_get(HashMap* map, ObjString* key, Value* out_value);
+
+uint32_t hash_string(const char* str);
 
 HashNode* hash_next(HashIter* it);
+
+void hash_free(HashMap* map);
 
 #endif // __HASHMAP_H__

@@ -66,11 +66,7 @@ void vm_init(VM* vm, Bytecode* bytecode) {
     vm->sp = 0;
     vm->ip = 0;
     vm->frame_count = 0;
-    Scope* global_scope = malloc(sizeof(Scope));
-    global_scope->name = "Global";
-    global_scope->vars = NULL;
-    global_scope->parent = NULL;
-    global_scope->return_value = make_none();
+    Scope* global_scope = new_scope("Global", NULL);
     vm->scope = global_scope;
 }
 
@@ -175,12 +171,12 @@ static void op_load_global(VM* vm, int operand) {
         printf("LOAD_GLOBAL expects a string constant as variable name\n");
         exit(1);
     }
-    Var* var = scope_find(vm->scope, as_string(name_val)->chars);
-    if (!var) {
+    Value value = scope_find(vm->scope, as_string(name_val)->chars);
+    if (value.type == VAL_NONE) {
         printf("Undefined global variable: %s\n", as_string(name_val)->chars);
         exit(1);
     }
-    vm_push(vm, var->value);
+    vm_push(vm, value);
 }
 
 static void op_jump_if_zero(VM* vm, int operand) {
@@ -233,18 +229,13 @@ static void op_call(VM* vm, int operand)
     }
 
     ObjFunction* fn = (ObjFunction*)func_val.as.object;
-    Scope *new_scope = malloc(sizeof(Scope));
-    new_scope->name = fn->name;
-    new_scope->parent = fn->scope ? fn->scope : vm->scope;
-    new_scope->vars = NULL;
+    Scope* scope= new_scope(fn->name, fn->scope ? fn->scope : vm->scope);
 
     for (int i = fn->param_count - 1; i >= 0; i--) {
         Value arg_val = vm_pop(vm);
-        Var* var = malloc(sizeof(Var));
-        var->name = strdup(fn->params[i]);
-        var->value = arg_val;
-        var->next = new_scope->vars;
-        new_scope->vars = var;
+        const char* param_name = fn->params[i];
+
+        scope_set(scope, param_name, arg_val);
     }
 
     CallFrame* frame = &vm->call_stack[vm->frame_count++];
@@ -252,7 +243,7 @@ static void op_call(VM* vm, int operand)
     frame->scope = vm->scope;
     frame->base_sp = vm->sp;
 
-    vm->scope = new_scope;
+    vm->scope = scope;
     vm->ip = fn->addr;
 }
 

@@ -6,39 +6,31 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-Var * scope_find(Scope* scope, const char* name) {
+Scope* new_scope(const char* name, Scope* parent) {
+    Scope* scope = malloc(sizeof(Scope));
+    scope->name = name;
+    scope->vars = malloc(sizeof(HashMap));
+    hash_init(scope->vars, 16);
+    scope->parent = parent;
+    scope->return_value = make_none();
+    return scope;
+}
+
+Value scope_find(Scope* scope, const char* name) {
     while (scope) {
-        Var* v = scope->vars;
-        while (v) {
-            if (strcmp(v->name, name) == 0) {
-                return v;
-            }
-            v = v->next;
+        Value ret;
+        if (hash_get(scope->vars, name, &ret)) {
+            return ret;
         }
 
         scope = scope->parent;
     }
 
-    return NULL;
+    return (Value){.type = VAL_NONE};
 }
 
 void scope_set(Scope* scope, const char* name, Value value) {
-    // Find value in current scope
-    Var* v = scope->vars;
-    while (v) {
-        if (strcmp(v->name, name) == 0) {
-            v->value = value;
-            return;
-        }
-        v = v->next;
-    }
-
-    // Create new value if not found
-    v = malloc(sizeof(Var));
-    v->name = strdup(name);
-    v->value = value;
-    v->next = scope->vars;
-    scope->vars = v;
+    hash_set(scope->vars, name, value);
 }
 
 int is_true(Value v) {
@@ -226,45 +218,37 @@ int value_equals(Value* a, Value* b) {
     }
 }
 
-void free_var(Var* v) {
-    if (!v) return;
+void free_value(Value v) {
 
-    if (v->value.type == VAL_OBJ) {
-        if (is_obj_type(v->value, OBJ_STRING)) {
-            ObjString* str = as_string(v->value);
+    if (v.type == VAL_OBJ) {
+        if (is_obj_type(v, OBJ_STRING)) {
+            ObjString* str = as_string(v);
             free(str->chars);
             free(str);
-        } else if (is_obj_type(v->value, OBJ_LIST)) {
-            ObjList* list = (ObjList*)v->value.as.object;
+        } else if (is_obj_type(v, OBJ_LIST)) {
+            ObjList* list = (ObjList*)v.as.object;
             free(list->items);
             free(list);
-        } else if (is_obj_type(v->value, OBJ_FUNCTION)) {
-            ObjFunction* fn = (ObjFunction*)v->value.as.object;
+        } else if (is_obj_type(v, OBJ_FUNCTION)) {
+            ObjFunction* fn = (ObjFunction*)v.as.object;
             free(fn->name);
             for (int i = 0; i < fn->param_count; i++) {
                 free(fn->params[i]);
             }
             free(fn->params);
             free(fn);
-        } else if (is_obj_type(v->value, OBJ_NATIVE_FUNCTION)) {
-            ObjNativeFunction* native_fn = (ObjNativeFunction*)v->value.as.object;
+        } else if (is_obj_type(v, OBJ_NATIVE_FUNCTION)) {
+            ObjNativeFunction* native_fn = (ObjNativeFunction*)v.as.object;
             free(native_fn->name);
             free(native_fn);
         }
     }
-
-    free(v);
 }
 
 void free_scope(Scope* scope) {
     if (!scope) return;
 
-    Var* v = scope->vars;
-    while (v) {
-        Var* next = v->next;
-        free_var(v);
-        v = next;
-    }
+    // TODO: Free all variables in the scope
 
     scope->vars = NULL;
     free(scope);

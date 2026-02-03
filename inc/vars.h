@@ -77,20 +77,16 @@ typedef struct ObjNativeFunction {
     char* name;
 } ObjNativeFunction;
 
-typedef struct Var {
-    const char* name;
-    Value value;
-    struct Var* next;
-} Var;
 
 typedef struct Scope {
     const char * name;
-    Var * vars;
+    HashMap * vars;
     Value return_value;
     struct Scope* parent;
 }Scope;
 
-Var * scope_find(Scope* scope, const char* name);
+Scope* new_scope(const char* name, Scope* parent);
+Value scope_find(Scope* scope, const char* name);
 void scope_set(Scope* scope, const char* name, Value value);
 
 int is_true(Value v);
@@ -113,7 +109,7 @@ void print_value(Value v);
 
 int value_equals(Value* a, Value* b);
 
-void free_var(Var* v);
+void free_value(Value v);
 void free_scope(Scope* scope);
 
 #endif // __INC_VARS_H__

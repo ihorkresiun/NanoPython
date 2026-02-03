@@ -1,5 +1,8 @@
 #include "compiler.h"
 
+#include "lexer.h"
+#include "parser.h"
+#include "intern_string.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
@@ -14,6 +17,7 @@ void compiler_init(Compiler* compiler) {
     compiler->bytecode->constants = malloc(sizeof(Value) * const_cap);
     compiler->bytecode->const_count = 0;
     compiler->loop_count = 0;
+    hash_init(&compiler->imported_modules, 16);
 }
 
 static void emit(Compiler* compiler, Opcode op, int arg) {
@@ -255,8 +259,14 @@ static void compile_node(Compiler* compiler, Ast* node) {
             ObjFunction* fn = malloc(sizeof(ObjFunction));
             fn->addr = fn_addr;
             fn->name = strdup(node->FuncDef.name);
-            fn->params = node->FuncDef.args;
             fn->param_count = node->FuncDef.argc;
+            
+            // Deep copy parameters
+            fn->params = malloc(sizeof(char*) * fn->param_count);
+            for (int i = 0; i < fn->param_count; i++) {
+                fn->params[i] = strdup(node->FuncDef.args[i]);
+            }
+            
             fn->scope = NULL; // Closure scope will be set during execution
 
             Obj * obj_fn = (Obj*)fn;
@@ -366,8 +376,14 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 ObjFunction* fn = malloc(sizeof(ObjFunction));
                 fn->addr = method_addr;
                 fn->name = strdup(method->FuncDef.name);
-                fn->params = method->FuncDef.args;
                 fn->param_count = method->FuncDef.argc;
+                
+                // Deep copy parameters
+                fn->params = malloc(sizeof(char*) * fn->param_count);
+                for (int i = 0; i < fn->param_count; i++) {
+                    fn->params[i] = strdup(method->FuncDef.args[i]);
+                }
+                
                 fn->scope = NULL;
                 fn->obj.type = OBJ_FUNCTION;
                 
@@ -422,6 +438,71 @@ static void compile_node(Compiler* compiler, Ast* node) {
             compile_node(compiler, node->AttrAssign.value);
             int attr_name_idx = add_constant(compiler, make_string(node->AttrAssign.attr_name));
             emit(compiler, OP_SET_ATTR, attr_name_idx);
+        }
+        break;
+
+        case AST_IMPORT: {
+            // Check if module already imported
+            ObjString* module_name = malloc(sizeof(ObjString));
+            module_name->obj.type = OBJ_STRING;
+            module_name->chars = strdup(node->Import.module_name);
+            module_name->length = strlen(node->Import.module_name);
+            
+            Value cached;
+            if (hash_get(&compiler->imported_modules, module_name, &cached)) {
+                // Already imported, skip
+                free(module_name->chars);
+                free(module_name);
+                break;
+            }
+            
+            // Compile-time import: load, parse, and compile the module
+            char filename[256];
+            snprintf(filename, sizeof(filename), "%s.py", node->Import.module_name);
+            
+            // Read the module file
+            FILE* file = fopen(filename, "r");
+            if (!file) {
+                printf("Cannot import module '%s': file '%s' not found\n", 
+                       node->Import.module_name, filename);
+                exit(1);
+            }
+            
+            fseek(file, 0, SEEK_END);
+            long file_size = ftell(file);
+            fseek(file, 0, SEEK_SET);
+            
+            char* source = malloc(file_size + 1);
+            fread(source, 1, file_size, file);
+            source[file_size] = '\0';
+            fclose(file);
+            
+            // Parse the module
+            Lexer* lexer = malloc(sizeof(Lexer));
+            lexer_init(lexer, source);
+            
+            Parser parser;
+            parser.lexer = lexer;
+            parser_init(&parser, source);
+            Ast* module_ast = parse_program(&parser);
+            
+            // Mark as imported
+            hash_set(&compiler->imported_modules, module_name, make_number_int(1));
+            
+            // Compile the module into the current bytecode
+            // (Just compile its statements, don't add HALT)
+            if (module_ast->type == AST_BLOCK) {
+                for (int i = 0; i < module_ast->Block.count; i++) {
+                    compile_node(compiler, module_ast->Block.statements[i]);
+                }
+            } else {
+                compile_node(compiler, module_ast);
+            }
+            
+            // Cleanup
+            free(lexer);
+            free(source);
+            ast_free(module_ast);
         }
         break;
 

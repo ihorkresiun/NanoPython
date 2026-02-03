@@ -503,6 +503,20 @@ static Ast* parse_continue(Parser* p) {
     return ast_new_continue();
 }
 
+static Ast* parse_import(Parser* p) {
+    parser_eat(p, TOKEN_IMPORT);
+    
+    if (p->current.type != TOKEN_IDENT) {
+        printf("Expected module name after 'import'\n");
+        exit(1);
+    }
+    
+    char* module_name = strdup(p->current.ident);
+    parser_eat(p, TOKEN_IDENT);
+    
+    return ast_new_import(module_name);
+}
+
 static Ast* parse_ident(Parser* p) {
     Token tok = p->current;
     if (tok.type == TOKEN_IDENT) {
@@ -545,6 +559,8 @@ Ast* parse_statement(Parser* p) {
             return parse_break(p);
         case TOKEN_CONTINUE:
             return parse_continue(p);
+        case TOKEN_IMPORT:
+            return parse_import(p);
         case TOKEN_IDENT:
             // Identifier or assignment
             return parse_ident(p);

@@ -3,6 +3,7 @@
 
 #include "ast.h"
 #include "vm.h"
+#include "hashmap.h"
 
 typedef struct {
     int loop_start;
@@ -17,6 +18,7 @@ typedef struct {
     Bytecode* bytecode;
     LoopContext loop_stack[MAX_LOOP_NESTING];
     int loop_count;
+    HashMap imported_modules;  // Track imported modules to avoid duplicates
 } Compiler;
 
 void compiler_init(Compiler* compiler);

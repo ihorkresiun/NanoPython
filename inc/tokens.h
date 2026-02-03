@@ -32,6 +32,8 @@ typedef enum {
     TOKEN_CONTINUE,
     TOKEN_FOR,
     TOKEN_IN,
+    TOKEN_IMPORT,
+    TOKEN_FROM,
     TOKEN_COLON,
     TOKEN_LT,
     TOKEN_GT,

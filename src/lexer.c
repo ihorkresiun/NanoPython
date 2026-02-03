@@ -24,6 +24,8 @@ static Keyword keywords[] = {
     {"continue", TOKEN_CONTINUE},
     {"for", TOKEN_FOR},
     {"in", TOKEN_IN},
+    {"import", TOKEN_IMPORT},
+    {"from", TOKEN_FROM},
 
     {NULL, 0}
 };

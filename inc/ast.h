@@ -29,6 +29,7 @@ typedef enum {
     AST_METHOD_CALL,
     AST_ATTR_ACCESS,
     AST_ATTR_ASSIGN,
+    AST_IMPORT,
 } AstType;
 
 typedef struct Ast {
@@ -155,6 +156,10 @@ typedef struct Ast {
             char* attr_name;
             struct Ast* value;
         }AttrAssign;
+
+        struct {
+            char* module_name;  // Name of module to import
+        }Import;
     };
 } Ast;
 
@@ -183,6 +188,7 @@ Ast* ast_new_classdef(const char* name, const char* parent, Ast** methods, int m
 Ast* ast_new_method_call(Ast* object, const char* method_name, Ast** args, int argc);
 Ast* ast_new_attr_access(Ast* object, const char* attr_name);
 Ast* ast_new_attr_assign(Ast* object, const char* attr_name, Ast* value);
+Ast* ast_new_import(const char* module_name);
 
 void ast_free(Ast* node);
 

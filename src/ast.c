@@ -209,6 +209,13 @@ Ast* ast_new_attr_assign(Ast* object, const char* attr_name, Ast* value) {
     return node;
 }
 
+Ast* ast_new_import(const char* module_name) {
+    Ast* node = ast_new_node();
+    node->type = AST_IMPORT;
+    node->Import.module_name = strdup(module_name);
+    return node;
+}
+
 void ast_free(Ast* node) {
     if (node == NULL) return;
 
@@ -326,6 +333,9 @@ void ast_free(Ast* node) {
             ast_free(node->AttrAssign.object);
             free(node->AttrAssign.attr_name);
             ast_free(node->AttrAssign.value);
+        break;
+        case AST_IMPORT:
+            free(node->Import.module_name);
         break;
 
         default:

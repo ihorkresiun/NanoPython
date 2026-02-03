@@ -25,6 +25,10 @@ typedef enum {
     AST_RETURN,
     AST_BREAK,
     AST_CONTINUE,
+    AST_CLASSDEF,
+    AST_METHOD_CALL,
+    AST_ATTR_ACCESS,
+    AST_ATTR_ASSIGN,
 } AstType;
 
 typedef struct Ast {
@@ -126,6 +130,31 @@ typedef struct Ast {
         struct {
             struct Ast* expr;
         }Print;
+
+        struct {
+            char* name;
+            char* parent;  // Base class name (can be NULL)
+            struct Ast** methods;  // Array of FuncDef nodes
+            int method_count;
+        }ClassDef;
+
+        struct {
+            struct Ast* object;  // Expression that evaluates to an object
+            char* method_name;
+            struct Ast** args;
+            int argc;
+        }MethodCall;
+
+        struct {
+            struct Ast* object;  // Expression that evaluates to an object
+            char* attr_name;
+        }AttrAccess;
+
+        struct {
+            struct Ast* object;  // Expression that evaluates to an object
+            char* attr_name;
+            struct Ast* value;
+        }AttrAssign;
     };
 } Ast;
 
@@ -150,6 +179,10 @@ Ast* ast_new_return(Ast* value);
 Ast* ast_new_break();
 Ast* ast_new_continue();
 Ast* ast_new_print(Ast* expr);
+Ast* ast_new_classdef(const char* name, const char* parent, Ast** methods, int method_count);
+Ast* ast_new_method_call(Ast* object, const char* method_name, Ast** args, int argc);
+Ast* ast_new_attr_access(Ast* object, const char* attr_name);
+Ast* ast_new_attr_assign(Ast* object, const char* attr_name, Ast* value);
 
 void ast_free(Ast* node);
 

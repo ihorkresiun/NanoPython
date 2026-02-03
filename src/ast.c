@@ -172,6 +172,43 @@ Ast* ast_new_continue() {
     return node;
 }
 
+Ast* ast_new_classdef(const char* name, const char* parent, Ast** methods, int method_count) {
+    Ast* node = ast_new_node();
+    node->type = AST_CLASSDEF;
+    node->ClassDef.name = strdup(name);
+    node->ClassDef.parent = parent ? strdup(parent) : NULL;
+    node->ClassDef.methods = methods;
+    node->ClassDef.method_count = method_count;
+    return node;
+}
+
+Ast* ast_new_method_call(Ast* object, const char* method_name, Ast** args, int argc) {
+    Ast* node = ast_new_node();
+    node->type = AST_METHOD_CALL;
+    node->MethodCall.object = object;
+    node->MethodCall.method_name = strdup(method_name);
+    node->MethodCall.args = args;
+    node->MethodCall.argc = argc;
+    return node;
+}
+
+Ast* ast_new_attr_access(Ast* object, const char* attr_name) {
+    Ast* node = ast_new_node();
+    node->type = AST_ATTR_ACCESS;
+    node->AttrAccess.object = object;
+    node->AttrAccess.attr_name = strdup(attr_name);
+    return node;
+}
+
+Ast* ast_new_attr_assign(Ast* object, const char* attr_name, Ast* value) {
+    Ast* node = ast_new_node();
+    node->type = AST_ATTR_ASSIGN;
+    node->AttrAssign.object = object;
+    node->AttrAssign.attr_name = strdup(attr_name);
+    node->AttrAssign.value = value;
+    return node;
+}
+
 void ast_free(Ast* node) {
     if (node == NULL) return;
 
@@ -264,6 +301,31 @@ void ast_free(Ast* node) {
         case AST_BREAK:
         case AST_CONTINUE:
             // Nothing to free
+        break;
+        case AST_CLASSDEF:
+            free(node->ClassDef.name);
+            if (node->ClassDef.parent) free(node->ClassDef.parent);
+            for (int i = 0; i < node->ClassDef.method_count; i++) {
+                ast_free(node->ClassDef.methods[i]);
+            }
+            free(node->ClassDef.methods);
+        break;
+        case AST_METHOD_CALL:
+            ast_free(node->MethodCall.object);
+            free(node->MethodCall.method_name);
+            for (int i = 0; i < node->MethodCall.argc; i++) {
+                ast_free(node->MethodCall.args[i]);
+            }
+            free(node->MethodCall.args);
+        break;
+        case AST_ATTR_ACCESS:
+            ast_free(node->AttrAccess.object);
+            free(node->AttrAccess.attr_name);
+        break;
+        case AST_ATTR_ASSIGN:
+            ast_free(node->AttrAssign.object);
+            free(node->AttrAssign.attr_name);
+            ast_free(node->AttrAssign.value);
         break;
 
         default:

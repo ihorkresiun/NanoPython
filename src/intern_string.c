@@ -13,7 +13,7 @@ static ObjString* find_string(HashMap* map, const char* chars, int length) {
     uint32_t index = hash & (map->capacity - 1);
     HashNode* node = &map->nodes[index];
 
-    while (node != NULL && node->key != NULL) {
+    while (node != NULL && node->key != NULL && node->key->length == length) {
         if (memcmp(node->key->chars, chars, length) == 0) {
             return node->key;
         }

@@ -117,6 +117,31 @@ Value make_native_function(const char* name, NativeFn function) {
     return v;
 }
 
+Value make_class(const char* name, ObjClass* parent) {
+    ObjClass* klass = malloc(sizeof(ObjClass));
+    klass->obj.type = OBJ_CLASS;
+    klass->name = strdup(name);
+    klass->methods = malloc(sizeof(HashMap));
+    hash_init(klass->methods, 8);
+    klass->parent = parent;
+    Value v = {0};
+    v.type = VAL_OBJ;
+    v.as.object = (Obj*)klass;
+    return v;
+}
+
+Value make_instance(ObjClass* klass) {
+    ObjInstance* instance = malloc(sizeof(ObjInstance));
+    instance->obj.type = OBJ_INSTANCE;
+    instance->klass = klass;
+    instance->fields = malloc(sizeof(HashMap));
+    hash_init(instance->fields, 8);
+    Value v = {0};
+    v.type = VAL_OBJ;
+    v.as.object = (Obj*)instance;
+    return v;
+}
+
 Value make_none() {
     return (Value){.type = VAL_NONE};
 }
@@ -177,6 +202,12 @@ void print_value(Value v) {
                 printf("<native function %s>", native_fn->name);
             } else if (v.as.object->type == OBJ_FUNCTION) {
                 printf("<function>");
+            } else if (v.as.object->type == OBJ_CLASS) {
+                ObjClass* klass = (ObjClass*)v.as.object;
+                printf("<class '%s'>", klass->name);
+            } else if (v.as.object->type == OBJ_INSTANCE) {
+                ObjInstance* instance = (ObjInstance*)v.as.object;
+                printf("<%s instance>", instance->klass->name);
             } else {
                 printf("<Unknown object type %d>", v.as.object->type);
             }

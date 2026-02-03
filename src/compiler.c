@@ -333,6 +333,98 @@ static void compile_node(Compiler* compiler, Ast* node) {
         }
         break;
 
+        case AST_CLASSDEF: {
+            // Create class object with name and parent
+            int class_name_idx = add_constant(compiler, make_string(node->ClassDef.name));
+            
+            // Load parent class if specified
+            if (node->ClassDef.parent) {
+                int parent_idx = add_constant(compiler, make_string(node->ClassDef.parent));
+                emit(compiler, OP_LOAD, parent_idx);
+            } else {
+                // No parent, push None
+                int none_idx = add_constant(compiler, make_none());
+                emit(compiler, OP_CONST, none_idx);
+            }
+            
+            // Create the class object - it's now on the stack
+            emit(compiler, OP_MAKE_CLASS, class_name_idx);
+            
+            // Store the class so we can reload it
+            emit(compiler, OP_STORE, class_name_idx);
+            
+            // For each method: load class, push method, set attribute
+            for (int i = 0; i < node->ClassDef.method_count; i++) {
+                Ast* method = node->ClassDef.methods[i];
+                
+                // Load the class
+                emit(compiler, OP_LOAD, class_name_idx);
+                
+                // Compile the method as a function
+                int method_addr = compiler->bytecode->count + 2;
+                
+                ObjFunction* fn = malloc(sizeof(ObjFunction));
+                fn->addr = method_addr;
+                fn->name = strdup(method->FuncDef.name);
+                fn->params = method->FuncDef.args;
+                fn->param_count = method->FuncDef.argc;
+                fn->scope = NULL;
+                fn->obj.type = OBJ_FUNCTION;
+                
+                Value v = {.type = VAL_OBJ, .as.object = (Obj*)fn};
+                int fn_idx = add_constant(compiler, v);
+                emit(compiler, OP_CONST, fn_idx);
+                
+                int jump_over_method = emit_jump(compiler, OP_JUMP);
+                
+                // Compile method body
+                compile_node(compiler, method->FuncDef.body);
+                emit(compiler, OP_CONST, add_constant(compiler, make_none()));
+                emit(compiler, OP_RET, 0);
+                
+                patch_jump(compiler, jump_over_method, compiler->bytecode->count);
+                
+                // Stack: [class, method_function]
+                // Set method on class (this pops both)
+                int method_name_idx = add_constant(compiler, make_string(method->FuncDef.name));
+                emit(compiler, OP_SET_ATTR, method_name_idx);
+            }
+        }
+        break;
+
+        case AST_METHOD_CALL: {
+            // Push the object (this will become 'self')
+            compile_node(compiler, node->MethodCall.object);
+            
+            // Compile arguments
+            for (int i = 0; i < node->MethodCall.argc; i++) {
+                compile_node(compiler, node->MethodCall.args[i]);
+            }
+            
+            // Method call: stack = [object, arg1, arg2, ...]
+            // First operand: method name index
+            // Second operand: argc (NOT including self)
+            int method_name_idx = add_constant(compiler, make_string(node->MethodCall.method_name));
+            emit(compiler, OP_CALL_METHOD, method_name_idx);
+            emit(compiler, OP_NOP, node->MethodCall.argc); // Store argc for method call
+        }
+        break;
+
+        case AST_ATTR_ACCESS: {
+            compile_node(compiler, node->AttrAccess.object);
+            int attr_name_idx = add_constant(compiler, make_string(node->AttrAccess.attr_name));
+            emit(compiler, OP_GET_ATTR, attr_name_idx);
+        }
+        break;
+
+        case AST_ATTR_ASSIGN: {
+            compile_node(compiler, node->AttrAssign.object);
+            compile_node(compiler, node->AttrAssign.value);
+            int attr_name_idx = add_constant(compiler, make_string(node->AttrAssign.attr_name));
+            emit(compiler, OP_SET_ATTR, attr_name_idx);
+        }
+        break;
+
         default:
             printf("Unsupported AST node in compiler: %d\n", node->type);
             exit(1);

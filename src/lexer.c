@@ -14,6 +14,7 @@ static Keyword keywords[] = {
     {"if", TOKEN_IF},
     {"else", TOKEN_ELSE},
     {"def", TOKEN_DEF},
+    {"class", TOKEN_CLASS},
     {"while", TOKEN_WHILE},
     {"and", TOKEN_AND},
     {"or", TOKEN_OR},
@@ -136,8 +137,8 @@ Token lexer_next(Lexer* l) {
     // Skip spaces inside a line
     if (s == ' ' || s == '\t') { l->pos++; return lexer_next(l); }
 
-    // Numbers
-    if(isdigit(s) || s == '.') {
+    // Numbers - but only if it starts with a digit or a dot followed by a digit
+    if(isdigit(s) || (s == '.' && isdigit(l->input[l->pos + 1]))) {
         // Parse number
         char buffer[64];
         size_t i = 0;
@@ -164,7 +165,7 @@ Token lexer_next(Lexer* l) {
     }
 
     // Identifier or keyword
-    if (isalpha(s)) {
+    if (isalpha(s) || s == '_') {
         char buffer[64];
         size_t i = 0;
         while (isalpha(s) || isdigit(s) || s == '_') {
@@ -223,6 +224,7 @@ Token lexer_next(Lexer* l) {
         case '*': tok.type=TOKEN_STAR;      l->pos++; return tok;
         case '/': tok.type=TOKEN_SLASH;     l->pos++; return tok;
         case '^': tok.type=TOKEN_CARET;     l->pos++; return tok;
+        case '.': tok.type=TOKEN_DOT;       l->pos++; return tok;
         case '(': tok.type=TOKEN_LPAREN;    l->pos++; return tok;
         case ')': tok.type=TOKEN_RPAREN;    l->pos++; return tok;
         case '[': tok.type=TOKEN_LBRACKET;  l->pos++; return tok;

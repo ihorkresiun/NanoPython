@@ -22,6 +22,8 @@ typedef enum {
     OBJ_DICT,
     OBJ_FUNCTION,
     OBJ_NATIVE_FUNCTION,
+    OBJ_CLASS,
+    OBJ_INSTANCE,
 }ObjectType;
 
 typedef struct Obj {
@@ -77,6 +79,19 @@ typedef struct ObjNativeFunction {
     char* name;
 } ObjNativeFunction;
 
+typedef struct ObjClass {
+    Obj obj;
+    char* name;
+    HashMap* methods;  // Map of method name -> ObjFunction
+    struct ObjClass* parent;  // Base class for inheritance
+} ObjClass;
+
+typedef struct ObjInstance {
+    Obj obj;
+    ObjClass* klass;
+    HashMap* fields;  // Map of field name -> Value
+} ObjInstance;
+
 
 typedef struct Scope {
     const char * name;
@@ -102,6 +117,8 @@ Value make_list();
 Value make_dict();
 Value make_function(ObjFunction* fn);
 Value make_native_function(const char* name, NativeFn function);
+Value make_class(const char* name, ObjClass* parent);
+Value make_instance(ObjClass* klass);
 
 Value make_none();
 

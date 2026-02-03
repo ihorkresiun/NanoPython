@@ -34,6 +34,12 @@ typedef enum {
     OP_IDX_GET,
     OP_IDX_SET,
 
+    OP_MAKE_CLASS,
+    OP_MAKE_INSTANCE,
+    OP_GET_ATTR,
+    OP_SET_ATTR,
+    OP_CALL_METHOD,
+
     OP_HALT
 } Opcode;
 

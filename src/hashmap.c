@@ -30,7 +30,7 @@ void hash_set(HashMap* map, ObjString* key, Value value) {
     HashNode* node = &map->nodes[index];
 
     // Handle collisions with chaining
-    while (node->key != NULL) {
+    while (node->key != NULL && node->key->length == key->length) {
         if (strcmp(node->key->chars, key->chars) == 0) {
             // Key already exists, update value
             node->value = value;
@@ -61,7 +61,7 @@ int hash_get(HashMap* map, ObjString* key, Value* out_value) {
     HashNode* node = &map->nodes[index];
 
     while (node != NULL && node->key != NULL) {
-        if (strcmp(node->key->chars, key->chars) == 0) {
+        if (node->key->length == key->length && strcmp(node->key->chars, key->chars) == 0) {
             *out_value = node->value;
             return 1; // Found
         }

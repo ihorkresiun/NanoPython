@@ -52,7 +52,58 @@ static Ast* parse_factor(Parser* p) {
     if (op == TOKEN_IDENT) {
         const char* ident_name = strdup(p->current.ident);
         parser_eat(p, TOKEN_IDENT);
-        if (p->current.type == TOKEN_LPAREN) {
+        
+        Ast* base = ast_new_var(ident_name);
+        
+        // Handle dot notation (obj.attr or obj.method())
+        while (p->current.type == TOKEN_DOT) {
+            parser_eat(p, TOKEN_DOT);
+            
+            if (p->current.type != TOKEN_IDENT) {
+                printf("Expected attribute/method name after '.'\n");
+                exit(1);
+            }
+            
+            const char* attr_name = strdup(p->current.ident);
+            parser_eat(p, TOKEN_IDENT);
+            
+            if (p->current.type == TOKEN_LPAREN) {
+                // Method call obj.method(args)
+                parser_eat(p, TOKEN_LPAREN);
+                
+                Ast** args = NULL;
+                int argc = 0;
+                
+                if (p->current.type != TOKEN_RPAREN) {
+                    while (1) {
+                        Ast* arg = parse_logic_or(p);
+                        args = realloc(args, sizeof(Ast*) * (argc + 1));
+                        args[argc++] = arg;
+                        
+                        if (p->current.type == TOKEN_COMMA) {
+                            parser_eat(p, TOKEN_COMMA);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                parser_eat(p, TOKEN_RPAREN);
+                base = ast_new_method_call(base, attr_name, args, argc);
+            } else if (p->current.type == TOKEN_ASSIGN) {
+                // Attribute assignment obj.attr = value
+                parser_eat(p, TOKEN_ASSIGN);
+                Ast* value = parse_logic_or(p);
+                return ast_new_attr_assign(base, attr_name, value);
+            } else {
+                // Attribute access obj.attr
+                base = ast_new_attr_access(base, attr_name);
+            }
+        }
+        
+        // After processing all dots, check for function call or indexing
+        // But only if we haven't already processed a method call
+        if (base->type == AST_VAR && p->current.type == TOKEN_LPAREN) {
+            // Regular function call (no dots were involved)
             return parse_call(p, ident_name);
         }
 
@@ -63,18 +114,16 @@ static Ast* parse_factor(Parser* p) {
 
             if (p->current.type != TOKEN_ASSIGN) {
                 // Just a list index access a[0]
-                Ast* target = ast_new_var(ident_name);
-                return ast_new_index(target, index);
+                return ast_new_index(base, index);
             }
 
             parser_eat(p, TOKEN_ASSIGN);
             // Assignment to list index a[0] = 5
             Ast* value = parse_logic_or(p);
-            Ast* target = ast_new_var(ident_name);
-            return ast_new_assign_index(target, index, value);
+            return ast_new_assign_index(base, index, value);
         }
 
-        return ast_new_var(ident_name);
+        return base;
     }
 
     if (op == TOKEN_LPAREN) {
@@ -349,6 +398,63 @@ static Ast* parse_def(Parser* p) {
     return ast_new_funcdef(func_name, args, argc, body);
 }
 
+static Ast* parse_class(Parser* p) {
+    parser_eat(p, TOKEN_CLASS);
+
+    if (p->current.type != TOKEN_IDENT) {
+        printf("Expected class name after 'class'\n");
+        exit(1);
+    }
+
+    const char* class_name = strdup(p->current.ident);
+    parser_eat(p, TOKEN_IDENT);
+
+    // Optional parent class
+    char* parent_name = NULL;
+    if (p->current.type == TOKEN_LPAREN) {
+        parser_eat(p, TOKEN_LPAREN);
+        if (p->current.type == TOKEN_IDENT) {
+            parent_name = strdup(p->current.ident);
+            parser_eat(p, TOKEN_IDENT);
+        }
+        parser_eat(p, TOKEN_RPAREN);
+    }
+
+    parser_eat(p, TOKEN_COLON);
+    parser_eat(p, TOKEN_NEWLINE);
+    parser_eat(p, TOKEN_INDENT);
+
+    // Parse methods
+    Ast** methods = NULL;
+    int method_count = 0;
+
+    while (p->current.type != TOKEN_DEDENT && p->current.type != TOKEN_EOF) {
+        if (p->current.type == TOKEN_NEWLINE) {
+            parser_eat(p, TOKEN_NEWLINE);
+            continue;
+        }
+
+        if (p->current.type == TOKEN_DEF) {
+            Ast* method = parse_def(p);
+            methods = realloc(methods, sizeof(Ast*) * (method_count + 1));
+            methods[method_count++] = method;
+        } else {
+            printf("Expected method definition in class body\n");
+            exit(1);
+        }
+
+        if (p->current.type == TOKEN_NEWLINE) {
+            parser_eat(p, TOKEN_NEWLINE);
+        }
+    }
+
+    if (p->current.type == TOKEN_DEDENT) {
+        parser_eat(p, TOKEN_DEDENT);
+    }
+
+    return ast_new_classdef(class_name, parent_name, methods, method_count);
+}
+
 static Ast* parse_call(Parser* p, const char* func_name) {
     parser_eat(p, TOKEN_LPAREN);
 
@@ -431,6 +537,8 @@ Ast* parse_statement(Parser* p) {
             return parse_for(p);
         case TOKEN_DEF:
             return parse_def(p);
+        case TOKEN_CLASS:
+            return parse_class(p);
         case TOKEN_RETURN:
             return parse_return(p);
         case TOKEN_BREAK:

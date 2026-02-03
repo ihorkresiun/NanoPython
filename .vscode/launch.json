@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/NanoPython",
-            "args": ["${workspaceFolder}/build/test.npy"],
+            "args": ["${workspaceFolder}/build/test.py"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

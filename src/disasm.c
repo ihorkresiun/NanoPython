@@ -91,6 +91,43 @@ void store_disasm(Bytecode* bytecode, const char* filename) {
             case OP_MAKE_DICT:   fprintf(file, "MAKE_DICT %d\n", instr.operand); break;
             case OP_IDX_GET:     fprintf(file, "INDEX_GET\n"); break;
             case OP_IDX_SET:     fprintf(file, "INDEX_SET\n"); break;
+            case OP_MAKE_CLASS:  {
+                Value name = bytecode->constants[instr.operand];
+                if (name.type == VAL_OBJ && name.as.object->type == OBJ_STRING) {
+                    fprintf(file, "MAKE_CLASS [%d]=(OBJ->Str)\"%s\"\n", instr.operand, ((ObjString*)name.as.object)->chars);
+                } else {
+                    fprintf(file, "MAKE_CLASS %d\n", instr.operand);
+                }
+                break;
+            }
+            case OP_MAKE_INSTANCE: fprintf(file, "MAKE_INSTANCE\n"); break;
+            case OP_GET_ATTR:    {
+                Value name = bytecode->constants[instr.operand];
+                if (name.type == VAL_OBJ && name.as.object->type == OBJ_STRING) {
+                    fprintf(file, "GET_ATTR [%d]=(OBJ->Str)\"%s\"\n", instr.operand, ((ObjString*)name.as.object)->chars);
+                } else {
+                    fprintf(file, "GET_ATTR %d\n", instr.operand);
+                }
+                break;
+            }
+            case OP_SET_ATTR:    {
+                Value name = bytecode->constants[instr.operand];
+                if (name.type == VAL_OBJ && name.as.object->type == OBJ_STRING) {
+                    fprintf(file, "SET_ATTR [%d]=(OBJ->Str)\"%s\"\n", instr.operand, ((ObjString*)name.as.object)->chars);
+                } else {
+                    fprintf(file, "SET_ATTR %d\n", instr.operand);
+                }
+                break;
+            }
+            case OP_CALL_METHOD: {
+                Value name = bytecode->constants[instr.operand];
+                if (name.type == VAL_OBJ && name.as.object->type == OBJ_STRING) {
+                    fprintf(file, "CALL_METHOD [%d]=(OBJ->Str)\"%s\"\n", instr.operand, ((ObjString*)name.as.object)->chars);
+                } else {
+                    fprintf(file, "CALL_METHOD %d\n", instr.operand);
+                }
+                break;
+            }
             default:             fprintf(file, "UNKNOWN OPCODE %d\n", instr.opcode); break;
         }
     }

@@ -3,9 +3,14 @@
 
 #include "vars.h"
 
-Value native_print(int arg_count, Value* args);
-Value native_len(int arg_count, Value* args);
-Value native_clock(int arg_count, Value* args);
-Value native_exit(int arg_count, Value* args);
+typedef struct VM VM; // forward declaration
+
+Value native_print(int arg_count, Value* args, VM* vm);
+Value native_len(int arg_count, Value* args, VM* vm);
+Value native_clock(int arg_count, Value* args, VM* vm);
+Value native_exit(int arg_count, Value* args, VM* vm);
+Value native_input(int arg_count, Value* args, VM* vm);
+Value native_gc_collect(int arg_count, Value* args, VM* vm);
+Value native_gc_stats(int arg_count, Value* args, VM* vm);
 
 #endif // __INC_NATIVE_FUNC_H__

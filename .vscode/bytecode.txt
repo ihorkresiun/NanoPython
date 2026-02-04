@@ -1,24 +1,24 @@
-0000: CONST (OBJ)->Func
-0001: STORE test
-0002: JUMP 7
-0003: LOAD a
-0004: LOAD b
-0005: ADD
-0006: RET
-0007: CONST 2 (INT)
-0008: CONST 3 (INT)
-0009: LOAD test
-0010: CALL
-0011: STORE s
-0012: LOAD s
-0013: PRINT
-0014: HALT
+LABEL_0000:
+	0000 CONST [0]=(OBJ->Str)"Age"
+	0001 CONST [1]=(INT)39
+	0002 CONST [2]=(OBJ->Str)"Name"
+	0003 CONST [3]=(OBJ->Str)"Ikpechukwu"
+	0004 MAKE_DICT 2
+	0005 STORE [4]=(OBJ->Str)"d"
+	0006 LOAD [4]=(OBJ->Str)"d"
+	0007 CONST [0]=(OBJ->Str)"Age"
+	0008 INDEX_GET
+	0009 LOAD [5]=(OBJ->Str)"print"
+	0010 CALL 1
+	0011 LOAD [4]=(OBJ->Str)"d"
+	0012 LOAD [5]=(OBJ->Str)"print"
+	0013 CALL 1
+	0014 HALT
 
 Constants:
-0000: OBJ Function
-0001: OBJ String: "test"
-0002: OBJ String: "a"
-0003: OBJ String: "b"
-0004: INT 2
-0005: INT 3
-0006: OBJ String: "s"
+0000: OBJ String: "Age"
+0001: INT 39
+0002: OBJ String: "Name"
+0003: OBJ String: "Ikpechukwu"
+0004: OBJ String: "d"
+0005: OBJ String: "print"

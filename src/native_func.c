@@ -1,11 +1,15 @@
 #include "native_func.h"
 
+#include "hashmap.h"
+#include "vm.h"
+#include "gc.h"
+
 #include "stdlib.h"
 #include "string.h"
 #include "stdio.h"
 #include "time.h"
 
-Value native_print(int arg_count, Value* args) {
+Value native_print(int arg_count, Value* args, VM* vm) {
     for (int i = 0; i < arg_count; i++) {
         print_value(args[i]);
         if (i < arg_count - 1) {
@@ -16,7 +20,7 @@ Value native_print(int arg_count, Value* args) {
     return make_none();
 }
 
-Value native_len(int arg_count, Value* args) {
+Value native_len(int arg_count, Value* args, VM* vm) {
     if (arg_count != 1) {
         printf("len() takes exactly one argument (%d given)\n", arg_count);
         exit(1);
@@ -46,7 +50,7 @@ Value native_len(int arg_count, Value* args) {
     exit(1);
 }
 
-Value native_clock(int arg_count, Value* args) {
+Value native_clock(int arg_count, Value* args, VM* vm) {
     if (arg_count != 0) {
         printf("clock() takes no arguments (%d given)\n", arg_count);
         exit(1);
@@ -57,7 +61,74 @@ Value native_clock(int arg_count, Value* args) {
     return result;
 }
 
-Value native_exit(int arg_count, Value* args) {
+Value native_input(int arg_count, Value* args, VM* vm) {
+    if (arg_count > 1) {
+        printf("input() takes at most one argument (%d given)\n", arg_count);
+        exit(1);
+    }
+    if (arg_count == 1) {
+        print_value(args[0]);
+    }
+    char buffer[1024];
+    if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+        printf("Error reading input\n");
+        exit(1);
+    }
+    // Remove trailing newline
+    size_t len = strlen(buffer);
+    if (len > 0 && buffer[len - 1] == '\n') {
+        buffer[len - 1] = '\0';
+    }
+    return make_string(buffer);
+}
+
+Value native_exit(int arg_count, Value* args, VM* vm) {
     exit(0);
     return make_none(); // Unreachable
+}
+
+Value native_gc_collect(int arg_count, Value* args, VM* vm) {
+    if (arg_count != 0) {
+        printf("gc_collect() takes no arguments (%d given)\n", arg_count);
+        exit(1);
+    }
+    gc_collect(vm);
+    return make_none();
+}
+
+Value native_gc_stats(int arg_count, Value* args, VM* vm) {
+    if (arg_count != 0) {
+        printf("gc_stats() takes no arguments (%d given)\n", arg_count);
+        exit(1);
+    }
+    Value result = {0};
+    result.type = VAL_OBJ;
+    ObjDict* dict = malloc(sizeof(ObjDict));
+    dict->obj.type = OBJ_DICT;
+    dict->count = 0;
+    dict->capacity = 4;
+    dict->map = malloc(sizeof(HashMap));
+    hash_init(dict->map, 4);
+
+    // Add stats
+    Value allocated = {0};
+    allocated.type = VAL_INT;
+    allocated.as.integer = vm->bytes_allocated;
+    ObjString* key_allocated = malloc(sizeof(ObjString));
+    key_allocated->obj.type = OBJ_STRING;
+    key_allocated->chars = strdup("allocated_bytes");
+    key_allocated->length = strlen(key_allocated->chars);
+    hash_set(dict->map, key_allocated, allocated);
+
+    Value next_gc = {0};
+    next_gc.type = VAL_INT;
+    next_gc.as.integer = vm->next_gc;
+    ObjString* key_next_gc = malloc(sizeof(ObjString));
+    key_next_gc->obj.type = OBJ_STRING;
+    key_next_gc->chars = strdup("next_gc_bytes");
+    key_next_gc->length = strlen(key_next_gc->chars);
+    hash_set(dict->map, key_next_gc, next_gc);
+
+    result.as.object = (Obj*)dict;
+    return result;
 }

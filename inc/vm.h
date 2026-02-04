@@ -1,6 +1,7 @@
 #ifndef __INC_VM_H__
 #define __INC_VM_H__
 
+#include "gc.h"
 #include "vars.h"
 #include "hashmap.h"
 
@@ -68,7 +69,7 @@ typedef struct CallFrame {
 #define VM_STACK_SIZE 1024
 #define MAX_CALL_STACK_SIZE 64
 
-typedef struct {
+typedef struct VM{
     Bytecode* bytecode;
     Value stack[VM_STACK_SIZE];
     int sp; // Stack pointer
@@ -78,6 +79,10 @@ typedef struct {
     int frame_count;
     Scope* scope;
     HashMap strings; // For string interning
+
+    Obj* objects; // Linked list of all allocated objects for GC
+    int bytes_allocated;
+    int next_gc; // Threshold to trigger next GC
 } VM;
 
 void vm_run(VM* vm);

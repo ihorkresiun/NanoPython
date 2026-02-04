@@ -70,34 +70,3 @@ int hash_get(HashMap* map, ObjString* key, Value* out_value) {
     return 0; // Not found
 }
 
-HashNode* hash_next(HashIter* it) {
-    while (it->node == NULL) {
-        if (it->bucket >= it->map->capacity) {
-            return NULL;
-        }
-        it->node = &it->map->nodes[it->bucket++];
-    }
-
-    HashNode* current = it->node;
-    it->node = it->node->next;
-    return current;
-    
-}
-
-void hash_free(HashMap* map) {
-    for (int i = 0; i < map->capacity; i++) {
-        HashNode* node = &map->nodes[i];
-        while (node != NULL) {
-            HashNode* next = node->next;
-            if (node->key != NULL) {
-                free((void*)node->key->chars);
-                free(node->key);
-            }
-            if (node != &map->nodes[i]) {
-                free(node);
-            }
-            node = next;
-        }
-    }
-    free(map->nodes);
-}

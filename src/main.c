@@ -73,6 +73,9 @@ int main(int argc, char** argv) {
                 vm_register_native_functions(&vm, "len", native_len);
                 vm_register_native_functions(&vm, "time", native_clock);
                 vm_register_native_functions(&vm, "exit", native_exit);
+                vm_register_native_functions(&vm, "input", native_input);
+                vm_register_native_functions(&vm, "gc", native_gc_collect);
+                vm_register_native_functions(&vm, "mem", native_gc_stats);
                 vm_initialized = 1;
             }
             

@@ -3,6 +3,7 @@
 #include "hashmap.h"
 #include "intern_string.h"
 #include "vars.h"
+#include "vm_objects.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -85,6 +86,10 @@ void vm_init(VM* vm, Bytecode* bytecode) {
     Scope* global_scope = new_scope("Global", NULL);
     vm->scope = global_scope;
     hash_init(&vm->strings, 1024);
+
+    vm->objects = NULL;
+    vm->bytes_allocated = 0;
+    vm->next_gc = 1024 * 8; // 8KB initial threshold
 }
 
 void vm_register_native_functions(VM* vm, const char* name, NativeFn function) {
@@ -95,7 +100,8 @@ void vm_register_native_functions(VM* vm, const char* name, NativeFn function) {
 
 static void vm_push(VM* vm, Value value) {
     if (vm->sp >= VM_STACK_SIZE - 1) {
-        printf("Stack overflow\n");
+        printf("Stack overflow at ip=%d\n", vm->ip);
+        printf("Current stack size: %d\n", vm->sp);
         exit(1);
     }
     vm->stack[vm->sp++] = value;
@@ -302,7 +308,7 @@ static void op_call(VM* vm, int operand)
         ObjNativeFunction* native_fn = (ObjNativeFunction*)func_val.as.object;
         // For simplicity, assume no arguments for native functions
         int arg_count = operand;
-        Value result = native_fn->function(arg_count, &vm->stack[vm->sp - arg_count]);
+        Value result = native_fn->function(arg_count, &vm->stack[vm->sp - arg_count], vm);
         vm_push(vm, result);
         return;
     }
@@ -344,7 +350,7 @@ void op_return(VM* vm) {
     
     if (vm->scope != frame->scope && frame->scope != NULL) {
         // Free current scope
-        free_scope(vm->scope);
+        // free_scope(vm->scope);
         // Restore previous frame state
         vm->scope = frame->scope;
     }
@@ -354,26 +360,31 @@ void op_return(VM* vm) {
 }
 
 void op_make_list(VM* vm, int count) {
-    ObjList* list = malloc(sizeof(ObjList));
-    list->count = count;
-    list->capacity = count;
-    list->items = malloc(sizeof(Value) * count);
+    // Pop items from stack
+    Value* items = malloc(sizeof(Value) * count);
     for (int i = count - 1; i >= 0; i--) {
-        list->items[i] = vm_pop(vm);
+        items[i] = vm_pop(vm);
     }
-    Value list_val;
-    list_val.type = VAL_OBJ;
-    list_val.as.object = (Obj*)list;
-    list_val.as.object->type = OBJ_LIST;
+    
+    // Create list using vm_make_list (tracks GC)
+    Value list_val = vm_make_list(vm, count);
+    ObjList* list = (ObjList*)list_val.as.object;
+    
+    // Copy items
+    for (int i = 0; i < count; i++) {
+        list->items[i] = items[i];
+    }
+    list->count = count;
+    
+    free(items);
     vm_push(vm, list_val);
 }
 
 static void op_make_dict(VM* vm, int count) {
-    ObjDict* dict = malloc(sizeof(ObjDict));
+    // Create dict using vm_make_dict (tracks GC)
+    Value dict_val = vm_make_dict(vm);
+    ObjDict* dict = (ObjDict*)dict_val.as.object;
     dict->count = count;
-    dict->capacity = count;
-    dict->map = malloc(sizeof(HashMap));
-    hash_init(dict->map, count);
 
     for (int i = count - 1; i >= 0; i--) {
         Value val = vm_pop(vm);
@@ -386,40 +397,43 @@ static void op_make_dict(VM* vm, int count) {
         hash_set(dict->map, as_string(key), val);
     }
 
-    Value dict_val;
-    dict_val.type = VAL_OBJ;
-    dict_val.as.object = (Obj*)dict;
-    dict_val.as.object->type = OBJ_DICT;
     vm_push(vm, dict_val);
 }
 
 static void op_make_tuple(VM* vm, int count) {
-    ObjTuple* tuple = malloc(sizeof(ObjTuple));
+    // Pop items from stack
+    Value* items = malloc(sizeof(Value) * count);
+    for (int i = count - 1; i >= 0; i--) {
+        items[i] = vm_pop(vm);
+    }
+    
+    // Create tuple using vm_make_tuple (tracks GC)
+    Value tuple_val = vm_make_tuple(vm);
+    ObjTuple* tuple = (ObjTuple*)tuple_val.as.object;
     tuple->count = count;
     tuple->items = malloc(sizeof(Value) * count);
-    for (int i = count - 1; i >= 0; i--) {
-        tuple->items[i] = vm_pop(vm);
+    vm->bytes_allocated += sizeof(Value) * count;
+    
+    // Copy items
+    for (int i = 0; i < count; i++) {
+        tuple->items[i] = items[i];
     }
-    Value tuple_val;
-    tuple_val.type = VAL_OBJ;
-    tuple_val.as.object = (Obj*)tuple;
-    tuple_val.as.object->type = OBJ_TUPLE;
+    
+    free(items);
     vm_push(vm, tuple_val);
 }
 
 static void op_make_set(VM* vm, int count) {
-    ObjSet* set = malloc(sizeof(ObjSet));
+    // Create set using vm_make_set (tracks GC)
+    Value set_val = vm_make_set(vm);
+    ObjSet* set = (ObjSet*)set_val.as.object;
     set->count = count;
-    set->capacity = count > 0 ? count * 2 : 4;
-    set->map = malloc(sizeof(HashMap));
-    hash_init(set->map, set->capacity);
 
     // Pop elements from stack and add to set
     for (int i = 0; i < count; i++) {
         Value val = vm_pop(vm);
         
         // Use string representation as key for set membership
-        // In a real implementation, you'd want a proper hash of the value
         char key[64];
         if (val.type == VAL_INT) {
             snprintf(key, sizeof(key), "%ld", val.as.integer);
@@ -435,14 +449,11 @@ static void op_make_set(VM* vm, int count) {
         key_str->obj.type = OBJ_STRING;
         key_str->chars = strdup(key);
         key_str->length = strlen(key);
+        vm->bytes_allocated += sizeof(ObjString) + strlen(key) + 1;
         
         hash_set(set->map, key_str, val);
     }
 
-    Value set_val;
-    set_val.type = VAL_OBJ;
-    set_val.as.object = (Obj*)set;
-    set_val.as.object->type = OBJ_SET;
     vm_push(vm, set_val);
 }
 

@@ -7,6 +7,7 @@ typedef struct Ast Ast; // forward declaration
 typedef struct Scope Scope; // forward declaration
 
 typedef struct HashMap HashMap; // forward declaration
+typedef struct VM VM; // forward declaration
 
 typedef enum {
     VAL_NONE,
@@ -30,6 +31,7 @@ typedef enum {
 
 typedef struct Obj {
     ObjectType type;
+    int marked; // For garbage collection
     struct Obj* next;
 }Obj;
 
@@ -86,9 +88,9 @@ typedef struct ObjFunction {
     Scope* scope; // Closure scope
 } ObjFunction;
 
-typedef Value (*NativeFn)(int arg_count, Value* args);
+typedef Value (*NativeFn)(int arg_count, Value* args, VM* vm);
 
-typedef struct ObjNativeFunction {
+typedef struct ObjNativeFunction { 
     Obj obj;
     NativeFn function;
     char* name;
@@ -143,7 +145,6 @@ void print_value(Value v);
 
 int value_equals(Value* a, Value* b);
 
-void free_value(Value v);
 void free_scope(Scope* scope);
 
 #endif // __INC_VARS_H__

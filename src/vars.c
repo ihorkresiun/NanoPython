@@ -169,22 +169,30 @@ Value make_none() {
     return (Value){.type = VAL_NONE};
 }
 
+static void print_node(HashNode* node) {
+    if (node == NULL) return;
+    print_value((Value){.type=VAL_OBJ, .as.object=(Obj*)node->key});
+    printf(": ");
+    print_value(node->value);
+    printf(", ");
+}
+
 static void print_dict(ObjDict* dict) {
-    HashIter it = {.map = dict->map, .bucket = 0, .node = NULL};
-
-    HashNode* node = hash_next(&it);
-
     printf("{");
-    
-    while (node) {
-        printf("\"%s\": ", node->key->chars);
-        print_value(node->value);
-        node = hash_next(&it);
-        if (node) {
-            printf(", ");
+    for (int i = 0; i < dict->capacity; i++) {
+        HashNode* node = &dict->map->nodes[i];
+        if (node->key != NULL) {  // Check if bucket has data
+            print_node(node);
+        }
+        // Follow chain
+        node = node->next;
+        while (node) {
+            if (node->key != NULL) {
+                print_node(node);
+            }
+            node = node->next;
         }
     }
-
     printf("}");
 }
 
@@ -313,39 +321,4 @@ int value_equals(Value* a, Value* b) {
         default:
             return 0;
     }
-}
-
-void free_value(Value v) {
-
-    if (v.type == VAL_OBJ) {
-        if (is_obj_type(v, OBJ_STRING)) {
-            ObjString* str = as_string(v);
-            free(str->chars);
-            free(str);
-        } else if (is_obj_type(v, OBJ_LIST)) {
-            ObjList* list = (ObjList*)v.as.object;
-            free(list->items);
-            free(list);
-        } else if (is_obj_type(v, OBJ_FUNCTION)) {
-            ObjFunction* fn = (ObjFunction*)v.as.object;
-            free(fn->name);
-            for (int i = 0; i < fn->param_count; i++) {
-                free(fn->params[i]);
-            }
-            free(fn->params);
-            free(fn);
-        } else if (is_obj_type(v, OBJ_NATIVE_FUNCTION)) {
-            ObjNativeFunction* native_fn = (ObjNativeFunction*)v.as.object;
-            free(native_fn->name);
-            free(native_fn);
-        }
-    }
-}
-
-void free_scope(Scope* scope) {
-    if (!scope) return;
-
-    hash_free(scope->vars);
-    free(scope->vars);
-    free(scope);
 }

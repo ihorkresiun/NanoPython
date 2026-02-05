@@ -81,9 +81,11 @@ void vm_init(VM* vm, Bytecode* bytecode) {
     vm->scope = global_scope;
     hash_init(&vm->strings, 1024);
 
+    #if VM_USE_GC
     vm->objects = NULL;
     vm->bytes_allocated = 0;
     vm->next_gc = 1024 * 8; // 8KB initial threshold
+    #endif
 }
 
 void vm_register_native_functions(VM* vm, const char* name, NativeFn function) {
@@ -310,8 +312,8 @@ static void op_call(VM* vm, int operand)
         printf("Attempted to call a non-function value. Type: %d\n", func_val.type);
         exit(1);
     }
-    if (vm->frame_count >= MAX_CALL_STACK_SIZE) {
-        printf("Call stack overflow, %d > %d\n", vm->frame_count, MAX_CALL_STACK_SIZE);
+    if (vm->frame_count >= VM_CALL_STACK_SIZE) {
+        printf("Call stack overflow, %d > %d\n", vm->frame_count, VM_CALL_STACK_SIZE);
         exit(1);
     }
 

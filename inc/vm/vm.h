@@ -2,8 +2,9 @@
 #define __INC_VM_H__
 
 #include "gc.h"
-#include "vars.h"
 #include "hashmap.h"
+#include "vm_config.h"
+
 
 typedef enum {
     OP_NOP,
@@ -63,24 +64,23 @@ typedef struct CallFrame {
     Scope* scope;
 } CallFrame;
 
-// TODO Add vm_config.h
-#define VM_STACK_SIZE 1024
-#define MAX_CALL_STACK_SIZE 64
-
 typedef struct VM{
     Bytecode* bytecode;
     Value stack[VM_STACK_SIZE];
     int sp; // Stack pointer
     int ip; // Instruction pointer
 
-    CallFrame call_stack[MAX_CALL_STACK_SIZE];
+    CallFrame call_stack[VM_CALL_STACK_SIZE];
     int frame_count;
     Scope* scope;
     HashMap strings; // For string interning
 
-    Obj* objects; // Linked list of all allocated objects for GC
     int bytes_allocated;
+
+#if VM_USE_GC
+    Obj* objects; // Linked list of all allocated objects for GC
     int next_gc; // Threshold to trigger next GC
+#endif
 } VM;
 
 void vm_run(VM* vm);

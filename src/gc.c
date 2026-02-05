@@ -1,10 +1,13 @@
 #include "gc.h"
 
 #include "vm.h"
+#include "vm_config.h"
 
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+
+#if VM_USE_GC
 
 void gc_free_object(VM* vm, Obj* obj);
 
@@ -272,3 +275,5 @@ void gc_collect(VM* vm) {
     vm->next_gc = after * 2; // Set next GC threshold
     printf("GC collected %d bytes, %d remaining\n", before - after, after);
 }
+
+#endif // VM_USE_GC

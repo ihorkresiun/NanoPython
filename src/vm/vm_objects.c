@@ -9,14 +9,18 @@
 
 Obj* vm_alloc_object(VM* vm, size_t size, ObjectType type) {
     Obj* object = malloc(size);
+    # if VM_USE_GC
     vm->bytes_allocated += size;
     if (vm->bytes_allocated > vm->next_gc) {
         gc_collect(vm);
     }
+    # endif
     object->type = type;
     object->marked = 0;
+    # if VM_USE_GC
     object->next = vm->objects;
     vm->objects = object;
+    # endif
     return object;
 }
 

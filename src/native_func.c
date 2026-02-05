@@ -215,7 +215,9 @@ Value native_gc_collect(int arg_count, Value* args, VM* vm) {
         printf("gc_collect() takes no arguments (%d given)\n", arg_count);
         exit(1);
     }
+    #if VM_USE_GC
     gc_collect(vm);
+    #endif
     return make_none();
 }
 
@@ -245,8 +247,12 @@ Value native_gc_stats(int arg_count, Value* args, VM* vm) {
 
     Value next_gc = {0};
     next_gc.type = VAL_INT;
-    next_gc.as.integer = vm->next_gc;
-    ObjString* key_next_gc = malloc(sizeof(ObjString));
+    #if VM_USE_GC
+        next_gc.as.integer = vm->next_gc;
+    #else
+        next_gc.as.integer = -1; // GC not enabled
+    #endif
+    ObjString* key_next_gc = (ObjString*)vm_make_string(vm, "next_gc_bytes").as.object;
     key_next_gc->obj.type = OBJ_STRING;
     key_next_gc->chars = strdup("next_gc_bytes");
     key_next_gc->length = strlen(key_next_gc->chars);

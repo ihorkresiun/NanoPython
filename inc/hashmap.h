@@ -24,4 +24,6 @@ int hash_get(HashMap* map, ObjString* key, Value* out_value);
 
 uint32_t hash_string(const char* str);
 
+void hash_debug_print(HashMap* map);
+
 #endif // __HASHMAP_H__

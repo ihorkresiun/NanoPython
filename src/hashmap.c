@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "stdint.h"
+#include "stdio.h"
 
 void hash_init(HashMap* map, int initial_capacity) {
     map->capacity = initial_capacity;
@@ -30,7 +31,7 @@ void hash_set(HashMap* map, ObjString* key, Value value) {
     HashNode* node = &map->nodes[index];
 
     // Handle collisions with chaining
-    while (node->key != NULL && node->key->length == key->length) {
+    while (node->key != NULL) {
         if (strcmp(node->key->chars, key->chars) == 0) {
             // Key already exists, update value
             node->value = value;
@@ -70,3 +71,16 @@ int hash_get(HashMap* map, ObjString* key, Value* out_value) {
     return 0; // Not found
 }
 
+void hash_debug_print(HashMap* map) {
+    for (int i = 0; i < map->capacity; i++) {
+        HashNode* node = &map->nodes[i];
+        if (node->key != NULL) {
+            printf("Bucket %d: ", i);
+            while (node != NULL) {
+                printf("[Key: %s, Value Type: %d] -> ", node->key->chars, node->value.type);
+                node = node->next;
+            }
+            printf("NULL\n");
+        }
+    }
+}

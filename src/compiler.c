@@ -171,6 +171,12 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 case TOKEN_GT:
                     emit(compiler, OP_GT, 0);
                     break;
+                case TOKEN_LE:
+                    emit(compiler, OP_LE, 0);
+                    break;
+                case TOKEN_GE:
+                    emit(compiler, OP_GE, 0);
+                    break;
                 default:
                     printf("Unsupported binary operator in compiler: %d\n", node->Binary.op);
                     exit(1);

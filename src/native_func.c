@@ -80,7 +80,7 @@ Value native_input(int arg_count, Value* args, VM* vm) {
     if (len > 0 && buffer[len - 1] == '\n') {
         buffer[len - 1] = '\0';
     }
-    return make_string(buffer);
+    return vm_make_string(vm, buffer);
 }
 
 Value native_exit(int arg_count, Value* args, VM* vm) {
@@ -128,7 +128,7 @@ Value native_type(int arg_count, Value* args, VM* vm) {
             type_name = "<unknown>";
     }
     printf("<type '%s'>\n", type_name);
-    return make_string(type_name);
+    return vm_make_string(vm, type_name);
 }
 
 Value native_int(int arg_count, Value* args, VM* vm) {
@@ -192,18 +192,18 @@ Value native_str(int arg_count, Value* args, VM* vm) {
     } else if (arg.type == VAL_INT) {
         char buffer[32];
         snprintf(buffer, sizeof(buffer), "%ld", arg.as.integer);
-        return make_string(buffer);
+        return vm_make_string(vm, buffer);
     } else if (arg.type == VAL_FLOAT) {
         char buffer[32];
         snprintf(buffer, sizeof(buffer), "%g", arg.as.floating);
-        return make_string(buffer);
+        return vm_make_string(vm, buffer);
     } else if (arg.type == VAL_BOOL) {
-        return make_string(arg.as.boolean ? "True" : "False");
+        return vm_make_string(vm, arg.as.boolean ? "True" : "False");
     } else if (arg.type == VAL_NONE) {
-        return make_string("None");
+        return vm_make_string(vm, "None");
     } else if (arg.type == VAL_OBJ) {
         // For simplicity, just return a placeholder string for objects
-        return make_string("<object>");
+        return vm_make_string(vm, "<object>");
     } else {
         printf("str() argument has unsupported type\n");
         exit(1);
@@ -228,7 +228,7 @@ Value native_gc_stats(int arg_count, Value* args, VM* vm) {
     }
     Value result = {0};
     result.type = VAL_OBJ;
-    ObjDict* dict = malloc(sizeof(ObjDict));
+    ObjDict* dict = (ObjDict*)vm_make_dict(vm).as.object;
     dict->obj.type = OBJ_DICT;
     dict->count = 0;
     dict->capacity = 4;
@@ -239,7 +239,7 @@ Value native_gc_stats(int arg_count, Value* args, VM* vm) {
     Value allocated = {0};
     allocated.type = VAL_INT;
     allocated.as.integer = vm->bytes_allocated;
-    ObjString* key_allocated = malloc(sizeof(ObjString));
+    ObjString* key_allocated = (ObjString*)vm_make_string(vm, "allocated_bytes").as.object;
     key_allocated->obj.type = OBJ_STRING;
     key_allocated->chars = strdup("allocated_bytes");
     key_allocated->length = strlen(key_allocated->chars);

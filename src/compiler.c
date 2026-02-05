@@ -141,7 +141,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
         break;
 
         case AST_STRING: {
-            int idx = add_constant(compiler, make_string(node->String.value));
+            int idx = add_constant(compiler, make_const_string(node->String.value));
             emit(compiler, OP_CONST, idx);
         }
         break;
@@ -237,13 +237,13 @@ static void compile_node(Compiler* compiler, Ast* node) {
 
         case AST_ASSIGN: {
             compile_node(compiler, node->Assign.value);
-            int idx = add_constant(compiler, make_string(node->Assign.name));
+            int idx = add_constant(compiler, make_const_string(node->Assign.name));
             emit(compiler, OP_STORE, idx);
         }
         break;
 
         case AST_VAR: {
-            int idx = add_constant(compiler, make_string(node->Variable.name));
+            int idx = add_constant(compiler, make_const_string(node->Variable.name));
             emit(compiler, OP_LOAD, idx);
         }
         break;
@@ -281,7 +281,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
             int fn_idx = add_constant(compiler, v);
             emit(compiler, OP_CONST, fn_idx);
 
-            int fn_idx_name = add_constant(compiler, make_string(node->FuncDef.name));
+            int fn_idx_name = add_constant(compiler, make_const_string(node->FuncDef.name));
             emit(compiler, OP_STORE, fn_idx_name);
 
             int jump_over_func = emit_jump(compiler, OP_JUMP);
@@ -300,7 +300,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
             for (int i = 0; i < node->Call.argc; i++) {
                 compile_node(compiler, node->Call.args[i]);
             }
-            int fn_idx_name = add_constant(compiler, make_string(node->Call.name));
+            int fn_idx_name = add_constant(compiler, make_const_string(node->Call.name));
             emit(compiler, OP_LOAD, fn_idx_name);
             emit(compiler, OP_CALL, node->Call.argc);
         }
@@ -323,7 +323,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 compile_node(compiler, node->List.elements[i]);
             }
             // Call native function to create list
-            int fn_idx_name = add_constant(compiler, make_string("native_make_list"));
+            int fn_idx_name = add_constant(compiler, make_const_string("native_make_list"));
             emit(compiler, OP_LOAD, fn_idx_name);
             emit(compiler, OP_CALL, node->List.count);
         }
@@ -334,7 +334,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 compile_node(compiler, node->Tuple.elements[i]);
             }
             // Call native function to create tuple
-            int fn_idx_name = add_constant(compiler, make_string("native_make_tuple"));
+            int fn_idx_name = add_constant(compiler, make_const_string("native_make_tuple"));
             emit(compiler, OP_LOAD, fn_idx_name);
             emit(compiler, OP_CALL, node->Tuple.count);
         }
@@ -345,7 +345,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 compile_node(compiler, node->Set.elements[i]);
             }
             // Call native function to create set
-            int fn_idx_name = add_constant(compiler, make_string("native_make_set"));
+            int fn_idx_name = add_constant(compiler, make_const_string("native_make_set"));
             emit(compiler, OP_LOAD, fn_idx_name);
             emit(compiler, OP_CALL, node->Set.count);
         }
@@ -357,7 +357,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 compile_node(compiler, node->Dict.values[i]);
             }
             // Call native function to create dict
-            int fn_idx_name = add_constant(compiler, make_string("native_make_dict"));
+            int fn_idx_name = add_constant(compiler, make_const_string("native_make_dict"));
             emit(compiler, OP_LOAD, fn_idx_name);
             emit(compiler, OP_CALL, node->Dict.count);
         }
@@ -379,11 +379,11 @@ static void compile_node(Compiler* compiler, Ast* node) {
 
         case AST_CLASSDEF: {
             // Create class object with name and parent
-            int class_name_idx = add_constant(compiler, make_string(node->ClassDef.name));
+            int class_name_idx = add_constant(compiler, make_const_string(node->ClassDef.name));
             
             // Load parent class if specified
             if (node->ClassDef.parent) {
-                int parent_idx = add_constant(compiler, make_string(node->ClassDef.parent));
+                int parent_idx = add_constant(compiler, make_const_string(node->ClassDef.parent));
                 emit(compiler, OP_LOAD, parent_idx);
             } else {
                 // No parent, push None
@@ -436,7 +436,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 
                 // Stack: [class, method_function]
                 // Set method on class (this pops both)
-                int method_name_idx = add_constant(compiler, make_string(method->FuncDef.name));
+                int method_name_idx = add_constant(compiler, make_const_string(method->FuncDef.name));
                 emit(compiler, OP_SET_ATTR, method_name_idx);
             }
         }
@@ -454,7 +454,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
             // Method call: stack = [object, arg1, arg2, ...]
             // First operand: method name index
             // Second operand: argc (NOT including self)
-            int method_name_idx = add_constant(compiler, make_string(node->MethodCall.method_name));
+            int method_name_idx = add_constant(compiler, make_const_string(node->MethodCall.method_name));
             emit(compiler, OP_CALL_METHOD, method_name_idx);
             emit(compiler, OP_NOP, node->MethodCall.argc); // Store argc for method call
         }
@@ -462,7 +462,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
 
         case AST_ATTR_ACCESS: {
             compile_node(compiler, node->AttrAccess.object);
-            int attr_name_idx = add_constant(compiler, make_string(node->AttrAccess.attr_name));
+            int attr_name_idx = add_constant(compiler, make_const_string(node->AttrAccess.attr_name));
             emit(compiler, OP_GET_ATTR, attr_name_idx);
         }
         break;
@@ -470,7 +470,7 @@ static void compile_node(Compiler* compiler, Ast* node) {
         case AST_ATTR_ASSIGN: {
             compile_node(compiler, node->AttrAssign.object);
             compile_node(compiler, node->AttrAssign.value);
-            int attr_name_idx = add_constant(compiler, make_string(node->AttrAssign.attr_name));
+            int attr_name_idx = add_constant(compiler, make_const_string(node->AttrAssign.attr_name));
             emit(compiler, OP_SET_ATTR, attr_name_idx);
         }
         break;

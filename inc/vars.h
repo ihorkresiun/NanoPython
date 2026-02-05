@@ -129,11 +129,8 @@ Value make_number_int(int x);
 Value make_number_float(double x);
 Value make_bool(int b);
 
-Value make_string(const char* s);
-Value make_list();
-Value make_dict();
-Value make_tuple();
-Value make_set();
+Value make_const_string(const char* s);
+
 Value make_function(ObjFunction* fn);
 Value make_native_function(const char* name, NativeFn function);
 

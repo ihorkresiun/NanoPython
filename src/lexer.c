@@ -132,7 +132,7 @@ Token lexer_next(Lexer* l) {
             exit(1);
         }
         tok.type = TOKEN_STRING; // Using STRING type for strings
-        tok.value = make_string(buffer);
+        tok.value = make_const_string(buffer);
         return tok;
     }
 

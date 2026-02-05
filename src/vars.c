@@ -62,54 +62,7 @@ ObjString* as_string(Value v) {
     return (ObjString*)v.as.object;
 }
 
-Value make_list() {
-    ObjList* l = malloc(sizeof(ObjList));
-    l->obj.type = OBJ_LIST;
-    l->count = 0;
-    l->capacity = 4;
-    l->items = malloc(sizeof(Value) * l->capacity);
-    Value v;
-    v.type = VAL_OBJ;
-    v.as.object = (Obj*)l; // Initialize as needed
-    return v;
-}
-
-Value make_dict() {
-    ObjDict* d = malloc(sizeof(ObjDict));
-    d->obj.type = OBJ_DICT;
-    d->count = 0;
-    d->capacity = 4;
-    d->map = NULL; // Initialize as needed
-    Value v;
-    v.type = VAL_OBJ;
-    v.as.object = (Obj*)d; // Initialize as needed
-    return v;
-}
-
-Value make_tuple() {
-    ObjTuple* t = malloc(sizeof(ObjTuple));
-    t->obj.type = OBJ_TUPLE;
-    t->count = 0;
-    t->items = NULL;
-    Value v;
-    v.type = VAL_OBJ;
-    v.as.object = (Obj*)t;
-    return v;
-}
-
-Value make_set() {
-    ObjSet* s = malloc(sizeof(ObjSet));
-    s->obj.type = OBJ_SET;
-    s->count = 0;
-    s->capacity = 4;
-    s->map = NULL;
-    Value v;
-    v.type = VAL_OBJ;
-    v.as.object = (Obj*)s;
-    return v;
-}
-
-Value make_string(const char* s) {
+Value make_const_string(const char* s) {
     Value v;
     v.type = VAL_OBJ;
 

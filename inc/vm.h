@@ -84,6 +84,9 @@ typedef struct VM{
 void vm_run(VM* vm);
 void vm_init(VM* vm, Bytecode* bytecode);
 
+void vm_debug_scope(VM* vm);
+void vm_debug_stack(VM* vm);
+
 void vm_push(VM* vm, Value value);
 Value vm_pop(VM* vm);
 

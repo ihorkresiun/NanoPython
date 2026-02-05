@@ -88,10 +88,40 @@ void vm_register_native_functions(VM* vm, const char* name, NativeFn function) {
     scope_set(vm->scope, name_str, native_fn_val);
 }
 
+void vm_debug_scope(VM* vm) {
+    printf("Current Scope Variables:\n");
+    Scope* scope = vm->scope;
+    while (scope) {
+        printf("Scope: %s\n", scope->name);
+        for (int i = 0; i < scope->vars->capacity; i++) {
+            HashNode* node = &scope->vars->nodes[i];
+            while (node != NULL) {
+                if (node->key != NULL) {
+                    printf("  %s: ", node->key->chars);
+                    print_value(node->value);
+                    printf("\n");
+                }
+                node = node->next;
+            }
+        }
+        scope = scope->parent;
+    }
+}
+
+void vm_debug_stack(VM* vm) {
+    printf("VM Stack (sp=%d):\n", vm->sp);
+    for (int i = 0; i < vm->sp; i++) {
+        printf("  [%d]: ", i);
+        print_value(vm->stack[i]);
+        printf("\n");
+    }
+}
+
 void vm_push(VM* vm, Value value) {
     if (vm->sp >= VM_STACK_SIZE - 1) {
         printf("Stack overflow at ip=%d\n", vm->ip);
         printf("Current stack size: %d\n", vm->sp);
+        vm_debug_stack(vm);
         exit(1);
     }
     vm->stack[vm->sp++] = value;
@@ -101,6 +131,7 @@ Value vm_pop(VM* vm) {
     if (vm->sp <= 0) {
         printf("Stack underflow at ip=%d\n", vm->ip);
         printf("Current stack size: %d\n", vm->sp);
+        vm_debug_stack(vm);
         exit(1);
     }
     return vm->stack[--vm->sp];
@@ -128,7 +159,7 @@ static void op_add(VM* vm) {
     } else if (a.type == VAL_INT && b.type == VAL_INT) {
         result = make_number_int(a.as.integer + b.as.integer);
     } else {
-        printf("Unsupported types for ADD operation\n");
+        printf("Unsupported types for ADD operation: %d and %d\n", a.type, b.type);
         exit(1);
     }
     vm_push(vm, result);
@@ -174,7 +205,7 @@ static void op_store_global(VM* vm, int operand) {
     Value v = vm_pop(vm);
     Value name_val = vm->bytecode->constants[operand];
     if (!is_obj_type(name_val, OBJ_STRING)) {
-        printf("STORE_GLOBAL expects a string constant as variable name\n");
+        printf("STORE_GLOBAL expects a string constant as variable name, but got type %d\n", name_val.type);
         exit(1);
     }
     scope_set(vm->scope, as_string(name_val), v);
@@ -183,12 +214,13 @@ static void op_store_global(VM* vm, int operand) {
 static void op_load_global(VM* vm, int operand) {
     Value name_val = vm->bytecode->constants[operand];
     if (!is_obj_type(name_val, OBJ_STRING)) {
-        printf("LOAD_GLOBAL expects a string constant as variable name\n");
+        printf("LOAD_GLOBAL expects a string constant as variable name, but got type %d\n", name_val.type);
         exit(1);
     }
     Value value = scope_find(vm->scope, as_string(name_val));
     if (value.type == VAL_NONE) {
         printf("Undefined global variable: %s\n", as_string(name_val)->chars);
+        vm_debug_scope(vm);
         exit(1);
     }
     vm_push(vm, value);
@@ -226,11 +258,11 @@ static void op_call(VM* vm, int operand)
 {
     Value func_val = vm_pop(vm);
     if (func_val.type != VAL_OBJ) {
-        printf("Attempted to call a non-function value\n");
+        printf("Attempted to call a non-function value. Type: %d\n", func_val.type);
         exit(1);
     }
     if (vm->frame_count >= MAX_CALL_STACK_SIZE) {
-        printf("Call stack overflow\n");
+        printf("Call stack overflow, %d > %d\n", vm->frame_count, MAX_CALL_STACK_SIZE);
         exit(1);
     }
 
@@ -322,7 +354,6 @@ static void op_call(VM* vm, int operand)
     vm->ip = fn->addr;
 }
 
-
 void op_return(VM* vm) {
     if (vm->frame_count <= 0) {
         printf("Call stack underflow\n");
@@ -378,7 +409,7 @@ static void op_index_get(VM* vm) {
         ObjList* list = (ObjList*)list_val.as.object;
         int index = (int)index_val.as.integer;
         if (index < 0 || index >= list->count) {
-            printf("LIST_GET index out of bounds\n");
+            printf("LIST_GET index out of bounds. Index: %d, List count: %d\n", index, list->count);
             exit(1);
         }
         Value item = list->items[index];
@@ -390,7 +421,7 @@ static void op_index_get(VM* vm) {
         ObjTuple* tuple = (ObjTuple*)list_val.as.object;
         int index = (int)index_val.as.integer;
         if (index < 0 || index >= tuple->count) {
-            printf("TUPLE_GET index out of bounds\n");
+            printf("TUPLE_GET index out of bounds. Index: %d, Tuple count: %d\n", index, tuple->count);
             exit(1);
         }
         Value item = tuple->items[index];
@@ -401,7 +432,7 @@ static void op_index_get(VM* vm) {
     if (is_obj_type(list_val, OBJ_DICT)) {
         ObjDict* dict = (ObjDict*)list_val.as.object;
         if (!is_obj_type(index_val, OBJ_STRING)) {
-            printf("DICT_GET expects a string key\n");
+            printf("DICT_GET expects a string key, but got type %d\n", index_val.type);
             exit(1);
         }
         ObjString* key = as_string(index_val);
@@ -427,7 +458,7 @@ static void op_index_set(VM* vm) {
         ObjList* list = (ObjList*)container.as.object;
         int index = (int)index_val.as.integer;
         if (index < 0 || index >= list->count) {
-            printf("LIST_SET index out of bounds\n");
+            printf("LIST_SET index out of bounds. Index: %d, List count: %d\n", index, list->count);
             exit(1);
         }
         list->items[index] = value;

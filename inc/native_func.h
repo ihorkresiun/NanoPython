@@ -10,6 +10,13 @@ Value native_len(int arg_count, Value* args, VM* vm);
 Value native_clock(int arg_count, Value* args, VM* vm);
 Value native_exit(int arg_count, Value* args, VM* vm);
 Value native_input(int arg_count, Value* args, VM* vm);
+
+Value native_int(int arg_count, Value* args, VM* vm);
+Value native_float(int arg_count, Value* args, VM* vm);
+Value native_str(int arg_count, Value* args, VM* vm);
+
+Value native_type(int arg_count, Value* args, VM* vm);
+
 Value native_gc_collect(int arg_count, Value* args, VM* vm);
 Value native_gc_stats(int arg_count, Value* args, VM* vm);
 

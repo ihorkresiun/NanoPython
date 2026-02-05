@@ -88,6 +88,128 @@ Value native_exit(int arg_count, Value* args, VM* vm) {
     return make_none(); // Unreachable
 }
 
+Value native_type(int arg_count, Value* args, VM* vm) {
+    if (arg_count != 1) {
+        printf("type() takes exactly one argument (%d given)\n", arg_count);
+        exit(1);
+    }
+    Value arg = args[0];
+    const char* type_name;
+    switch (arg.type) {
+        case VAL_INT: type_name = "int"; break;
+        case VAL_FLOAT: type_name = "float"; break;
+        case VAL_BOOL: type_name = "bool"; break;
+        case VAL_NONE: type_name = "NoneType"; break;
+        case VAL_OBJ:
+            if (arg.as.object->type == OBJ_STRING) {
+                type_name = "str";
+            } else if (arg.as.object->type == OBJ_LIST) {
+                type_name = "list";
+            } else if (arg.as.object->type == OBJ_DICT) {
+                type_name = "dict";
+            } else if (arg.as.object->type == OBJ_TUPLE) {
+                type_name = "tuple";
+            } else if (arg.as.object->type == OBJ_SET) {
+                type_name = "set";
+            } else if (arg.as.object->type == OBJ_FUNCTION) {
+                type_name = "function";
+            } else if (arg.as.object->type == OBJ_NATIVE_FUNCTION) {
+                type_name = "native_function";
+            } else if (arg.as.object->type == OBJ_CLASS) {
+                type_name = "class";
+            } else if (arg.as.object->type == OBJ_INSTANCE) {
+                ObjInstance* instance = (ObjInstance*)arg.as.object;
+                type_name = instance->klass->name;
+            } else {
+                type_name = "<unknown object>";
+            }
+        break;
+        default:
+            type_name = "<unknown>";
+    }
+    printf("<type '%s'>\n", type_name);
+    return make_string(type_name);
+}
+
+Value native_int(int arg_count, Value* args, VM* vm) {
+    if (arg_count != 1) {
+        printf("int() takes exactly one argument (%d given)\n", arg_count);
+        exit(1);
+    }
+    Value arg = args[0];
+    if (arg.type == VAL_INT) {
+        return arg;
+    } else if (arg.type == VAL_FLOAT) {
+        return make_number_int((int)arg.as.floating);
+    } else if (is_obj_type(arg, OBJ_STRING)) {
+        ObjString* str = as_string(arg);
+        char* endptr;
+        long val = strtol(str->chars, &endptr, 10);
+        if (*endptr != '\0') {
+            printf("Cannot convert string to int: '%s'\n", str->chars);
+            exit(1);
+        }
+        return make_number_int(val);
+    } else {
+        printf("int() argument must be a number or string\n");
+        exit(1);
+    }
+}
+
+Value native_float(int arg_count, Value* args, VM* vm) {
+    if (arg_count != 1) {
+        printf("float() takes exactly one argument (%d given)\n", arg_count);
+        exit(1);
+    }
+    Value arg = args[0];
+    if (arg.type == VAL_FLOAT) {
+        return arg;
+    } else if (arg.type == VAL_INT) {
+        return make_number_float((double)arg.as.integer);
+    } else if (is_obj_type(arg, OBJ_STRING)) {
+        ObjString* str = as_string(arg);
+        char* endptr;
+        double val = strtod(str->chars, &endptr);
+        if (*endptr != '\0') {
+            printf("Cannot convert string to float: '%s'\n", str->chars);
+            exit(1);
+        }
+        return make_number_float(val);
+    } else {
+        printf("float() argument must be a number or string\n");
+        exit(1);
+    }
+}
+
+Value native_str(int arg_count, Value* args, VM* vm) {
+    if (arg_count != 1) {
+        printf("str() takes exactly one argument (%d given)\n", arg_count);
+        exit(1);
+    }
+    Value arg = args[0];
+    if (arg.type == VAL_OBJ && arg.as.object->type == OBJ_STRING) {
+        return arg;
+    } else if (arg.type == VAL_INT) {
+        char buffer[32];
+        snprintf(buffer, sizeof(buffer), "%ld", arg.as.integer);
+        return make_string(buffer);
+    } else if (arg.type == VAL_FLOAT) {
+        char buffer[32];
+        snprintf(buffer, sizeof(buffer), "%g", arg.as.floating);
+        return make_string(buffer);
+    } else if (arg.type == VAL_BOOL) {
+        return make_string(arg.as.boolean ? "True" : "False");
+    } else if (arg.type == VAL_NONE) {
+        return make_string("None");
+    } else if (arg.type == VAL_OBJ) {
+        // For simplicity, just return a placeholder string for objects
+        return make_string("<object>");
+    } else {
+        printf("str() argument has unsupported type\n");
+        exit(1);
+    }
+}
+
 Value native_gc_collect(int arg_count, Value* args, VM* vm) {
     if (arg_count != 0) {
         printf("gc_collect() takes no arguments (%d given)\n", arg_count);

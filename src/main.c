@@ -19,6 +19,10 @@ static void register_native_functions(VM* vm) {
     vm_register_native_functions(vm, "time", native_clock);
     vm_register_native_functions(vm, "exit", native_exit);
     vm_register_native_functions(vm, "input", native_input);
+    vm_register_native_functions(vm, "int", native_int);
+    vm_register_native_functions(vm, "float", native_float);
+    vm_register_native_functions(vm, "str", native_str);
+    vm_register_native_functions(vm, "type", native_type);
     vm_register_native_functions(vm, "gc", native_gc_collect);
     vm_register_native_functions(vm, "mem", native_gc_stats);
     vm_register_native_functions(vm, "native_make_dict", native_make_dict);

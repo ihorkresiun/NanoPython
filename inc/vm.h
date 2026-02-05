@@ -30,7 +30,6 @@ typedef enum {
     OP_RET,
 
     OP_MAKE_LIST,
-    OP_MAKE_DICT,
     OP_MAKE_TUPLE,
     OP_MAKE_SET,
 
@@ -87,6 +86,10 @@ typedef struct VM{
 
 void vm_run(VM* vm);
 void vm_init(VM* vm, Bytecode* bytecode);
+
+void vm_push(VM* vm, Value value);
+Value vm_pop(VM* vm);
+
 void vm_register_native_functions(VM* vm, const char* name, NativeFn function);
 
 #endif /* __INC_VM_H__ */

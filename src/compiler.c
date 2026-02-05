@@ -341,7 +341,10 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 compile_node(compiler, node->Dict.keys[i]);
                 compile_node(compiler, node->Dict.values[i]);
             }
-            emit(compiler, OP_MAKE_DICT, node->Dict.count);
+            // Call native function to create dict
+            int fn_idx_name = add_constant(compiler, make_string("native_make_dict"));
+            emit(compiler, OP_LOAD, fn_idx_name);
+            emit(compiler, OP_CALL, node->Dict.count);
         }
         break;
 

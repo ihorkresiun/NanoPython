@@ -2,6 +2,7 @@
 
 #include "hashmap.h"
 #include "vm.h"
+#include "vm_objects.h"
 #include "gc.h"
 
 #include "stdlib.h"
@@ -131,4 +132,23 @@ Value native_gc_stats(int arg_count, Value* args, VM* vm) {
 
     result.as.object = (Obj*)dict;
     return result;
+}
+
+Value native_make_dict(int arg_count, Value* args, VM* vm) {
+    Value dict_val = vm_make_dict(vm);
+    ObjDict* dict = (ObjDict*)dict_val.as.object;
+    dict->count = arg_count;
+
+    for (int i = arg_count - 1; i >= 0; i--) {
+        Value val = vm_pop(vm);
+        Value key = vm_pop(vm);
+
+        if (!is_obj_type(key, OBJ_STRING)) {
+            printf("Dictionary keys must be strings\n");
+            exit(1);
+        }
+        hash_set(dict->map, as_string(key), val);
+    }
+
+    return dict_val;
 }

@@ -13,4 +13,6 @@ Value native_input(int arg_count, Value* args, VM* vm);
 Value native_gc_collect(int arg_count, Value* args, VM* vm);
 Value native_gc_stats(int arg_count, Value* args, VM* vm);
 
+Value native_make_dict(int arg_count, Value* args, VM* vm);
+
 #endif // __INC_NATIVE_FUNC_H__

@@ -9,8 +9,6 @@
 #include "stdlib.h"
 #include "string.h"
 
-static void vm_push(VM* vm, Value value);
-static Value vm_pop(VM* vm);
 static Value vm_peek(VM* vm);
 static void op_const_to_stack(VM* vm, int operand);
 static void op_add(VM* vm);
@@ -26,7 +24,6 @@ static void op_greater_than(VM* vm);
 static void op_call(VM* vm, int operand);
 static void op_return(VM* vm);
 static void op_make_list(VM* vm, int operand);
-static void op_make_dict(VM* vm, int count);
 static void op_make_tuple(VM* vm, int count);
 static void op_make_set(VM* vm, int count);
 static void op_index_get(VM* vm);
@@ -59,7 +56,6 @@ void vm_run(VM* vm)
             case OP_CALL: op_call(vm, instr.operand); break;
             case OP_RET: op_return(vm); break;
             case OP_MAKE_LIST: op_make_list(vm, instr.operand); break;
-            case OP_MAKE_DICT: op_make_dict(vm, instr.operand); break;
             case OP_MAKE_TUPLE: op_make_tuple(vm, instr.operand); break;
             case OP_MAKE_SET: op_make_set(vm, instr.operand); break;
             case OP_IDX_GET: op_index_get(vm); break;
@@ -98,7 +94,7 @@ void vm_register_native_functions(VM* vm, const char* name, NativeFn function) {
     scope_set(vm->scope, name_str, native_fn_val);
 }
 
-static void vm_push(VM* vm, Value value) {
+void vm_push(VM* vm, Value value) {
     if (vm->sp >= VM_STACK_SIZE - 1) {
         printf("Stack overflow at ip=%d\n", vm->ip);
         printf("Current stack size: %d\n", vm->sp);
@@ -107,7 +103,7 @@ static void vm_push(VM* vm, Value value) {
     vm->stack[vm->sp++] = value;
 }
 
-static Value vm_pop(VM* vm) {
+Value vm_pop(VM* vm) {
     if (vm->sp <= 0) {
         printf("Stack underflow at ip=%d\n", vm->ip);
         printf("Current stack size: %d\n", vm->sp);
@@ -249,7 +245,7 @@ static void op_call(VM* vm, int operand)
         ObjClass* klass = (ObjClass*)func_val.as.object;
         
         // Create instance
-        Value instance_val = make_instance(klass);
+        Value instance_val = vm_make_instance(vm, klass);
         
         // Look for __init__ method
         ObjString* init_name = intern_const_string(vm, "__init__", 8);
@@ -536,6 +532,7 @@ static void op_index_set(VM* vm) {
     printf("IDX_SET expects a list or dictionary value\n");
     exit(1);
 }
+
 static void op_make_class(VM* vm, int operand) {
     // Stack: [parent_class or None]
     // operand: index of class name in constants
@@ -547,7 +544,7 @@ static void op_make_class(VM* vm, int operand) {
     }
     
     ObjString* class_name = as_string(vm->bytecode->constants[operand]);
-    Value class_val = make_class(class_name->chars, parent);
+    Value class_val = vm_make_class(vm, class_name->chars, parent);
     
     vm_push(vm, class_val);
 }
@@ -562,7 +559,7 @@ static void op_make_instance(VM* vm) {
     }
     
     ObjClass* klass = (ObjClass*)class_val.as.object;
-    Value instance_val = make_instance(klass);
+    Value instance_val = vm_make_instance(vm, klass);
     
     vm_push(vm, instance_val);
 }

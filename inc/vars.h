@@ -136,8 +136,6 @@ Value make_tuple();
 Value make_set();
 Value make_function(ObjFunction* fn);
 Value make_native_function(const char* name, NativeFn function);
-Value make_class(const char* name, ObjClass* parent);
-Value make_instance(ObjClass* klass);
 
 Value make_none();
 

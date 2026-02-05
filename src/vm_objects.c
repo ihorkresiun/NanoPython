@@ -7,7 +7,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-Obj* alloc_object(VM* vm, size_t size, ObjectType type) {
+Obj* vm_alloc_object(VM* vm, size_t size, ObjectType type) {
     Obj* object = malloc(size);
     vm->bytes_allocated += size;
     if (vm->bytes_allocated > vm->next_gc) {
@@ -21,7 +21,7 @@ Obj* alloc_object(VM* vm, size_t size, ObjectType type) {
 }
 
 Value vm_make_string(VM* vm, const char* s) {
-    ObjString* string = (ObjString*)alloc_object(vm, sizeof(ObjString), OBJ_STRING);
+    ObjString* string = (ObjString*)vm_alloc_object(vm, sizeof(ObjString), OBJ_STRING);
     string->length = strlen(s);
     string->chars = strdup(s);
     vm->bytes_allocated += string->length + 1;  // Track string data
@@ -32,7 +32,7 @@ Value vm_make_string(VM* vm, const char* s) {
 }
 
 Value vm_make_list(VM* vm, int count) {
-    ObjList* list = (ObjList*)alloc_object(vm, sizeof(ObjList), OBJ_LIST);
+    ObjList* list = (ObjList*)vm_alloc_object(vm, sizeof(ObjList), OBJ_LIST);
     list->count = 0;
     int capacity = count > 4 ? count : 4;  // Use count or minimum of 4
     list->capacity = capacity;
@@ -45,7 +45,7 @@ Value vm_make_list(VM* vm, int count) {
 }
 
 Value vm_make_dict(VM* vm) {
-    ObjDict* dict = (ObjDict*)alloc_object(vm, sizeof(ObjDict), OBJ_DICT);
+    ObjDict* dict = (ObjDict*)vm_alloc_object(vm, sizeof(ObjDict), OBJ_DICT);
     dict->count = 0;
     dict->capacity = 4;
     dict->map = malloc(sizeof(HashMap));
@@ -58,7 +58,7 @@ Value vm_make_dict(VM* vm) {
 }
 
 Value vm_make_tuple(VM* vm) {
-    ObjTuple* tuple = (ObjTuple*)alloc_object(vm, sizeof(ObjTuple), OBJ_TUPLE);
+    ObjTuple* tuple = (ObjTuple*)vm_alloc_object(vm, sizeof(ObjTuple), OBJ_TUPLE);
     tuple->count = 0;
     tuple->items = NULL;
     Value v;
@@ -68,7 +68,7 @@ Value vm_make_tuple(VM* vm) {
 }
 
 Value vm_make_set(VM* vm) {
-    ObjSet* set = (ObjSet*)alloc_object(vm, sizeof(ObjSet), OBJ_SET);
+    ObjSet* set = (ObjSet*)vm_alloc_object(vm, sizeof(ObjSet), OBJ_SET);
     set->count = 0;
     set->capacity = 4;
     set->map = malloc(sizeof(HashMap));
@@ -81,7 +81,7 @@ Value vm_make_set(VM* vm) {
 }
 
 Value vm_make_class(VM* vm, const char* name, ObjClass* parent) {
-    ObjClass* klass = (ObjClass*)alloc_object(vm, sizeof(ObjClass), OBJ_CLASS);
+    ObjClass* klass = (ObjClass*)vm_alloc_object(vm, sizeof(ObjClass), OBJ_CLASS);
     klass->name = strdup(name);
     vm->bytes_allocated += strlen(name) + 1;  // Track name string
     klass->methods = malloc(sizeof(HashMap));
@@ -95,7 +95,7 @@ Value vm_make_class(VM* vm, const char* name, ObjClass* parent) {
 }
 
 Value vm_make_instance(VM* vm, ObjClass* klass) {
-    ObjInstance* instance = (ObjInstance*)alloc_object(vm, sizeof(ObjInstance), OBJ_INSTANCE);
+    ObjInstance* instance = (ObjInstance*)vm_alloc_object(vm, sizeof(ObjInstance), OBJ_INSTANCE);
     instance->klass = klass;
     instance->fields = malloc(sizeof(HashMap));
     hash_init(instance->fields, 8);

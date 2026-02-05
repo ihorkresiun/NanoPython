@@ -380,27 +380,6 @@ void op_return(VM* vm) {
     vm_push(vm, ret_val);
 }
 
-void op_make_list(VM* vm, int count) {
-    // Pop items from stack
-    Value* items = malloc(sizeof(Value) * count);
-    for (int i = count - 1; i >= 0; i--) {
-        items[i] = vm_pop(vm);
-    }
-    
-    // Create list using vm_make_list (tracks GC)
-    Value list_val = vm_make_list(vm, count);
-    ObjList* list = (ObjList*)list_val.as.object;
-    
-    // Copy items
-    for (int i = 0; i < count; i++) {
-        list->items[i] = items[i];
-    }
-    list->count = count;
-    
-    free(items);
-    vm_push(vm, list_val);
-}
-
 static void op_index_get(VM* vm) {
     Value index_val = vm_pop(vm);
     Value list_val = vm_pop(vm);

@@ -150,6 +150,26 @@ static void op_const_to_stack(VM* vm, int operand) {
     vm_push(vm, constant);
 }
 
+static Value vm_to_string(VM* vm, Value v) {
+    if (is_obj_type(v, OBJ_STRING)) {
+        return v;
+    } else if (v.type == VAL_INT) {
+        char buffer[32];
+        int len = snprintf(buffer, sizeof(buffer), "%ld", v.as.integer);
+        return vm_make_string(vm, buffer);
+    } else if (v.type == VAL_FLOAT) {
+        char buffer[32];
+        int len = snprintf(buffer, sizeof(buffer), "%f", v.as.floating);
+        return vm_make_string(vm, buffer);
+    } else if (v.type == VAL_BOOL) {
+        return vm_make_string(vm, v.as.boolean ? "True" : "False");
+    } else if (v.type == VAL_NONE) {
+        return vm_make_string(vm, "None");
+    } else {
+        return vm_make_string(vm, "<object>");
+    }
+}
+
 static void op_add(VM* vm) {
     Value b = vm_pop(vm);
     Value a = vm_pop(vm);
@@ -162,6 +182,15 @@ static void op_add(VM* vm) {
         result = make_number_float(a.as.integer + b.as.floating);
     } else if (a.type == VAL_INT && b.type == VAL_INT) {
         result = make_number_int(a.as.integer + b.as.integer);
+    } else if (is_obj_type(a, OBJ_STRING) || is_obj_type(b, OBJ_STRING)) {
+        ObjString* str_a = as_string(vm_to_string(vm, a));
+        ObjString* str_b = as_string(vm_to_string(vm, b));
+
+        char* ch = malloc(str_a->length + str_b->length + 1);
+        memcpy(ch, str_a->chars, str_a->length);
+        memcpy(ch + str_a->length, str_b->chars, str_b->length);
+        result = vm_make_string(vm, ch);
+        free(ch);
     } else {
         printf("Unsupported types for ADD operation: %d and %d\n", a.type, b.type);
         exit(1);

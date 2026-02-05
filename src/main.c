@@ -22,6 +22,9 @@ static void register_native_functions(VM* vm) {
     vm_register_native_functions(vm, "gc", native_gc_collect);
     vm_register_native_functions(vm, "mem", native_gc_stats);
     vm_register_native_functions(vm, "native_make_dict", native_make_dict);
+    vm_register_native_functions(vm, "native_make_list", native_make_list);
+    vm_register_native_functions(vm, "native_make_set", native_make_set);
+    vm_register_native_functions(vm, "native_make_tuple", native_make_tuple);
 }
 
 int main(int argc, char** argv) {

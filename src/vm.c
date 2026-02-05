@@ -23,9 +23,6 @@ static void op_less_than(VM* vm);
 static void op_greater_than(VM* vm);
 static void op_call(VM* vm, int operand);
 static void op_return(VM* vm);
-static void op_make_list(VM* vm, int operand);
-static void op_make_tuple(VM* vm, int count);
-static void op_make_set(VM* vm, int count);
 static void op_index_get(VM* vm);
 static void op_index_set(VM* vm);
 static void op_make_class(VM* vm, int operand);
@@ -55,9 +52,6 @@ void vm_run(VM* vm)
             case OP_NOP: break;
             case OP_CALL: op_call(vm, instr.operand); break;
             case OP_RET: op_return(vm); break;
-            case OP_MAKE_LIST: op_make_list(vm, instr.operand); break;
-            case OP_MAKE_TUPLE: op_make_tuple(vm, instr.operand); break;
-            case OP_MAKE_SET: op_make_set(vm, instr.operand); break;
             case OP_IDX_GET: op_index_get(vm); break;
             case OP_IDX_SET: op_index_set(vm); break;
             case OP_MAKE_CLASS: op_make_class(vm, instr.operand); break;
@@ -374,83 +368,6 @@ void op_make_list(VM* vm, int count) {
     
     free(items);
     vm_push(vm, list_val);
-}
-
-static void op_make_dict(VM* vm, int count) {
-    // Create dict using vm_make_dict (tracks GC)
-    Value dict_val = vm_make_dict(vm);
-    ObjDict* dict = (ObjDict*)dict_val.as.object;
-    dict->count = count;
-
-    for (int i = count - 1; i >= 0; i--) {
-        Value val = vm_pop(vm);
-        Value key = vm_pop(vm);
-
-        if (!is_obj_type(key, OBJ_STRING)) {
-            printf("Dictionary keys must be strings\n");
-            exit(1);
-        }
-        hash_set(dict->map, as_string(key), val);
-    }
-
-    vm_push(vm, dict_val);
-}
-
-static void op_make_tuple(VM* vm, int count) {
-    // Pop items from stack
-    Value* items = malloc(sizeof(Value) * count);
-    for (int i = count - 1; i >= 0; i--) {
-        items[i] = vm_pop(vm);
-    }
-    
-    // Create tuple using vm_make_tuple (tracks GC)
-    Value tuple_val = vm_make_tuple(vm);
-    ObjTuple* tuple = (ObjTuple*)tuple_val.as.object;
-    tuple->count = count;
-    tuple->items = malloc(sizeof(Value) * count);
-    vm->bytes_allocated += sizeof(Value) * count;
-    
-    // Copy items
-    for (int i = 0; i < count; i++) {
-        tuple->items[i] = items[i];
-    }
-    
-    free(items);
-    vm_push(vm, tuple_val);
-}
-
-static void op_make_set(VM* vm, int count) {
-    // Create set using vm_make_set (tracks GC)
-    Value set_val = vm_make_set(vm);
-    ObjSet* set = (ObjSet*)set_val.as.object;
-    set->count = count;
-
-    // Pop elements from stack and add to set
-    for (int i = 0; i < count; i++) {
-        Value val = vm_pop(vm);
-        
-        // Use string representation as key for set membership
-        char key[64];
-        if (val.type == VAL_INT) {
-            snprintf(key, sizeof(key), "%ld", val.as.integer);
-        } else if (val.type == VAL_FLOAT) {
-            snprintf(key, sizeof(key), "%g", val.as.floating);
-        } else if (is_obj_type(val, OBJ_STRING)) {
-            snprintf(key, sizeof(key), "%s", as_string(val)->chars);
-        } else {
-            snprintf(key, sizeof(key), "obj_%p", (void*)val.as.object);
-        }
-        
-        ObjString* key_str = malloc(sizeof(ObjString));
-        key_str->obj.type = OBJ_STRING;
-        key_str->chars = strdup(key);
-        key_str->length = strlen(key);
-        vm->bytes_allocated += sizeof(ObjString) + strlen(key) + 1;
-        
-        hash_set(set->map, key_str, val);
-    }
-
-    vm_push(vm, set_val);
 }
 
 static void op_index_get(VM* vm) {

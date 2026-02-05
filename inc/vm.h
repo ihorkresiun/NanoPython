@@ -29,10 +29,6 @@ typedef enum {
     OP_CALL,
     OP_RET,
 
-    OP_MAKE_LIST,
-    OP_MAKE_TUPLE,
-    OP_MAKE_SET,
-
     OP_IDX_GET,
     OP_IDX_SET,
 
@@ -65,6 +61,7 @@ typedef struct CallFrame {
     Scope* scope;
 } CallFrame;
 
+// TODO Add vm_config.h
 #define VM_STACK_SIZE 1024
 #define MAX_CALL_STACK_SIZE 64
 

@@ -134,6 +134,19 @@ Value native_gc_stats(int arg_count, Value* args, VM* vm) {
     return result;
 }
 
+Value native_make_list(int arg_count, Value* args, VM* vm) {
+    Value list_val = vm_make_list(vm, arg_count);
+    ObjList* list = (ObjList*)list_val.as.object;
+    list->count = arg_count;
+
+    for (int i = arg_count - 1; i >= 0; i--) {
+        Value val = vm_pop(vm);
+        list->items[i] = val;
+    }
+
+    return list_val;
+}
+
 Value native_make_dict(int arg_count, Value* args, VM* vm) {
     Value dict_val = vm_make_dict(vm);
     ObjDict* dict = (ObjDict*)dict_val.as.object;
@@ -151,4 +164,52 @@ Value native_make_dict(int arg_count, Value* args, VM* vm) {
     }
 
     return dict_val;
+}
+
+Value native_make_set(int arg_count, Value* args, VM* vm) {
+    Value set_val = vm_make_set(vm);
+    ObjSet* set = (ObjSet*)set_val.as.object;
+    set->count = arg_count;
+
+    for (int i = arg_count - 1; i >= 0; i--) {
+        Value val = vm_pop(vm);
+
+        // Create string representation of the value to use as key
+        char key[64];
+        if (val.type == VAL_INT) {
+            snprintf(key, sizeof(key), "%ld", val.as.integer);
+        } else if (val.type == VAL_FLOAT) {
+            snprintf(key, sizeof(key), "%g", val.as.floating);
+        } else if (is_obj_type(val, OBJ_STRING)) {
+            snprintf(key, sizeof(key), "%s", as_string(val)->chars);
+        } else {
+            snprintf(key, sizeof(key), "obj_%p", (void*)val.as.object);
+        }
+        
+        ObjString* key_str = malloc(sizeof(ObjString));
+        key_str->obj.type = OBJ_STRING;
+        key_str->chars = strdup(key);
+        key_str->length = strlen(key);
+        vm->bytes_allocated += sizeof(ObjString) + strlen(key) + 1;
+        
+        hash_set(set->map, key_str, val);
+    }
+
+    vm_push(vm, set_val);
+    return set_val;
+}
+
+Value native_make_tuple(int arg_count, Value* args, VM* vm) {
+    Value tuple_val = vm_make_tuple(vm);
+    ObjTuple* tuple = (ObjTuple*)tuple_val.as.object;
+    tuple->count = arg_count;
+    tuple->items = malloc(sizeof(Value) * arg_count);
+    vm->bytes_allocated += sizeof(Value) * arg_count;
+
+    for (int i = arg_count - 1; i >= 0; i--) {
+        Value val = vm_pop(vm);
+        tuple->items[i] = val;
+    }
+
+    return tuple_val;
 }

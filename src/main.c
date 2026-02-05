@@ -3,7 +3,6 @@
 #include "ast.h"
 #include "compiler.h"
 #include "disasm.h"
-#include "eval.h"
 #include "lexer.h"
 #include "native_func.h"
 #include "parser.h"

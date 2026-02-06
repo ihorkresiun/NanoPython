@@ -238,6 +238,7 @@ void ast_free(Ast* node) {
     switch (node->type)
     {
         case AST_NUMBER:
+        case AST_FLOAT:
             // Nothing to free
         break;
         case AST_STRING:

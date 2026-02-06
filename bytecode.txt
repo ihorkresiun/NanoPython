@@ -1,0 +1,30 @@
+LABEL_0000:
+	0000 CONST [0]=(OBJ->Str)"Hello "
+	0001 STORE [1]=(OBJ->Str)"a"
+	0002 CONST [2]=(OBJ->Str)"World"
+	0003 STORE [3]=(OBJ->Str)"b"
+	0004 CONST [4]=(OBJ->Str)"NanoPython"
+	0005 STORE [5]=(OBJ->Str)"name"
+	0006 LOAD [1]=(OBJ->Str)"a"
+	0007 LOAD [3]=(OBJ->Str)"b"
+	0008 ADD
+	0009 CONST [6]=(OBJ->Str)" from "
+	0010 ADD
+	0011 LOAD [5]=(OBJ->Str)"name"
+	0012 ADD
+	0013 STORE [7]=(OBJ->Str)"c"
+	0014 LOAD [7]=(OBJ->Str)"c"
+	0015 LOAD [8]=(OBJ->Str)"print"
+	0016 CALL 1
+	0017 HALT
+
+Constants:
+0000: OBJ String: "Hello "
+0001: OBJ String: "a"
+0002: OBJ String: "World"
+0003: OBJ String: "b"
+0004: OBJ String: "NanoPython"
+0005: OBJ String: "name"
+0006: OBJ String: " from "
+0007: OBJ String: "c"
+0008: OBJ String: "print"

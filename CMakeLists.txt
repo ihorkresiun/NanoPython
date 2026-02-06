@@ -5,8 +5,8 @@ project(NanoPython)
 # Common source files shared across targets
 set(COMMON_SOURCES
     src/ast.c
+    src/bytecode.c
     src/compiler.c
-    src/disasm.c
     src/hashmap.c
     src/lexer.c
     src/parser.c

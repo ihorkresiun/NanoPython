@@ -1,8 +1,8 @@
 #include "stdio.h"
 
 #include "ast.h"
+#include "bytecode.h"
 #include "compiler.h"
-#include "disasm.h"
 #include "lexer.h"
 #include "native_func.h"
 #include "parser.h"
@@ -139,7 +139,7 @@ static int mode_file(const char* source_file) {
         printf("Error: Compilation failed.\n");
         return 1;
     }
-    store_disasm(bytecode, "bytecode.txt");
+    bytecode_disasm(bytecode, "bytecode.txt");
 
     VM vm;
     vm_init(&vm, bytecode);

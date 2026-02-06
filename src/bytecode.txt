@@ -1,156 +1,21 @@
 LABEL_0000:
-	0000 CONST [0]=(OBJ->Str)"=== Python Classes in NanoPython ===\n"
-	0001 LOAD [1]=(OBJ->Str)"print"
-	0002 CALL 1
-	0003 CONST None
-	0004 MAKE_CLASS [2]=(OBJ->Str)"Person"
-	0005 STORE [2]=(OBJ->Str)"Person"
-	0006 LOAD [2]=(OBJ->Str)"Person"
-	0007 CONST [4]=(OBJ->Func)
-	0008 JUMP LABEL_0017
-	0009 LOAD [5]=(OBJ->Str)"self"
-	0010 LOAD [6]=(OBJ->Str)"name"
-	0011 SET_ATTR [6]=(OBJ->Str)"name"
-	0012 LOAD [5]=(OBJ->Str)"self"
-	0013 LOAD [7]=(OBJ->Str)"age"
-	0014 SET_ATTR [7]=(OBJ->Str)"age"
-	0015 CONST None
-	0016 RET
-LABEL_0017:
-	0017 SET_ATTR [8]=(OBJ->Str)"__init__"
-	0018 LOAD [2]=(OBJ->Str)"Person"
-	0019 CONST [9]=(OBJ->Func)
-	0020 JUMP LABEL_0034
-	0021 CONST [10]=(OBJ->Str)"Hi! My name is"
-	0022 LOAD [5]=(OBJ->Str)"self"
-	0023 GET_ATTR [6]=(OBJ->Str)"name"
-	0024 LOAD [1]=(OBJ->Str)"print"
-	0025 CALL 2
-	0026 CONST [11]=(OBJ->Str)"I am"
-	0027 LOAD [5]=(OBJ->Str)"self"
-	0028 GET_ATTR [7]=(OBJ->Str)"age"
-	0029 CONST [12]=(OBJ->Str)"years old"
-	0030 LOAD [1]=(OBJ->Str)"print"
-	0031 CALL 3
-	0032 CONST None
-	0033 RET
-LABEL_0034:
-	0034 SET_ATTR [13]=(OBJ->Str)"introduce"
-	0035 CONST [14]=(OBJ->Str)"Example 1: Person class"
-	0036 LOAD [1]=(OBJ->Str)"print"
-	0037 CALL 1
-	0038 CONST [15]=(OBJ->Str)"Alice"
-	0039 CONST [16]=(INT)30
-	0040 LOAD [2]=(OBJ->Str)"Person"
-	0041 CALL 2
-	0042 STORE [17]=(OBJ->Str)"alice"
-	0043 CONST [18]=(OBJ->Str)"Bob"
-	0044 CONST [19]=(INT)25
-	0045 LOAD [2]=(OBJ->Str)"Person"
-	0046 CALL 2
-	0047 STORE [20]=(OBJ->Str)"bob"
-	0048 LOAD [17]=(OBJ->Str)"alice"
-	0049 CALL_METHOD [13]=(OBJ->Str)"introduce"
-	0050 NOP
-	0051 LOAD [1]=(OBJ->Str)"print"
-	0052 CALL 0
-	0053 LOAD [20]=(OBJ->Str)"bob"
-	0054 CALL_METHOD [13]=(OBJ->Str)"introduce"
-	0055 NOP
-	0056 CONST [21]=(OBJ->Str)"\nExample 2: Counter class"
-	0057 LOAD [1]=(OBJ->Str)"print"
-	0058 CALL 1
-	0059 CONST None
-	0060 MAKE_CLASS [22]=(OBJ->Str)"Counter"
-	0061 STORE [22]=(OBJ->Str)"Counter"
-	0062 LOAD [22]=(OBJ->Str)"Counter"
-	0063 CONST [23]=(OBJ->Func)
-	0064 JUMP LABEL_0070
-	0065 LOAD [5]=(OBJ->Str)"self"
-	0066 CONST [24]=(INT)0
-	0067 SET_ATTR [25]=(OBJ->Str)"value"
-	0068 CONST None
-	0069 RET
-LABEL_0070:
-	0070 SET_ATTR [8]=(OBJ->Str)"__init__"
-	0071 LOAD [22]=(OBJ->Str)"Counter"
-	0072 CONST [26]=(OBJ->Func)
-	0073 JUMP LABEL_0082
-	0074 LOAD [5]=(OBJ->Str)"self"
-	0075 LOAD [5]=(OBJ->Str)"self"
-	0076 GET_ATTR [25]=(OBJ->Str)"value"
-	0077 CONST [27]=(INT)1
-	0078 ADD
-	0079 SET_ATTR [25]=(OBJ->Str)"value"
-	0080 CONST None
-	0081 RET
-LABEL_0082:
-	0082 SET_ATTR [28]=(OBJ->Str)"increment"
-	0083 LOAD [22]=(OBJ->Str)"Counter"
-	0084 CONST [29]=(OBJ->Func)
-	0085 JUMP LABEL_0091
-	0086 LOAD [5]=(OBJ->Str)"self"
-	0087 GET_ATTR [25]=(OBJ->Str)"value"
-	0088 RET
-	0089 CONST None
-	0090 RET
-LABEL_0091:
-	0091 SET_ATTR [30]=(OBJ->Str)"get"
-	0092 LOAD [22]=(OBJ->Str)"Counter"
-	0093 CALL 0
-	0094 STORE [31]=(OBJ->Str)"counter"
-	0095 LOAD [31]=(OBJ->Str)"counter"
-	0096 CALL_METHOD [28]=(OBJ->Str)"increment"
-	0097 NOP
-	0098 LOAD [31]=(OBJ->Str)"counter"
-	0099 CALL_METHOD [28]=(OBJ->Str)"increment"
-	0100 NOP
-	0101 LOAD [31]=(OBJ->Str)"counter"
-	0102 CALL_METHOD [28]=(OBJ->Str)"increment"
-	0103 NOP
-	0104 CONST [32]=(OBJ->Str)"Counter value:"
-	0105 LOAD [31]=(OBJ->Str)"counter"
-	0106 CALL_METHOD [30]=(OBJ->Str)"get"
-	0107 NOP
-	0108 LOAD [1]=(OBJ->Str)"print"
-	0109 CALL 2
-	0110 CONST [33]=(OBJ->Str)"\n=== All examples completed successfully! ==="
-	0111 LOAD [1]=(OBJ->Str)"print"
-	0112 CALL 1
-	0113 HALT
+	0000 CONST [0]=(OBJ->Str)"Hello "
+	0001 STORE [1]=(OBJ->Str)"a"
+	0002 CONST [2]=(OBJ->Str)"World"
+	0003 STORE [3]=(OBJ->Str)"b"
+	0004 LOAD [1]=(OBJ->Str)"a"
+	0005 LOAD [3]=(OBJ->Str)"b"
+	0006 ADD
+	0007 STORE [4]=(OBJ->Str)"c"
+	0008 LOAD [4]=(OBJ->Str)"c"
+	0009 LOAD [5]=(OBJ->Str)"print"
+	0010 CALL 1
+	0011 HALT
 
 Constants:
-0000: OBJ String: "=== Python Classes in NanoPython ===\n"
-0001: OBJ String: "print"
-0002: OBJ String: "Person"
-0003: NONE
-0004: OBJ Function
-0005: OBJ String: "self"
-0006: OBJ String: "name"
-0007: OBJ String: "age"
-0008: OBJ String: "__init__"
-0009: OBJ Function
-0010: OBJ String: "Hi! My name is"
-0011: OBJ String: "I am"
-0012: OBJ String: "years old"
-0013: OBJ String: "introduce"
-0014: OBJ String: "Example 1: Person class"
-0015: OBJ String: "Alice"
-0016: INT 30
-0017: OBJ String: "alice"
-0018: OBJ String: "Bob"
-0019: INT 25
-0020: OBJ String: "bob"
-0021: OBJ String: "\nExample 2: Counter class"
-0022: OBJ String: "Counter"
-0023: OBJ Function
-0024: INT 0
-0025: OBJ String: "value"
-0026: OBJ Function
-0027: INT 1
-0028: OBJ String: "increment"
-0029: OBJ Function
-0030: OBJ String: "get"
-0031: OBJ String: "counter"
-0032: OBJ String: "Counter value:"
-0033: OBJ String: "\n=== All examples completed successfully! ==="
+0000: OBJ String: "Hello "
+0001: OBJ String: "a"
+0002: OBJ String: "World"
+0003: OBJ String: "b"
+0004: OBJ String: "c"
+0005: OBJ String: "print"

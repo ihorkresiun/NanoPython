@@ -12,7 +12,6 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-static void register_native_functions(VM* vm);
 static int mode_repl();
 static int mode_file(const char* source_file);
 
@@ -24,24 +23,6 @@ int main(int argc, char** argv) {
     }
 
     return 0;
-}
-
-static void register_native_functions(VM* vm) {
-    vm_register_native_functions(vm, "print", native_print);
-    vm_register_native_functions(vm, "len", native_len);
-    vm_register_native_functions(vm, "time", native_clock);
-    vm_register_native_functions(vm, "exit", native_exit);
-    vm_register_native_functions(vm, "input", native_input);
-    vm_register_native_functions(vm, "int", native_int);
-    vm_register_native_functions(vm, "float", native_float);
-    vm_register_native_functions(vm, "str", native_str);
-    vm_register_native_functions(vm, "type", native_type);
-    vm_register_native_functions(vm, "gc", native_gc_collect);
-    vm_register_native_functions(vm, "mem", native_gc_stats);
-    vm_register_native_functions(vm, "native_make_dict", native_make_dict);
-    vm_register_native_functions(vm, "native_make_list", native_make_list);
-    vm_register_native_functions(vm, "native_make_set", native_make_set);
-    vm_register_native_functions(vm, "native_make_tuple", native_make_tuple);
 }
 
 static int mode_repl() {

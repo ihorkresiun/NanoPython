@@ -5,6 +5,8 @@
 
 typedef struct VM VM; // forward declaration
 
+void register_native_functions(VM* vm);
+
 Value native_print(int arg_count, Value* args, VM* vm);
 Value native_len(int arg_count, Value* args, VM* vm);
 Value native_clock(int arg_count, Value* args, VM* vm);

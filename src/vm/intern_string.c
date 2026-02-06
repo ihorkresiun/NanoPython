@@ -6,7 +6,6 @@
 #include "stdlib.h"
 #include "stdint.h"
 
-
 static ObjString* find_string(HashMap* map, const char* chars, int length) {
     if (map->count == 0 || length == 0) return NULL;
     uint32_t hash = hash_string(chars);
@@ -21,6 +20,7 @@ static ObjString* find_string(HashMap* map, const char* chars, int length) {
     }
     return NULL;
 }
+
 static ObjString* make_obj_string(const char* chars, int length) {
     ObjString* string = malloc(sizeof(ObjString));
     string->obj.type = OBJ_STRING;

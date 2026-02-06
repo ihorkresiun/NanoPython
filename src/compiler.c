@@ -2,7 +2,7 @@
 
 #include "lexer.h"
 #include "parser.h"
-#include "intern_string.h"
+
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"

@@ -5,6 +5,7 @@
 #include "compiler.h"
 #include "lexer.h"
 #include "native_func.h"
+#include "np_config.h"
 #include "parser.h"
 #include "vm.h"
 
@@ -27,7 +28,7 @@ int main(int argc, char** argv) {
 
 static int mode_repl() {
     // REPL mode
-    printf("NanoPython REPL v0.1\n");
+    printf("NanoPython REPL v%s\n", NP_VERSION);
     printf("Type 'exit()' to quit\n\n");
     
     char line[1024];

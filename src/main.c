@@ -76,10 +76,6 @@ static int mode_repl() {
             ast_free(tree);
             continue;
         }
-
-        if (NP_DEBUG > 0) {
-            bytecode_disasm(bytecode, "bytecode.txt");
-        }
         
         // Initialize VM on first use, otherwise reuse it
         if (!vm_initialized) {
@@ -147,11 +143,16 @@ static int mode_file(const char* source_file) {
         printf("Error: Compilation failed.\n");
         return 1;
     }
-    bytecode_disasm(bytecode, "bytecode.txt");
+    
+    if (NP_DEBUG > 0) {
+        bytecode_disasm(bytecode, "bytecode.txt");
+    }
 
     VM vm;
     vm_init(&vm, bytecode);
     register_native_functions(&vm);
     vm_run(&vm);
     free(source);
+
+    return 0;
 }

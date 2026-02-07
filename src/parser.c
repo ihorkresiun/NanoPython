@@ -380,7 +380,9 @@ static Ast* parse_block(Parser* p) {
         op = p->current.type;
     }
 
-    parser_eat(p, TOKEN_DEDENT);
+    if (op != TOKEN_EOF) {
+        parser_eat(p, TOKEN_DEDENT);
+    }
 
     return ast_new_block(stmts, count);
 }
@@ -535,7 +537,7 @@ static Ast* parse_class(Parser* p) {
         }
     }
 
-    if (p->current.type == TOKEN_DEDENT) {
+    if (p->current.type != TOKEN_EOF) {
         parser_eat(p, TOKEN_DEDENT);
     }
 

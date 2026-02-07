@@ -76,6 +76,10 @@ static int mode_repl() {
             ast_free(tree);
             continue;
         }
+
+        if (NP_DEBUG > 0) {
+            bytecode_disasm(bytecode, "bytecode.txt");
+        }
         
         // Initialize VM on first use, otherwise reuse it
         if (!vm_initialized) {
@@ -101,7 +105,6 @@ static int mode_repl() {
         
         ast_free(tree);
     }
-    
 }
 
 static int mode_file(const char* source_file) {
@@ -127,6 +130,10 @@ static int mode_file(const char* source_file) {
     lexer_init(&lexer, source);
     parser_init(&parser, source);
     Ast* tree = parse_program(&parser);
+
+    if (NP_DEBUG > 0) {
+        ast_dump(tree, "ast_dump.txt");
+    }
 
     if (!tree) {
         printf("Error: Failed to parse program.\n");

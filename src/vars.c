@@ -97,6 +97,61 @@ Value make_none() {
     return (Value){.type = VAL_NONE};
 }
 
+
+
+
+void print_token_type(TokenType token) {
+    switch (token) {
+        case TOKEN_EOF: printf("EOF"); break;
+        case TOKEN_NUMBER: printf("NUMBER"); break;
+        case TOKEN_FLOAT: printf("FLOAT"); break;
+        case TOKEN_STRING: printf("STRING"); break;
+        case TOKEN_IDENT: printf("IDENT"); break;
+        case TOKEN_MINUS: printf("MINUS"); break;
+        case TOKEN_PLUS: printf("PLUS"); break;
+        case TOKEN_STAR: printf("STAR"); break;
+        case TOKEN_SLASH: printf("SLASH"); break;
+        case TOKEN_LPAREN: printf("LPAREN"); break;
+        case TOKEN_RPAREN: printf("RPAREN"); break;
+        case TOKEN_LBRACKET: printf("LBRACKET"); break;
+        case TOKEN_RBRACKET: printf("RBRACKET"); break;
+        case TOKEN_LBRACE: printf("LBRACE"); break;
+        case TOKEN_RBRACE: printf("RBRACE"); break;
+        case TOKEN_COMMA: printf("COMMA"); break;
+        case TOKEN_CARET: printf("CARET"); break;
+        case TOKEN_ASSIGN: printf("ASSIGN"); break;
+        case TOKEN_DOT: printf("DOT"); break;
+        case TOKEN_IF: printf("IF"); break;
+        case TOKEN_ELSE: printf("ELSE"); break;
+        case TOKEN_WHILE: printf("WHILE"); break;
+        case TOKEN_DEF: printf("DEF"); break;
+        case TOKEN_CLASS: printf("CLASS"); break;
+        case TOKEN_RETURN: printf("RETURN"); break;
+        case TOKEN_BREAK: printf("BREAK"); break;
+        case TOKEN_CONTINUE: printf("CONTINUE"); break;
+        case TOKEN_FOR: printf("FOR"); break;
+        case TOKEN_IN: printf("IN"); break;
+        case TOKEN_IMPORT: printf("IMPORT"); break;
+        case TOKEN_FROM: printf("FROM"); break;
+        case TOKEN_COLON: printf("COLON"); break;
+        case TOKEN_LT: printf("LT"); break;
+        case TOKEN_GT: printf("GT"); break;
+        case TOKEN_LE: printf("LE"); break;
+        case TOKEN_GE: printf("GE"); break;
+        case TOKEN_EQ: printf("EQ"); break;
+        case TOKEN_NE: printf("NE"); break;
+        case TOKEN_NEWLINE: printf("NEWLINE"); break;
+        case TOKEN_INDENT: printf("INDENT"); break;
+        case TOKEN_DEDENT: printf("DEDENT"); break;
+        case TOKEN_AND: printf("AND"); break;
+        case TOKEN_OR: printf("OR"); break;
+        case TOKEN_NOT: printf("NOT"); break;
+
+        default:
+            printf("TOKEN(%d)", token);
+    }
+}
+
 static void print_node(HashNode* node) {
     if (node == NULL) return;
     print_value((Value){.type=VAL_OBJ, .as.object=(Obj*)node->key});
@@ -124,6 +179,62 @@ static void print_dict(ObjDict* dict) {
     printf("}");
 }
 
+static void print_set(ObjSet* set) {
+    if (set->count == 0) {
+        printf("set()");
+    } else {
+        printf("{");
+        int printed = 0;
+        // Iterate through set's hashmap
+        if (set->map) {
+            for (int i = 0; i < set->map->capacity; i++) {
+                HashNode* node = &set->map->nodes[i];
+                if (node->key != NULL) {
+                    if (printed > 0) printf(", ");
+                    print_value(node->value);
+                    printed++;
+                    
+                    // Follow the chain
+                    HashNode* next = node->next;
+                    while (next != NULL) {
+                        if (printed > 0) printf(", ");
+                        print_value(next->value);
+                        printed++;
+                        next = next->next;
+                    }
+                }
+            }
+        }
+        printf("}");
+    }
+}
+
+static void print_tuple(ObjTuple* tuple) {
+    printf("(");
+    for (int i = 0; i < tuple->count; i++) {
+        print_value(tuple->items[i]);
+        if (i < tuple->count - 1) {
+            printf(", ");
+        }
+    }
+    // Special case for single element tuple
+    if (tuple->count == 1) {
+        printf(",");
+    }
+    printf(")");
+}
+
+static void print_list(ObjList* list) {
+    printf("[");
+    for (int i = 0; i < list->count; i++) {
+        print_value(list->items[i]);
+        if (i < list->count - 1) {
+            printf(", ");
+        }
+    }
+    printf("]");
+}
+
 void print_value(Value v) {
     switch (v.type) {
         case VAL_INT:
@@ -145,60 +256,16 @@ void print_value(Value v) {
                 break;
             } else if (v.as.object->type == OBJ_LIST) {
                 ObjList* list = (ObjList*)v.as.object;
-                printf("[");
-                for (int i = 0; i < list->count; i++) {
-                    print_value(list->items[i]);
-                    if (i < list->count - 1) {
-                        printf(", ");
-                    }
-                }
-                printf("]");
+                print_list(list);
             } else if (v.as.object->type == OBJ_DICT) {
                 ObjDict* dict = (ObjDict*)v.as.object;
                 print_dict(dict);
             } else if (v.as.object->type == OBJ_TUPLE) {
                 ObjTuple* tuple = (ObjTuple*)v.as.object;
-                printf("(");
-                for (int i = 0; i < tuple->count; i++) {
-                    print_value(tuple->items[i]);
-                    if (i < tuple->count - 1) {
-                        printf(", ");
-                    }
-                }
-                // Special case for single element tuple
-                if (tuple->count == 1) {
-                    printf(",");
-                }
-                printf(")");
+                print_tuple(tuple);
             } else if (v.as.object->type == OBJ_SET) {
                 ObjSet* set = (ObjSet*)v.as.object;
-                if (set->count == 0) {
-                    printf("set()");
-                } else {
-                    printf("{");
-                    int printed = 0;
-                    // Iterate through set's hashmap
-                    if (set->map) {
-                        for (int i = 0; i < set->map->capacity; i++) {
-                            HashNode* node = &set->map->nodes[i];
-                            if (node->key != NULL) {
-                                if (printed > 0) printf(", ");
-                                print_value(node->value);
-                                printed++;
-                                
-                                // Follow the chain
-                                HashNode* next = node->next;
-                                while (next != NULL) {
-                                    if (printed > 0) printf(", ");
-                                    print_value(next->value);
-                                    printed++;
-                                    next = next->next;
-                                }
-                            }
-                        }
-                    }
-                    printf("}");
-                }
+                print_set(set);
             } else if (v.as.object->type == OBJ_NATIVE_FUNCTION) {
                 ObjNativeFunction* native_fn = (ObjNativeFunction*)v.as.object;
                 printf("<native function %s>", native_fn->name);

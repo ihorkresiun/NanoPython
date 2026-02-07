@@ -204,6 +204,8 @@ Ast* ast_new_attr_access(Ast* object, const char* attr_name);
 Ast* ast_new_attr_assign(Ast* object, const char* attr_name, Ast* value);
 Ast* ast_new_import(const char* module_name);
 
+void ast_dump(Ast* node, const char* filename);
+
 void ast_free(Ast* node);
 
 #endif // __INC_AST_H__

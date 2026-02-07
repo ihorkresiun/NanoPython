@@ -49,4 +49,10 @@ typedef enum {
     TOKEN_NOT
 }TokenType;
 
+
+typedef struct {
+    TokenType idx;
+    const char* name;
+} TokenName;
+
 #endif // __INC_TOKENS_H__

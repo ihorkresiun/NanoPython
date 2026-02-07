@@ -232,6 +232,262 @@ Ast* ast_new_import(const char* module_name) {
     return node;
 }
 
+const TokenName token_type_name[] = {
+    {TOKEN_EOF, "EOF"},
+    {TOKEN_NUMBER, "NUMBER"},
+    {TOKEN_FLOAT, "FLOAT"},
+    {TOKEN_STRING, "STRING"},
+    {TOKEN_IDENT, "IDENT"},
+    {TOKEN_MINUS, "MINUS"},
+    {TOKEN_PLUS, "PLUS"},
+    {TOKEN_STAR, "STAR"},
+    {TOKEN_SLASH, "SLASH"},
+    {TOKEN_LPAREN, "LPAREN"},
+    {TOKEN_RPAREN, "RPAREN"},
+    {TOKEN_LBRACKET, "LBRACKET"},
+    {TOKEN_RBRACKET, "RBRACKET"},
+    {TOKEN_LBRACE, "LBRACE"},
+    {TOKEN_RBRACE, "RBRACE"},
+    {TOKEN_COMMA, "COMMA"},
+    {TOKEN_CARET, "CARET"},
+    {TOKEN_ASSIGN, "ASSIGN"},
+    {TOKEN_DOT, "DOT"},
+    {TOKEN_IF, "IF"},
+    {TOKEN_ELSE, "ELSE"},
+    {TOKEN_WHILE, "WHILE"},
+    {TOKEN_DEF, "DEF"},
+    {TOKEN_CLASS, "CLASS"},
+    {TOKEN_RETURN, "RETURN"},
+    {TOKEN_BREAK, "BREAK"},
+    {TOKEN_CONTINUE, "CONTINUE"},
+    {TOKEN_FOR, "FOR"},
+    {TOKEN_IN, "IN"},
+    {TOKEN_IMPORT, "IMPORT"},
+    {TOKEN_FROM, "FROM"},
+    {TOKEN_COLON, "COLON"},
+    {TOKEN_LT, "LT"},
+    {TOKEN_GT, "GT"},
+    {TOKEN_LE, "LE"},
+    {TOKEN_GE, "GE"},
+    {TOKEN_EQ, "EQ"},
+    {TOKEN_NE, "NE"},
+    {TOKEN_NEWLINE, "NEWLINE"},
+    {TOKEN_INDENT, "INDENT"},
+    {TOKEN_DEDENT, "DEDENT"},
+    {TOKEN_AND, "AND"},
+    {TOKEN_OR, "OR"},
+    {TOKEN_NOT, "NOT"},
+};
+
+static void print_indent(FILE* f, int indent)
+{
+    for (int i = 0; i < indent; i++) {
+        fprintf(f, "  ");
+    }
+}
+
+static void ast_fprint(Ast* node, FILE* f, int indent) {
+    if (node == NULL) return;
+
+    print_indent(f, indent);
+
+    switch (node->type)
+    {
+        case AST_NUMBER:
+            fprintf(f, "Number: %ld\n", node->NumberInt.value);
+        break;
+        case AST_FLOAT:
+            fprintf(f, "Float: %f\n", node->NumberFloat.value);
+        break;
+        case AST_STRING:
+            fprintf(f, "String: \"%s\"\n", node->String.value);
+        break;
+        case AST_BINARY:
+            fprintf(f, "Binary Expression:\n");
+            ast_fprint(node->Binary.left, f, indent + 1);
+            print_indent(f, indent + 1);
+            fprintf(f, "%s", token_type_name[node->Binary.op].name);
+            ast_fprint(node->Binary.right, f, indent + 1);
+        break;
+        case AST_UNARY:
+            fprintf(f, "Unary Expression: %s\n", token_type_name[node->Unary.op].name);
+            ast_fprint(node->Unary.value, f, indent + 1);
+        break;
+        case AST_VAR:
+            fprintf(f, "Variable: %s\n", node->Variable.name);
+        break;
+        case AST_ASSIGN:
+            fprintf(f, "Assignment: %s\n", node->Assign.name);
+            ast_fprint(node->Assign.value, f, indent + 1);
+        break;
+        case AST_IF:
+            fprintf(f, "If Statement:\n");
+            fprintf(f, "Condition:\n");
+            ast_fprint(node->If.condition, f, indent + 1);
+            fprintf(f, "Then:\n");
+            ast_fprint(node->If.then_branch, f, indent + 1);
+            if (node->If.else_branch) {
+                fprintf(f, "Else:\n");
+                ast_fprint(node->If.else_branch, f, indent + 1);
+            }
+        break;
+        case AST_WHILE:
+            fprintf(f, "While Loop:\n");
+            fprintf(f, "Condition:\n");
+            ast_fprint(node->While.condition, f, indent + 1);
+            fprintf(f, "Body:\n");
+            ast_fprint(node->While.body, f, indent + 2);
+        break;
+        case AST_FOR:
+            fprintf(f, "For Loop: %s in\n", node->For.var);
+            fprintf(f, "Iterable:\n");
+            ast_fprint(node->For.iterable, f, indent + 1);
+            fprintf(f, "Body:\n");
+            ast_fprint(node->For.body, f, indent + 2);
+        break;
+        case AST_BLOCK:
+            fprintf(f, "Block:\n");
+            for (int i = 0; i < node->Block.count; i++) {
+                ast_fprint(node->Block.statements[i], f, indent + 1);
+            }
+        break;
+        case AST_LIST:
+            fprintf(f, "List:\n");
+            for (int i = 0; i < node->List.count; i++) {
+                ast_fprint(node->List.elements[i], f, indent + 1);
+            }
+        break;
+        case AST_DICT:
+            fprintf(f, "Dict:\n");
+            for (int i = 0; i < node->Dict.count; i++) {
+                fprintf(f, "Key:\n");
+                ast_fprint(node->Dict.keys[i], f, indent + 2);
+                fprintf(f, "Value:\n");
+                ast_fprint(node->Dict.values[i], f, indent + 2);
+            }
+        break;
+        case AST_SET:
+            fprintf(f, "Set:\n");
+            for (int i = 0; i < node->Set.count; i++) {
+                ast_fprint(node->Set.elements[i], f, indent + 1);
+            }
+        break;
+        case AST_TUPLE:
+            fprintf(f, "Tuple:\n");
+            for (int i = 0; i < node->Tuple.count; i++) {
+                ast_fprint(node->Tuple.elements[i], f, indent + 1);
+            }
+        break;
+        case AST_INDEX:
+            fprintf(f, "Indexing:\n");
+            fprintf(f, "Target:\n");
+            ast_fprint(node->Index.target, f, indent + 1);
+            fprintf(f, "Index:\n");
+            ast_fprint(node->Index.index, f, indent + 1);
+        break;
+        case AST_ASSIGN_INDEX:
+            fprintf(f, "Index Assignment:\n");
+            fprintf(f, "Target:\n");
+            ast_fprint(node->AssignIndex.target, f, indent + 1);
+            fprintf(f, "Index:\n");
+            ast_fprint(node->AssignIndex.index, f, indent + 1);
+            fprintf(f, "Value:\n");
+            ast_fprint(node->AssignIndex.value, f, indent + 1);
+        break;
+        case AST_FUNCDEF:
+            fprintf(f, "Function Definition: %s\n", node->FuncDef.name);
+            print_indent(f, indent);
+            fprintf(f, "Arguments:\n");
+            for (int i = 0; i < node->FuncDef.argc; i++) {
+                print_indent(f, indent + 1);
+                fprintf(f, "- %s\n", node->FuncDef.args[i]);
+            }
+            print_indent(f, indent);
+            fprintf(f, "Body:\n");
+            ast_fprint(node->FuncDef.body, f, indent + 1);
+        break;
+        case AST_CALL:
+            fprintf(f, "Function Call: %s\n", node->Call.name);
+            print_indent(f, indent);
+            fprintf(f, "Arguments:\n");
+            for (int i = 0; i < node->Call.argc; i++) {
+                ast_fprint(node->Call.args[i], f, indent + 1);
+            }
+        break;
+        case AST_RETURN:
+            fprintf(f, "Return:\n");
+            ast_fprint(node->Return.value, f, indent + 1);
+        break;
+        case AST_BREAK:
+            fprintf(f, "Break\n");
+        break;
+        case AST_CONTINUE:
+            fprintf(f, "Continue\n");
+        break;
+        case AST_CLASSDEF:
+            fprintf(f, "Class Definition: %s\n", node->ClassDef.name);
+            if (node->ClassDef.parent) {
+                print_indent(f, indent);
+                fprintf(f, "Parent Class: %s\n", node->ClassDef.parent);
+            }
+            print_indent(f, indent);
+            fprintf(f, "Methods:\n");
+            for (int i = 0; i < node->ClassDef.method_count; i++) {
+                ast_fprint(node->ClassDef.methods[i], f, indent + 1);
+            }
+        break;
+        case AST_METHOD_CALL:
+            fprintf(f, "Method Call: %s\n", node->MethodCall.method_name);
+            print_indent(f, indent);
+            fprintf(f, "Object:\n");
+            ast_fprint(node->MethodCall.object, f, indent + 1);
+            print_indent(f, indent);
+            fprintf(f, "Arguments:\n");
+            for (int i = 0; i < node->MethodCall.argc; i++) {
+                ast_fprint(node->MethodCall.args[i], f, indent + 1);
+            }
+        break;
+        case AST_ATTR_ACCESS:
+            fprintf(f, "Attribute Access: %s\n", node->AttrAccess.attr_name);
+            print_indent(f, indent);
+            fprintf(f, "Object:\n");
+            ast_fprint(node->AttrAccess.object, f, indent + 1);
+        break;
+        case AST_ATTR_ASSIGN:
+            fprintf(f, "Attribute Assignment: %s\n", node->AttrAssign.attr_name);
+            print_indent(f, indent);
+            fprintf(f, "Object:\n");
+            ast_fprint(node->AttrAssign.object, f, indent + 1);
+            print_indent(f, indent);
+            fprintf(f, "Value:\n");
+            ast_fprint(node->AttrAssign.value, f, indent + 1);
+        break;
+        case AST_IMPORT:
+            fprintf(f, "Import: %s\n", node->Import.module_name);
+        break;
+
+        case AST_ELSE:
+            // Handled in AST_IF
+        break;
+        default:
+            fprintf(f, "Unknown AST node type: %d\n", node->type);
+        break;
+    }
+}
+
+void ast_dump(Ast* node, const char* filename) {
+    if (node == NULL) return;
+    FILE* f = fopen(filename, "w");
+    if (!f) {
+        printf("Failed to open file for AST dump: %s\n", filename);
+        return;
+    }
+    
+    ast_fprint(node, f, 1);
+    
+    fclose(f);
+}
+
 void ast_free(Ast* node) {
     if (node == NULL) return;
 

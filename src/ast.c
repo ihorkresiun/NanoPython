@@ -322,6 +322,7 @@ static void ast_fprint(Ast* node, FILE* f, int indent) {
         break;
         case AST_IF:
             fprintf(f, "If Statement:\n");
+
             fprintf(f, "Condition:\n");
             ast_fprint(node->If.condition, f, indent + 1);
             fprintf(f, "Then:\n");
@@ -333,15 +334,19 @@ static void ast_fprint(Ast* node, FILE* f, int indent) {
         break;
         case AST_WHILE:
             fprintf(f, "While Loop:\n");
+            print_indent(f, indent);
             fprintf(f, "Condition:\n");
             ast_fprint(node->While.condition, f, indent + 1);
+            print_indent(f, indent);
             fprintf(f, "Body:\n");
             ast_fprint(node->While.body, f, indent + 2);
         break;
         case AST_FOR:
             fprintf(f, "For Loop: %s in\n", node->For.var);
+            print_indent(f, indent);
             fprintf(f, "Iterable:\n");
             ast_fprint(node->For.iterable, f, indent + 1);
+            print_indent(f, indent);
             fprintf(f, "Body:\n");
             ast_fprint(node->For.body, f, indent + 2);
         break;
@@ -360,8 +365,10 @@ static void ast_fprint(Ast* node, FILE* f, int indent) {
         case AST_DICT:
             fprintf(f, "Dict:\n");
             for (int i = 0; i < node->Dict.count; i++) {
+                print_indent(f, indent);
                 fprintf(f, "Key:\n");
                 ast_fprint(node->Dict.keys[i], f, indent + 2);
+                print_indent(f, indent);
                 fprintf(f, "Value:\n");
                 ast_fprint(node->Dict.values[i], f, indent + 2);
             }
@@ -380,17 +387,22 @@ static void ast_fprint(Ast* node, FILE* f, int indent) {
         break;
         case AST_INDEX:
             fprintf(f, "Indexing:\n");
+            print_indent(f, indent);
             fprintf(f, "Target:\n");
             ast_fprint(node->Index.target, f, indent + 1);
+            print_indent(f, indent);
             fprintf(f, "Index:\n");
             ast_fprint(node->Index.index, f, indent + 1);
         break;
         case AST_ASSIGN_INDEX:
             fprintf(f, "Index Assignment:\n");
+            print_indent(f, indent);
             fprintf(f, "Target:\n");
             ast_fprint(node->AssignIndex.target, f, indent + 1);
+            print_indent(f, indent);
             fprintf(f, "Index:\n");
             ast_fprint(node->AssignIndex.index, f, indent + 1);
+            print_indent(f, indent);
             fprintf(f, "Value:\n");
             ast_fprint(node->AssignIndex.value, f, indent + 1);
         break;

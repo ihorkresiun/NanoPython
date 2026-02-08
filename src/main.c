@@ -25,51 +25,76 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-
 static int mode_repl() {
-    // REPL mode
     printf("NanoPython REPL v%s\n", NP_VERSION);
     printf("Type 'exit()' to quit\n\n");
     
-    char line[1024];
+    char buffer[1024];
     VM vm;
+    Compiler compiler;
     int vm_initialized = 0;
+    
+    // Initialize compiler once - it will accumulate bytecode
+    compiler_init(&compiler);
     
     while (1) {
         printf(">>> ");
         fflush(stdout);
         
-        if (!fgets(line, sizeof(line), stdin)) {
+        if (!fgets(buffer, sizeof(buffer), stdin)) {
             break;
         }
         
-        // Remove trailing newline
-        size_t len = strlen(line);
-        if (len > 0 && line[len - 1] == '\n') {
-            line[len - 1] = '\0';
-        }
-        
+        int len = strlen(buffer);
         // Skip empty lines
-        if (strlen(line) == 0) {
+        if (len == 0) {
             continue;
+        }
+    
+        if (buffer[len - 2] == ':') {
+            // Multi-line block mode
+
+            char line[128];
+            
+            while (1) {
+                printf("... ");
+                fflush(stdout);
+                
+                if (!fgets(line, sizeof(line), stdin)) {
+                    break;
+                }
+
+                strcat(buffer, line);
+
+                // Empty line ends block
+                if (line[0] == '\n') {
+                    break;
+                }
+            }
         }
         
         // Parse and execute
         Lexer lexer = {0};
         Parser parser = {&lexer, {0}};
         
-        lexer_init(&lexer, line);
-        parser_init(&parser, line);
-        Ast* tree = parse_program(&parser);
+        lexer_init(&lexer, buffer);
+        parser_init(&parser, buffer);
+        
+        Ast* tree = parse_statement(&parser);
         
         if (!tree) {
             printf("Syntax error\n");
             continue;
         }
         
-        Compiler compiler;
-        compiler_init(&compiler);
+        // Compile using the same compiler instance (accumulates bytecode)
+        // Start IP to execute new portion of bytecode is current bytecode count
+        int start_ip = compiler.bytecode->count;
         Bytecode* bytecode = compile(&compiler, tree);
+
+        if (NP_DEBUG > 0) {
+            bytecode_disasm(bytecode, "repl_bytecode.txt");
+        }
         
         if (!bytecode) {
             printf("Compilation error\n");
@@ -77,16 +102,16 @@ static int mode_repl() {
             continue;
         }
         
-        // Initialize VM on first use, otherwise reuse it
+        // Initialize VM on first use
         if (!vm_initialized) {
             vm_init(&vm, bytecode);
             register_native_functions(&vm);
             vm_initialized = 1;
+        } else {
+            // VM already has reference to the same bytecode
+            // Just reset IP to execute new instructions
+            vm.ip = start_ip;
         }
-        
-        // Update VM to use new bytecode
-        vm.bytecode = bytecode;
-        vm.ip = 0;
         
         // Execute and check if value left on stack
         int old_sp = vm.sp;
@@ -101,6 +126,9 @@ static int mode_repl() {
         
         ast_free(tree);
     }
+    
+    printf("Goodbye!\n");
+    return 0;
 }
 
 static int mode_file(const char* source_file) {

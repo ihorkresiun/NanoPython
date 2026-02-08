@@ -44,6 +44,7 @@ static void patch_jump(Compiler* compiler, int jump_pos, int jump_target) {
 }
 
 static int add_constant(Compiler* compiler, Value value) {
+    // TODO: use a hash map to avoid O(n) lookups for existing constants
     Bytecode* bytecode = compiler->bytecode;
 
     // Check for existing constant
@@ -210,6 +211,59 @@ static void compile_node(Compiler* compiler, Ast* node) {
             int exit_jump = emit_jump(compiler, OP_JUMP_IF_ZERO);
 
             compile_node(compiler, node->While.body);
+            emit(compiler, OP_JUMP, loop_start);
+
+            int loop_end = compiler->bytecode->count;
+            patch_jump(compiler, exit_jump, loop_end);
+            patch_break_jumps(compiler, loop_end);
+            pop_loop(compiler);
+        }
+        break;
+
+        case AST_FOR: {
+            // for var in iterable:
+            //   body
+            // Compiles to:
+            // iterable
+            // GET_ITER
+            // loop_start:
+            //   FOR_ITER exit_jump
+            //   STORE var
+            //   body
+            //   JUMP loop_start
+            // exit_jump:
+
+            // Add native function for making iterators to constants (if not already added)
+            // It's already in the global scope, so we can not emit OP_STORE
+            int fn_make_iter = add_constant(compiler, make_const_string("native_make_iterator"));
+            int fn_iter_next = add_constant(compiler, make_const_string("native_iterator_next"));
+
+            // Add loop variable name to constants
+            int for_var_idx = add_constant(compiler, make_const_string(node->For.var));
+            // Load loop variable name onto stack for use in native_make_iterator and loop initialization
+            emit(compiler, OP_CONST, for_var_idx);
+
+            // Compile iterable expression and call native_make_iterator on it before starting the loop
+            compile_node(compiler, node->For.iterable);
+
+            // Call native_make_iterator(iterable, var_name) to get iterator object
+            emit(compiler, OP_LOAD, fn_make_iter);
+            emit(compiler, OP_CALL, 2); // Pass both the iterable and the loop variable for initialization
+            // The native_make_iterator function will create an iterator object and store it in the loop variable for use in the loop body
+            
+            // Start of loop
+            int loop_start = compiler->bytecode->count;
+            push_loop(compiler, loop_start);
+
+            // Load iterator object onto stack for native_iterator_next call
+            emit(compiler, OP_LOAD, for_var_idx); 
+            // Get next item and check if iteration is done
+            emit(compiler, OP_LOAD, fn_iter_next);
+            emit(compiler, OP_CALL, 1); // Pass the iterator to get the next item
+
+            int exit_jump = emit_jump(compiler, OP_JUMP_IF_ZERO);
+
+            compile_node(compiler, node->For.body);
             emit(compiler, OP_JUMP, loop_start);
 
             int loop_end = compiler->bytecode->count;

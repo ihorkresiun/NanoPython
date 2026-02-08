@@ -3,6 +3,7 @@
 #include "hashmap.h"
 #include "intern_string.h"
 #include "vars.h"
+#include "vm_config.h"
 #include "vm_objects.h"
 
 #include "stdio.h"
@@ -33,10 +34,47 @@ static void op_get_attr(VM* vm, int operand);
 static void op_set_attr(VM* vm, int operand);
 static void op_call_method(VM* vm, int operand);
 
+typedef struct {
+    Opcode opcode;
+    const char* name;
+} OpcodeInfo;
+
+static OpcodeInfo opcode_info[] = {
+    {OP_NOP, "NOP"},
+    {OP_LOAD, "LOAD"},
+    {OP_STORE, "STORE"},
+    {OP_ADD, "ADD"},
+    {OP_SUB, "SUB"},
+    {OP_MUL, "MUL"},
+    {OP_DIV, "DIV"},
+    {OP_EQ, "EQ"},
+    {OP_LT, "LT"},
+    {OP_GT, "GT"},
+    {OP_GE, "GE"},
+    {OP_LE, "LE"},
+    {OP_JUMP, "JUMP"},
+    {OP_JUMP_IF_ZERO, "JUMP_IF_ZERO"},
+    {OP_CONST, "CONST"},
+    {OP_POP, "POP"},
+    {OP_CALL, "CALL"},
+    {OP_RET, "RET"},
+    {OP_IDX_GET, "IDX_GET"},
+    {OP_IDX_SET, "IDX_SET"},
+    {OP_MAKE_CLASS, "MAKE_CLASS"},
+    {OP_MAKE_INSTANCE, "MAKE_INSTANCE"},
+    {OP_GET_ATTR, "GET_ATTR"},
+    {OP_SET_ATTR, "SET_ATTR"},
+    {OP_CALL_METHOD, "CALL_METHOD"},
+    {OP_HALT, "HALT"}
+};
+
 void vm_run(VM* vm) 
 {
     while (1) {
         Instruction instr = vm->bytecode->instructions[vm->ip++];
+        if (VM_DEBUG > 1) {
+            printf("Executing instruction at ip=%d: %s %d\n", vm->ip - 1, opcode_info[instr.opcode].name, instr.operand);
+        }
         switch (instr.opcode) {
             case OP_CONST: op_const_to_stack(vm, instr.operand); break;
             case OP_POP: vm_pop(vm); break;
@@ -125,7 +163,7 @@ void vm_debug_stack(VM* vm) {
 
 void vm_push(VM* vm, Value value) {
     if (vm->sp >= VM_STACK_SIZE - 1) {
-        printf("Stack overflow at ip=%d\n", vm->ip);
+        printf("Stack overflow at ip=%d\n", vm->ip - 1);
         printf("Current stack size: %d\n", vm->sp);
         vm_debug_stack(vm);
         exit(1);
@@ -135,7 +173,7 @@ void vm_push(VM* vm, Value value) {
 
 Value vm_pop(VM* vm) {
     if (vm->sp <= 0) {
-        printf("Stack underflow at ip=%d\n", vm->ip);
+        printf("Stack underflow at ip=%d\n", vm->ip - 1);
         printf("Current stack size: %d\n", vm->sp);
         vm_debug_stack(vm);
         exit(1);
@@ -255,7 +293,9 @@ static void op_load_global(VM* vm, int operand) {
     Value value = scope_find(vm->scope, as_string(name_val));
     if (value.type == VAL_NONE) {
         printf("Undefined global variable: %s\n", as_string(name_val)->chars);
-        vm_debug_scope(vm);
+        if (VM_DEBUG > 0) {
+            vm_debug_scope(vm);
+        }
         exit(1);
     }
     vm_push(vm, value);

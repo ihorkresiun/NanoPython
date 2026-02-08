@@ -1,6 +1,8 @@
 #ifndef __INC_VM_CONFIG_H__
 #define __INC_VM_CONFIG_H__
 
+#define VM_DEBUG                (0) // Set to 1 to enable basic debug output, 2 for more verbose debug output
+
 #define VM_STACK_SIZE           (1024)
 #define VM_CALL_STACK_SIZE      (64)
 

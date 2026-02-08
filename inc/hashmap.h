@@ -5,10 +5,11 @@
 
 #include "stdint.h"
 
+#define HASH_MAX_LOAD_FACTOR 0.75
+
 typedef struct HashNode {
     ObjString* key;
     Value value;
-    
     struct HashNode* next;
 } HashNode;
 
@@ -24,6 +25,6 @@ int hash_get(HashMap* map, ObjString* key, Value* out_value);
 
 uint32_t hash_string(const char* str);
 
-void hash_debug_print(HashMap* map);
+void hash_print(HashMap* map);
 
 #endif // __HASHMAP_H__

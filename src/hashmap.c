@@ -26,6 +26,29 @@ uint32_t hash_string(const char* str){
     return hash;
 }
 
+static void hash_resize(HashMap* map, int new_capacity) {
+    HashNode* old_nodes = map->nodes;
+    int old_capacity = map->capacity;
+
+    map->capacity = new_capacity;
+    map->count = 0;
+    map->nodes = malloc(sizeof(HashNode) * new_capacity);
+    for (int i = 0; i < new_capacity; i++) {
+        map->nodes[i].key = NULL;
+        map->nodes[i].value = (Value){0};
+        map->nodes[i].next = NULL;
+    }
+
+    for (int i = 0; i < old_capacity; i++) {
+        HashNode* node = &old_nodes[i];
+        while (node != NULL && node->key != NULL) {
+            hash_set(map, node->key, node->value);
+            node = node->next;
+        }
+    }
+    free(old_nodes);
+}
+
 void hash_set(HashMap* map, ObjString* key, Value value) {
     uint32_t index = hash_string(key->chars) & (map->capacity - 1);
     HashNode* node = &map->nodes[index];
@@ -55,6 +78,10 @@ void hash_set(HashMap* map, ObjString* key, Value value) {
         node->next = new_node;
         map->count++;
     }
+
+    if (map->count > map->capacity * HASH_MAX_LOAD_FACTOR) {
+        hash_resize(map, map->capacity * 2);
+    }
 }
 
 int hash_get(HashMap* map, ObjString* key, Value* out_value) {
@@ -71,7 +98,7 @@ int hash_get(HashMap* map, ObjString* key, Value* out_value) {
     return 0; // Not found
 }
 
-void hash_debug_print(HashMap* map) {
+void hash_print(HashMap* map) {
     for (int i = 0; i < map->capacity; i++) {
         HashNode* node = &map->nodes[i];
         if (node->key != NULL) {

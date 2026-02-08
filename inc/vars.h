@@ -27,6 +27,7 @@ typedef enum {
     OBJ_NATIVE_FUNCTION,
     OBJ_CLASS,
     OBJ_INSTANCE,
+    OBJ_ITERATOR
 }ObjectType;
 
 typedef struct Obj {
@@ -109,6 +110,12 @@ typedef struct ObjInstance {
     HashMap* fields;  // Map of field name -> Value
 } ObjInstance;
 
+typedef struct ObjIterator {
+    Obj obj;
+    Value iterable;
+    Value current;
+    int index;
+} ObjIterator;
 
 typedef struct Scope {
     const char * name;

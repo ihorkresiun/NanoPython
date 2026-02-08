@@ -109,3 +109,13 @@ Value vm_make_instance(VM* vm, ObjClass* klass) {
     v.as.object = (Obj*)instance;
     return v;
 }
+
+Value vm_make_iterator(VM* vm, Value iterable) {
+    ObjIterator* iterator = (ObjIterator*)vm_alloc_object(vm, sizeof(ObjIterator), OBJ_ITERATOR);
+    iterator->iterable = iterable;
+    iterator->index = 0;
+    Value v;
+    v.type = VAL_OBJ;
+    v.as.object = (Obj*)iterator;
+    return v;
+}

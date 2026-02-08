@@ -15,5 +15,6 @@ Value vm_make_tuple(VM* vm);
 Value vm_make_set(VM* vm);
 Value vm_make_class(VM* vm, const char* name, ObjClass* parent);
 Value vm_make_instance(VM* vm, ObjClass* klass);
+Value vm_make_iterator(VM* vm, Value iterable);
 
 #endif // __INC_VM_OBJECTS_H__

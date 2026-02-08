@@ -27,5 +27,7 @@ Value native_make_dict(int arg_count, Value* args, VM* vm);
 Value native_make_set(int arg_count, Value* args, VM* vm);
 Value native_make_tuple(int arg_count, Value* args, VM* vm);
 
+Value native_make_iterator(int arg_count, Value* args, VM* vm);
+Value native_iterator_next(int arg_count, Value* args, VM* vm);
 
 #endif // __INC_NATIVE_FUNC_H__

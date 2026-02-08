@@ -97,9 +97,6 @@ Value make_none() {
     return (Value){.type = VAL_NONE};
 }
 
-
-
-
 void print_token_type(TokenType token) {
     switch (token) {
         case TOKEN_EOF: printf("EOF"); break;
@@ -277,8 +274,11 @@ void print_value(Value v) {
             } else if (v.as.object->type == OBJ_INSTANCE) {
                 ObjInstance* instance = (ObjInstance*)v.as.object;
                 printf("<%s instance>", instance->klass->name);
+            } else if (v.as.object->type == OBJ_ITERATOR) {
+                ObjIterator* iterator = (ObjIterator*)v.as.object;
+                print_value(iterator->current);
             } else {
-                printf("<Unknown object type %d>", v.as.object->type);
+                printf("<unknown object type %d>", v.as.object->type);
             }
 
         break;

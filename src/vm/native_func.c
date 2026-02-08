@@ -26,6 +26,8 @@ void register_native_functions(VM* vm) {
     vm_register_native_functions(vm, "native_make_list", native_make_list);
     vm_register_native_functions(vm, "native_make_set", native_make_set);
     vm_register_native_functions(vm, "native_make_tuple", native_make_tuple);
+    vm_register_native_functions(vm, "native_make_iterator", native_make_iterator);
+    vm_register_native_functions(vm, "native_iterator_next", native_iterator_next);
 }
 
 Value native_print(int arg_count, Value* args, VM* vm) {
@@ -358,4 +360,117 @@ Value native_make_tuple(int arg_count, Value* args, VM* vm) {
     }
 
     return tuple_val;
+}
+
+Value native_make_iterator(int arg_count, Value* args, VM* vm) {
+    if (arg_count != 2) {
+        printf("native_make_iterator() takes exactly 2 arguments (iterable and loop variable name)\n");
+        exit(1);
+    }
+    
+    Value iterable = args[1];
+    if (!is_obj_type(iterable, OBJ_LIST) && 
+        !is_obj_type(iterable, OBJ_DICT) && 
+        !is_obj_type(iterable, OBJ_SET) && 
+        !is_obj_type(iterable, OBJ_TUPLE)) {
+        printf("native_make_iterator() first argument must be a list, dict, set, or tuple\n");
+        exit(1);
+    }
+    Value var_name_val = args[0];
+    if (!is_obj_type(var_name_val, OBJ_STRING)) {
+        printf("native_make_iterator() second argument must be a string (loop variable name)\n");
+        exit(1);
+    }
+    ObjString* var_name = as_string(var_name_val);
+
+    Value iterator = vm_make_iterator(vm, iterable);
+
+    scope_set(vm->scope, var_name, iterator);
+    return iterator;
+}
+
+
+static Value iterator_get_current(Value iterator_val) {
+    if (!is_obj_type(iterator_val, OBJ_ITERATOR)) {
+        printf("Expected an iterator object\n");
+        exit(1);
+    }
+    ObjIterator* iterator = (ObjIterator*)iterator_val.as.object;
+    Value iterable = iterator->iterable;
+
+    if (is_obj_type(iterable, OBJ_LIST)) {
+        ObjList* list = (ObjList*)iterable.as.object;
+        if (iterator->index >= list->count) {
+            return make_none(); // Signal end of iteration
+        }
+        Value item = list->items[iterator->index];
+        return item;
+    }
+
+    if (is_obj_type(iterable, OBJ_TUPLE)) {
+        ObjTuple* tuple = (ObjTuple*)iterable.as.object;
+        if (iterator->index >= tuple->count) {
+            return make_none(); // Signal end of iteration
+        }
+        Value item = tuple->items[iterator->index];
+        return item;
+    }
+
+    if (is_obj_type(iterable, OBJ_DICT)) {
+        ObjDict* dict = (ObjDict*)iterable.as.object;
+        if (iterator->index >= dict->count) {
+            return make_none(); // Signal end of iteration
+        }
+        // Iterate over keys in the dictionary
+        int count = 0;
+        for (int i = 0; i < dict->map->capacity; i++) {
+            HashNode* node = &dict->map->nodes[i];
+            while (node) {
+                if (count == iterator->index) {
+                    Value key_val = {.type = VAL_OBJ, .as.object = (Obj*)node->key};
+                    return key_val; // Return key as string
+                }
+                count++;
+                node = node->next;
+            }
+        }
+    }
+
+    if (is_obj_type(iterable, OBJ_SET)) {
+        ObjSet* set = (ObjSet*)iterable.as.object;
+        if (iterator->index >= set->count) {
+            return make_none(); // Signal end of iteration
+        }
+        // Iterate over keys in the set's underlying map
+        int count = 0;
+        for (int i = 0; i < set->map->capacity; i++) {
+            HashNode* node = &set->map->nodes[i];
+            while (node) {
+                if (count == iterator->index) {
+                    return node->value; // Return the value stored in the set
+                }
+                count++;
+                node = node->next;
+            }
+        }
+    }
+}
+
+Value native_iterator_next(int arg_count, Value* args, VM* vm) {
+    if (arg_count != 1) {
+        printf("native_iterator_next() takes exactly 1 argument (iterator object)\n");
+        exit(1);
+    }
+    Value iter_val = args[0];
+    if (!is_obj_type(iter_val, OBJ_ITERATOR)) {
+        printf("native_iterator_next() argument must be an iterator object, not %d\n", iter_val.type);
+        exit(1);
+    }
+    ObjIterator* iterator = (ObjIterator*)iter_val.as.object;
+    iterator->current = iterator_get_current(iter_val);
+    if (iterator->current.type == VAL_NONE) {
+        return iterator->current; // Signal end of iteration
+    }
+    iterator->index++; // Move to next item for the next call
+    return iterator->current;
 }

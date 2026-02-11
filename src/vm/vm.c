@@ -376,10 +376,20 @@ static void op_call(VM* vm, int operand)
         // Create instance
         Value instance_val = vm_make_instance(vm, klass);
         
-        // Look for __init__ method
+        // Look for __init__ method in class and parent classes
         ObjString* init_name = intern_const_string(vm, "__init__", 8);
         Value init_method;
         int has_init = hash_get(klass->methods, init_name, &init_method);
+        
+        // If not found in current class, search parent classes
+        if (!has_init) {
+            ObjClass* parent = klass->parent;
+            while (parent && !has_init) {
+                has_init = hash_get(parent->methods, init_name, &init_method);
+                if (has_init) break;
+                parent = parent->parent;
+            }
+        }
         
         if (has_init && is_obj_type(init_method, OBJ_FUNCTION)) {
             // Call __init__ with instance as first argument

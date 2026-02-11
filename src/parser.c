@@ -657,8 +657,6 @@ static Ast* parse_import(Parser* p) {
     return ast_new_import(module_name);
 }
 
-static Ast* parse_assignment_or_expr(Parser* p);
-
 static Ast* parse_ident(Parser* p) {
     Token tok = p->current;
     if (tok.type == TOKEN_IDENT) {
@@ -670,34 +668,59 @@ static Ast* parse_ident(Parser* p) {
         }
 
         if (p->next.type == TOKEN_ASSIGN) {
-            // Assignment to variable
+            // Collect all identifiers in the chain: a = b = c = value
+            char** idents = malloc(sizeof(char*));
+            int ident_count = 0;
+            
+            // First identifier
+            idents[ident_count++] = strdup(tok.ident);
             parser_eat(p, TOKEN_IDENT);
             parser_eat(p, TOKEN_ASSIGN);
-
-            // Parse the expression on the right side, which might be another assignment
-            Ast* value = parse_assignment_or_expr(p);
-            return ast_new_assign(tok.ident, value);
+            
+            // Collect remaining identifiers in the chain
+            while (p->current.type == TOKEN_IDENT && p->next.type == TOKEN_ASSIGN) {
+                idents = realloc(idents, sizeof(char*) * (ident_count + 1));
+                idents[ident_count++] = strdup(p->current.ident);
+                parser_eat(p, TOKEN_IDENT);
+                parser_eat(p, TOKEN_ASSIGN);
+            }
+            
+            // Now parse the actual value (right-most expression)
+            Ast* value = parse_logic_or(p);
+            
+            // If only one identifier, return simple assignment
+            if (ident_count == 1) {
+                Ast* result = ast_new_assign(idents[0], value);
+                free(idents);
+                return result;
+            }
+            
+            // Multiple identifiers: create a block with assignments
+            // For a = b = c = 10, generate:
+            //   c = 10
+            //   b = c  
+            //   a = b
+            Ast** statements = malloc(sizeof(Ast*) * ident_count);
+            
+            // First assignment (rightmost variable) gets the actual value
+            statements[0] = ast_new_assign(idents[ident_count - 1], value);
+            
+            // Subsequent assignments copy from previous variable (right to left)
+            for (int i = 1; i < ident_count; i++) {
+                statements[i] = ast_new_assign(idents[ident_count - 1 - i], 
+                                              ast_new_var(idents[ident_count - i]));
+            }
+            
+            // Free the idents array (strdup'd strings are now owned by AST nodes)
+            free(idents);
+            
+            // Return a block containing all assignments
+            return ast_new_block(statements, ident_count);
         }
         
         // Not an assignment, parse as expression, a + b, a + 1 etc.
         return parse_logic_or(p);
     }
-}
-
-static Ast* parse_assignment_or_expr(Parser* p) {
-    // Check if this is an identifier followed by '='
-    if (p->current.type == TOKEN_IDENT && p->next.type == TOKEN_ASSIGN) {
-        Token tok = p->current;
-        parser_eat(p, TOKEN_IDENT);
-        parser_eat(p, TOKEN_ASSIGN);
-        
-        // Recursively parse the right side (supports chained assignments)
-        Ast* value = parse_assignment_or_expr(p);
-        return ast_new_assign(tok.ident, value);
-    }
-    
-    // Otherwise, parse as regular expression
-    return parse_logic_or(p);
 }
 
 Ast* parse_statement(Parser* p) {

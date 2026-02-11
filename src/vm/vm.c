@@ -294,7 +294,6 @@ static void op_store_global(VM* vm, int operand) {
         exit(1);
     }
     scope_set(vm->scope, as_string(name_val), v);
-    vm_push(vm, v); // Push back the value to keep it on stack after STORE
 }
 
 static void op_load_global(VM* vm, int operand) {

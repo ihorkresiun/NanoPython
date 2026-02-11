@@ -157,6 +157,10 @@ void patch_break_jumps(Compiler* compiler, int break_target) {
 }
 
 static void compile_node(Compiler* compiler, Ast* node) {
+    if (!node) {
+        printf("ERROR: Trying to compile NULL node\n");
+        exit(1);
+    }
     switch (node->type) {
         case AST_NUMBER: {
             int idx = add_constant(compiler, make_number_int(node->NumberInt.value));
@@ -173,6 +177,34 @@ static void compile_node(Compiler* compiler, Ast* node) {
         case AST_STRING: {
             int idx = add_constant(compiler, make_const_string(node->String.value));
             emit(compiler, OP_CONST, idx);
+        }
+        break;
+
+        case AST_UNARY: {
+            compile_node(compiler, node->Unary.value);
+            switch (node->Unary.op) {
+                case TOKEN_MINUS: {
+                    // Unary minus: negate the value
+                    // Push -1 and multiply
+                    int neg_one = add_constant(compiler, make_number_int(-1));
+                    emit(compiler, OP_CONST, neg_one);
+                    emit(compiler, OP_MUL, 0);
+                    break;
+                }
+                case TOKEN_NOT: {
+                    // Logical NOT
+                    // For now, we'll implement it as: if value == 0 then 1 else 0
+                    // Push 0, compare for equality
+                    int zero = add_constant(compiler, make_number_int(0));
+                    emit(compiler, OP_CONST, zero);
+                    emit(compiler, OP_EQ, 0);
+                    break;
+                }
+                default:
+                    printf("Unsupported unary operator in compiler: %d\n", node->Unary.op);
+                    exit(1);
+                    break;
+            }
         }
         break;
 

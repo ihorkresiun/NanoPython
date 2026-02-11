@@ -242,9 +242,13 @@ static void op_sub(VM* vm) {
     Value b = vm_pop(vm);
     Value a = vm_pop(vm);
     Value result;
-    if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
+    if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
         result = make_number_float(a.as.floating - b.as.floating);
-    } else {
+    } else if (a.type == VAL_FLOAT && b.type == VAL_INT) {
+        result = make_number_float(a.as.floating - b.as.integer);
+    } else if (a.type == VAL_INT && b.type == VAL_FLOAT) {
+        result = make_number_float(a.as.integer - b.as.floating);
+    } else if (a.type == VAL_INT && b.type == VAL_INT) {
         result = make_number_int(a.as.integer - b.as.integer);
     }
     vm_push(vm, result);
@@ -254,9 +258,13 @@ static void op_mul(VM* vm) {
     Value b = vm_pop(vm);
     Value a = vm_pop(vm);
     Value result;
-    if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
+    if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
         result = make_number_float(a.as.floating * b.as.floating);
-    } else {
+    } else if (a.type == VAL_FLOAT && b.type == VAL_INT) {
+        result = make_number_float(a.as.floating * b.as.integer);
+    } else if (a.type == VAL_INT && b.type == VAL_FLOAT) {
+        result = make_number_float(a.as.integer * b.as.floating);
+    } else if (a.type == VAL_INT && b.type == VAL_INT) {
         result = make_number_int(a.as.integer * b.as.integer);
     }
     vm_push(vm, result);
@@ -266,9 +274,13 @@ static void op_div(VM* vm) {
     Value b = vm_pop(vm);
     Value a = vm_pop(vm);
     Value result;
-    if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
+    if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
         result = make_number_float(a.as.floating / b.as.floating);
-    } else {
+    } else if (a.type == VAL_FLOAT && b.type == VAL_INT) {
+        result = make_number_float(a.as.floating / b.as.integer);
+    } else if (a.type == VAL_INT && b.type == VAL_FLOAT) {
+        result = make_number_float(a.as.integer / b.as.floating);
+    } else if (a.type == VAL_INT && b.type == VAL_INT) {
         result = make_number_int(a.as.integer / b.as.integer);
     }
     vm_push(vm, result);

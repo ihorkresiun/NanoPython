@@ -657,11 +657,14 @@ static Ast* parse_import(Parser* p) {
     return ast_new_import(module_name);
 }
 
+static Ast* parse_assignment_or_expr(Parser* p);
+
 static Ast* parse_ident(Parser* p) {
     Token tok = p->current;
     if (tok.type == TOKEN_IDENT) {
 
         if (token_endline_or_eof(p->next.type)) {
+            parser_eat(p, TOKEN_IDENT);
             // Just a variable reference
             return ast_new_var(tok.ident);
         }
@@ -671,14 +674,30 @@ static Ast* parse_ident(Parser* p) {
             parser_eat(p, TOKEN_IDENT);
             parser_eat(p, TOKEN_ASSIGN);
 
-            // Parse the expression on the right side
-            Ast* value = parse_logic_or(p);
+            // Parse the expression on the right side, which might be another assignment
+            Ast* value = parse_assignment_or_expr(p);
             return ast_new_assign(tok.ident, value);
         }
         
         // Not an assignment, parse as expression, a + b, a + 1 etc.
         return parse_logic_or(p);
     }
+}
+
+static Ast* parse_assignment_or_expr(Parser* p) {
+    // Check if this is an identifier followed by '='
+    if (p->current.type == TOKEN_IDENT && p->next.type == TOKEN_ASSIGN) {
+        Token tok = p->current;
+        parser_eat(p, TOKEN_IDENT);
+        parser_eat(p, TOKEN_ASSIGN);
+        
+        // Recursively parse the right side (supports chained assignments)
+        Ast* value = parse_assignment_or_expr(p);
+        return ast_new_assign(tok.ident, value);
+    }
+    
+    // Otherwise, parse as regular expression
+    return parse_logic_or(p);
 }
 
 Ast* parse_statement(Parser* p) {

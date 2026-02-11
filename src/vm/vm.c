@@ -554,6 +554,7 @@ static void op_index_set(VM* vm) {
             exit(1);
         }
         list->items[index] = value;
+        return;
     }
 
     if (is_obj_type(container, OBJ_DICT)) {

@@ -385,10 +385,14 @@ Value native_make_iterator(int arg_count, Value* args, VM* vm) {
 
     Value iterator = vm_make_iterator(vm, iterable);
 
-    scope_set(vm->scope, var_name, iterator);
+    // Store iterator in internal variable __iter_<varname>
+    char iter_var_name[256];
+    snprintf(iter_var_name, sizeof(iter_var_name), "__iter_%s", var_name->chars);
+    ObjString* iter_var = (ObjString*)vm_make_string(vm, iter_var_name).as.object;
+    scope_set(vm->scope, iter_var, iterator);
+    
     return iterator;
 }
-
 
 static Value iterator_get_current(Value iterator_val) {
     if (!is_obj_type(iterator_val, OBJ_ITERATOR)) {
@@ -458,19 +462,36 @@ static Value iterator_get_current(Value iterator_val) {
 
 Value native_iterator_next(int arg_count, Value* args, VM* vm) {
     if (arg_count != 1) {
-        printf("native_iterator_next() takes exactly 1 argument (iterator object)\n");
+        printf("native_iterator_next() takes exactly 1 argument (loop variable name)\n");
         exit(1);
     }
-    Value iter_val = args[0];
+    Value var_name_val = args[0];
+    if (!is_obj_type(var_name_val, OBJ_STRING)) {
+        printf("native_iterator_next() argument must be a string (loop variable name)\n");
+        exit(1);
+    }
+    ObjString* var_name = as_string(var_name_val);
+    
+    // Get iterator from __iter_<varname>
+    char iter_var_name[256];
+    snprintf(iter_var_name, sizeof(iter_var_name), "__iter_%s", var_name->chars);
+    ObjString* iter_var = (ObjString*)vm_make_string(vm, iter_var_name).as.object;
+    Value iter_val = scope_find(vm->scope, iter_var);
+    
     if (!is_obj_type(iter_val, OBJ_ITERATOR)) {
-        printf("native_iterator_next() argument must be an iterator object, not %d\n", iter_val.type);
+        printf("native_iterator_next() could not find iterator for variable %s\n", var_name->chars);
         exit(1);
     }
+    
     ObjIterator* iterator = (ObjIterator*)iter_val.as.object;
     iterator->current = iterator_get_current(iter_val);
     if (iterator->current.type == VAL_NONE) {
         return iterator->current; // Signal end of iteration
     }
+    
+    // Store current value in the actual loop variable
+    scope_set(vm->scope, var_name, iterator->current);
+    
     iterator->index++; // Move to next item for the next call
     return iterator->current;
 }

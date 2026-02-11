@@ -284,11 +284,11 @@ static void compile_node(Compiler* compiler, Ast* node) {
             int loop_start = compiler->bytecode->count;
             push_loop(compiler, loop_start);
 
-            // Load iterator object onto stack for native_iterator_next call
-            emit(compiler, OP_LOAD, for_var_idx); 
+            // Pass loop variable name to native_iterator_next
+            emit(compiler, OP_CONST, for_var_idx); 
             // Get next item and check if iteration is done
             emit(compiler, OP_LOAD, fn_iter_next);
-            emit(compiler, OP_CALL, 1); // Pass the iterator to get the next item
+            emit(compiler, OP_CALL, 1); // Pass the variable name to get the next item
 
             int exit_jump = emit_jump(compiler, OP_JUMP_IF_ZERO);
 

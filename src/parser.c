@@ -320,7 +320,7 @@ static Ast* parse_factor(Parser* p) {
         }
     }
 
-    printf("Unknown factor %d\n", op);
+    printf("Unknown factor %d, line %d, column %d\n", op, p->current.line, p->current.col);
     exit(1);
     return NULL;
 }

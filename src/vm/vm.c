@@ -303,13 +303,6 @@ static void op_load_global(VM* vm, int operand) {
         exit(1);
     }
     Value value = scope_find(vm->scope, as_string(name_val));
-    if (value.type == VAL_NONE) {
-        printf("Undefined global variable: %s\n", as_string(name_val)->chars);
-        if (VM_DEBUG > 0) {
-            vm_debug_scope(vm);
-        }
-        exit(1);
-    }
     vm_push(vm, value);
 }
 

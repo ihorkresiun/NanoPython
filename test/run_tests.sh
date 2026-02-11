@@ -18,13 +18,11 @@ fi
 
 # Paths
 BUILD_DIR="../build"
-COMPILER="$BUILD_DIR/NanoPythonCompiler"
-VM="$BUILD_DIR/NanoPythonVM"
-BYTECODE="test.bcd"
+NANOPYTHON="$BUILD_DIR/NanoPython"
 
-# Check if executables exist
-if [ ! -f "$COMPILER" ] || [ ! -f "$VM" ]; then
-    echo -e "${RED}Error: Compiler or VM not found${NC}"
+# Check if executable exists
+if [ ! -f "$NANOPYTHON" ]; then
+    echo -e "${RED}Error: NanoPython executable not found${NC}"
     echo "Please build the project first"
     exit 1
 fi
@@ -46,25 +44,14 @@ for test_file in test_*.py; do
         echo -e "${YELLOW}Running:${NC} $test_file"
         echo "---------------------------------------"
         
-        # Compile
-        $COMPILER "$test_file" "$BYTECODE" 2>&1 > /dev/null
-        compile_status=$?
-        
-        if [ $compile_status -ne 0 ]; then
-            echo -e "${RED}✗ FAILED${NC} - Compilation error"
-            failed=$((failed + 1))
-            echo
-            continue
-        fi
-        
-        # Run
-        $VM "$BYTECODE" 2>&1
+        # Run with integrated NanoPython
+        $NANOPYTHON "$test_file" 2>&1
         run_status=$?
         
         if [ $run_status -eq 0 ]; then
             echo -e "${GREEN}✓ PASSED${NC}"
             passed=$((passed + 1))
-        else:
+        else
             echo -e "${RED}✗ FAILED${NC} - Runtime error (exit code: $run_status)"
             failed=$((failed + 1))
         fi
@@ -72,9 +59,6 @@ for test_file in test_*.py; do
         echo
     fi
 done
-
-# Clean up
-rm -f "$BYTECODE"
 
 # Print summary
 echo "======================================="

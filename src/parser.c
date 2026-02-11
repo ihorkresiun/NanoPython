@@ -28,6 +28,24 @@ static void parser_eat(Parser* p, TokenType type) {
     }
 }
 
+static void parser_eat_newlines(Parser* p) {
+    while (p->current.type == TOKEN_NEWLINE) {
+        parser_eat(p, TOKEN_NEWLINE);
+    }
+}
+
+static void parser_eat_indents(Parser* p) {
+    while (p->current.type == TOKEN_INDENT) {
+        parser_eat(p, TOKEN_INDENT);
+    }
+}
+
+static void parser_eat_dedents(Parser* p) {
+    while (p->current.type == TOKEN_DEDENT) {
+        parser_eat(p, TOKEN_DEDENT);
+    }
+}
+
 static Ast* parse_factor(Parser* p) {
     TokenType op = p->current.type;
 
@@ -74,17 +92,18 @@ static Ast* parse_factor(Parser* p) {
                 Ast** args = NULL;
                 int argc = 0;
                 
-                if (p->current.type != TOKEN_RPAREN) {
-                    while (1) {
-                        Ast* arg = parse_logic_or(p);
-                        args = realloc(args, sizeof(Ast*) * (argc + 1));
-                        args[argc++] = arg;
-                        
-                        if (p->current.type == TOKEN_COMMA) {
-                            parser_eat(p, TOKEN_COMMA);
-                        } else {
-                            break;
-                        }
+                while (p->current.type != TOKEN_RPAREN) {
+                    parser_eat_newlines(p);
+                    parser_eat_indents(p);
+                    Ast* arg = parse_logic_or(p);
+                    args = realloc(args, sizeof(Ast*) * (argc + 1));
+                    args[argc++] = arg;
+                    
+                    if (p->current.type == TOKEN_COMMA) {
+                        parser_eat(p, TOKEN_COMMA);
+                    } else {
+                        parser_eat_newlines(p);
+                        parser_eat_dedents(p);
                     }
                 }
                 parser_eat(p, TOKEN_RPAREN);
@@ -109,7 +128,15 @@ static Ast* parse_factor(Parser* p) {
 
         if (p->current.type == TOKEN_LBRACKET) {
             parser_eat(p, TOKEN_LBRACKET);
+
+            parser_eat_newlines(p);
+            parser_eat_indents(p);
+            
             Ast* index = parse_logic_or(p);
+
+            parser_eat_newlines(p);
+            parser_eat_dedents(p);
+
             parser_eat(p, TOKEN_RBRACKET);
 
             if (p->current.type != TOKEN_ASSIGN) {
@@ -128,6 +155,9 @@ static Ast* parse_factor(Parser* p) {
 
     if (op == TOKEN_LPAREN) {
         parser_eat(p, TOKEN_LPAREN);
+
+        parser_eat_newlines(p);
+        parser_eat_indents(p);
         
         // Empty tuple ()
         if (p->current.type == TOKEN_RPAREN) {
@@ -147,22 +177,21 @@ static Ast* parse_factor(Parser* p) {
             
             parser_eat(p, TOKEN_COMMA);
             
-            // Allow trailing comma for single element tuple: (1,)
-            if (p->current.type != TOKEN_RPAREN) {
-                while (1) {
-                    Ast* elem = parse_logic_or(p);
-                    elements = realloc(elements, sizeof(Ast*) * (count + 1));
-                    elements[count++] = elem;
+            while (p->current.type != TOKEN_RPAREN) {
+                // Skip newlines and indents between elements
+                parser_eat_newlines(p);
+                parser_eat_indents(p);
+                
+                Ast* elem = parse_logic_or(p);
+                elements = realloc(elements, sizeof(Ast*) * (count + 1));
+                elements[count++] = elem;
 
-                    if (p->current.type == TOKEN_COMMA) {
-                        parser_eat(p, TOKEN_COMMA);
-                        // Allow trailing comma
-                        if (p->current.type == TOKEN_RPAREN) {
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
+                if (p->current.type == TOKEN_COMMA) {
+                    parser_eat(p, TOKEN_COMMA);
+                } else {
+                    parser_eat_newlines(p);
+                    parser_eat_dedents(p);
+                    break;
                 }
             }
             
@@ -183,6 +212,10 @@ static Ast* parse_factor(Parser* p) {
         int count = 0;
 
         while (p->current.type != TOKEN_RBRACKET) {
+            // Skip newlines and indents between elements
+            parser_eat_newlines(p);
+            parser_eat_indents(p);
+            
             Ast* elem = parse_logic_or(p);
             elements = realloc(elements, sizeof(Ast*) * (count + 1));
             elements[count++] = elem;
@@ -190,6 +223,8 @@ static Ast* parse_factor(Parser* p) {
             if (p->current.type == TOKEN_COMMA) {
                 parser_eat(p, TOKEN_COMMA);
             } else {
+                parser_eat_newlines(p);
+                parser_eat_dedents(p);
                 break;
             }
         }
@@ -201,6 +236,9 @@ static Ast* parse_factor(Parser* p) {
     if (op == TOKEN_LBRACE) {
         // Dictionary or Set literal
         parser_eat(p, TOKEN_LBRACE);
+        // Skip newlines and indents before first element
+        parser_eat_newlines(p);
+        parser_eat_indents(p);
         
         // Empty dict {}
         if (p->current.type == TOKEN_RBRACE) {
@@ -224,8 +262,11 @@ static Ast* parse_factor(Parser* p) {
 
             if (p->current.type == TOKEN_COMMA) {
                 parser_eat(p, TOKEN_COMMA);
-                
                 while (p->current.type != TOKEN_RBRACE) {
+                    // Skip newlines and indents between elements
+                    parser_eat_newlines(p);
+                    parser_eat_indents(p);
+
                     Ast* key = parse_logic_or(p);
                     parser_eat(p, TOKEN_COLON);
                     Ast* value = parse_logic_or(p);
@@ -239,6 +280,8 @@ static Ast* parse_factor(Parser* p) {
                     if (p->current.type == TOKEN_COMMA) {
                         parser_eat(p, TOKEN_COMMA);
                     } else {
+                        parser_eat_newlines(p);
+                        parser_eat_dedents(p);
                         break;
                     }
                 }
@@ -254,8 +297,10 @@ static Ast* parse_factor(Parser* p) {
 
             if (p->current.type == TOKEN_COMMA) {
                 parser_eat(p, TOKEN_COMMA);
-                
+
                 while (p->current.type != TOKEN_RBRACE) {
+                    parser_eat_newlines(p);
+                    parser_eat_dedents(p);
                     Ast* elem = parse_logic_or(p);
                     elements = realloc(elements, sizeof(Ast*) * (count + 1));
                     elements[count++] = elem;
@@ -263,6 +308,8 @@ static Ast* parse_factor(Parser* p) {
                     if (p->current.type == TOKEN_COMMA) {
                         parser_eat(p, TOKEN_COMMA);
                     } else {
+                        parser_eat_newlines(p);
+                        parser_eat_dedents(p);
                         break;
                     }
                 }
@@ -274,6 +321,7 @@ static Ast* parse_factor(Parser* p) {
     }
 
     printf("Unknown factor %d\n", op);
+    exit(1);
     return NULL;
 }
 

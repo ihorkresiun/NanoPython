@@ -19,6 +19,7 @@ typedef struct {
     LoopContext loop_stack[MAX_LOOP_NESTING];
     int loop_count;
     HashMap imported_modules;  // Track imported modules to avoid duplicates
+    HashMap string_constants; // Map string values to their constant pool indices
 } Compiler;
 
 void compiler_init(Compiler* compiler);

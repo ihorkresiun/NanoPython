@@ -18,6 +18,7 @@ void compiler_init(Compiler* compiler) {
     compiler->bytecode->const_count = 0;
     compiler->loop_count = 0;
     hash_init(&compiler->imported_modules, 16);
+    hash_init(&compiler->string_constants, 64);  // Initialize string constants hashmap
 }
 
 static void emit(Compiler* compiler, Opcode op, int arg) {
@@ -43,8 +44,30 @@ static void patch_jump(Compiler* compiler, int jump_pos, int jump_target) {
     compiler->bytecode->instructions[jump_pos].operand = jump_target;
 }
 
+static int find_string(HashMap* map, const char* chars, int length) {
+    if (map->count == 0 || length == 0) return -1;
+    uint32_t hash = hash_string(chars);
+    uint32_t index = hash & (map->capacity - 1);
+    HashNode* node = &map->nodes[index];
+
+    while (node != NULL) {
+        if (node->key && node->key->length == length && memcmp(node->key->chars, chars, length) == 0) {
+            return node->value.as.integer; // Return the constant pool index
+        }
+        node = node->next;
+    }
+    return -1;
+}
+
 static int add_constant(Compiler* compiler, Value value) {
-    // TODO: use a hash map to avoid O(n) lookups for existing constants
+    if (value.type == VAL_OBJ && value.as.object->type == OBJ_STRING) {
+        ObjString* str = (ObjString*)value.as.object;
+        int existing_idx = find_string(&compiler->string_constants, str->chars, str->length);
+        if (existing_idx != -1) {
+            return existing_idx;
+        }
+    }
+
     Bytecode* bytecode = compiler->bytecode;
 
     // Check for existing constant
@@ -64,6 +87,12 @@ static int add_constant(Compiler* compiler, Value value) {
     }
 
     bytecode->constants[bytecode->const_count] = value;
+
+    if (value.type == VAL_OBJ && value.as.object->type == OBJ_STRING) {
+        ObjString* str = (ObjString*)value.as.object;
+        hash_set(&compiler->string_constants, str, make_number_int(bytecode->const_count));
+    }
+
     return bytecode->const_count++;
 }
 

@@ -33,7 +33,8 @@ static Keyword keywords[] = {
 void lexer_init(Lexer * lexer, const char * input) {
     lexer->input = input;
     lexer->pos = 0;
-    lexer->line_start = 1;
+    lexer->line = 1;
+    lexer->col = 1;
     lexer->indent_top = 0;
     lexer->indent_stack[lexer->indent_top] = 0;
     lexer->pending_indents = 0;
@@ -57,6 +58,9 @@ static int count_leading_spaces(const char * str) {
 
 Token lexer_next(Lexer* l) {
     Token tok = {0};
+    tok.line = l->line;
+    tok.col = l->col;
+    int start_pos = l->pos;
 
     if (l->pending_indents > 0) {
         l->pending_indents--;
@@ -81,6 +85,8 @@ Token lexer_next(Lexer* l) {
     // New line and indentation handling
     if (s == '\n') {
         l->pos++;
+        l->line++;
+        l->col = 1;
 
         // Check for indentation in the next line
         const char* next_line = l->input + l->pos;
@@ -133,6 +139,8 @@ Token lexer_next(Lexer* l) {
         }
         tok.type = TOKEN_STRING; // Using STRING type for strings
         tok.value = make_const_string(buffer);
+        tok.line = l->line;
+        tok.col = l->pos - start_pos;
         return tok;
     }
 
@@ -163,6 +171,8 @@ Token lexer_next(Lexer* l) {
             tok.value = make_number_int(atoi(buffer));
         }
         
+        tok.line = l->line;
+        tok.col = l->pos - start_pos;
         return tok;
     }
 
@@ -177,6 +187,8 @@ Token lexer_next(Lexer* l) {
         buffer[i] = 0;
         tok.type = check_keyword(buffer);
         tok.ident = strdup(buffer);
+        tok.line = l->line;
+        tok.col = l->pos - start_pos;
         return tok;
     }
 
@@ -188,6 +200,8 @@ Token lexer_next(Lexer* l) {
         } else {
             tok.type = TOKEN_LT;
         }
+        tok.line = l->line;
+        tok.col = l->pos - start_pos;
         return tok;
     }
     if (s == '>') {
@@ -198,6 +212,8 @@ Token lexer_next(Lexer* l) {
         } else {
             tok.type = TOKEN_GT;
         }
+        tok.line = l->line;
+        tok.col = l->pos - start_pos;
         return tok;
     }
     if (s == '=') {
@@ -208,6 +224,8 @@ Token lexer_next(Lexer* l) {
         } else {
             tok.type = TOKEN_ASSIGN;
         }
+        tok.line = l->line;
+        tok.col = l->pos - start_pos;
         return tok;
     }
     if (s == '!') {
@@ -215,10 +233,14 @@ Token lexer_next(Lexer* l) {
         if (l->input[l->pos] == '=') {
             l->pos++;
             tok.type = TOKEN_NE;;
+            tok.line = l->line;
+            tok.col = l->pos - start_pos;
             return tok;
         }
     }
 
+    tok.line = l->line;
+    tok.col = l->pos - start_pos + 1;
     // Operators
     switch (s) {
         case '+': tok.type=TOKEN_PLUS;      l->pos++; return tok;

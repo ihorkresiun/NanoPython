@@ -643,7 +643,7 @@ static void op_get_attr(VM* vm, int operand) {
         exit(1);
     }
     
-    printf("GET_ATTR expects an instance or class\n");
+    printf("VM GET_ATTR expects an instance or class. Got %d. IP=%d\n", obj_val.type, vm->ip - 1);
     exit(1);
 }
 
@@ -665,7 +665,7 @@ static void op_set_attr(VM* vm, int operand) {
         return;
     }
     
-    printf("SET_ATTR expects an instance or class\n");
+    printf("VM SET_ATTR expects an instance or class. Got %d. IP=%d\n", obj_val.type, vm->ip - 1);
     exit(1);
 }
 

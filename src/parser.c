@@ -23,7 +23,7 @@ static void parser_eat(Parser* p, TokenType type) {
         p->current = p->next;
         p->next = lexer_next(p->lexer);
     } else {
-        printf("Unexpected token: expected %d, got %d\n", type, p->current.type);
+        printf("Unexpected token: expected %d, got %d, at line %d, column %d\n", type, p->current.type, p->current.line, p->current.col);
         exit(1);
     }
 }
@@ -60,7 +60,7 @@ static Ast* parse_factor(Parser* p) {
             parser_eat(p, TOKEN_DOT);
             
             if (p->current.type != TOKEN_IDENT) {
-                printf("Expected attribute/method name after '.'\n");
+                printf("Expected attribute/method name after '.', at line %d, column %d\n", p->current.line, p->current.col);
                 exit(1);
             }
             

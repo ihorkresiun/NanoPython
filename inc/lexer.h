@@ -9,12 +9,15 @@ typedef struct {
     TokenType type;
     Value value;
     char * ident; // names
+    int line; // for error reporting
+    int col;  // for error reporting
 } Token;
 
 typedef struct {
     const char * input;
     size_t pos;
-    int line_start;
+    int line;
+    int col;
     int indent_stack[64];
     int indent_top;
     int pending_indents;

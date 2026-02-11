@@ -672,15 +672,15 @@ static Ast* parse_ident(Parser* p) {
             char** idents = malloc(sizeof(char*));
             int ident_count = 0;
             
-            // First identifier
-            idents[ident_count++] = strdup(tok.ident);
+            // First identifier - just store pointer to token's string
+            idents[ident_count++] = tok.ident;
             parser_eat(p, TOKEN_IDENT);
             parser_eat(p, TOKEN_ASSIGN);
             
             // Collect remaining identifiers in the chain
             while (p->current.type == TOKEN_IDENT && p->next.type == TOKEN_ASSIGN) {
                 idents = realloc(idents, sizeof(char*) * (ident_count + 1));
-                idents[ident_count++] = strdup(p->current.ident);
+                idents[ident_count++] = p->current.ident;
                 parser_eat(p, TOKEN_IDENT);
                 parser_eat(p, TOKEN_ASSIGN);
             }
@@ -711,7 +711,7 @@ static Ast* parse_ident(Parser* p) {
                                               ast_new_var(idents[ident_count - i]));
             }
             
-            // Free the idents array (strdup'd strings are now owned by AST nodes)
+            // Free the idents array (ast_new_assign/ast_new_var do their own strdup)
             free(idents);
             
             // Return a block containing all assignments

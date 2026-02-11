@@ -126,7 +126,8 @@ static Ast* parse_factor(Parser* p) {
             return parse_call(p, ident_name);
         }
 
-        if (p->current.type == TOKEN_LBRACKET) {
+        // Handle chained indexing: a[0][1][2]
+        while (p->current.type == TOKEN_LBRACKET) {
             parser_eat(p, TOKEN_LBRACKET);
 
             parser_eat_newlines(p);
@@ -139,15 +140,16 @@ static Ast* parse_factor(Parser* p) {
 
             parser_eat(p, TOKEN_RBRACKET);
 
-            if (p->current.type != TOKEN_ASSIGN) {
-                // Just a list index access a[0]
-                return ast_new_index(base, index);
+            // Check if this is an assignment (only valid for non-chained indexing)
+            if (p->current.type == TOKEN_ASSIGN) {
+                // Assignment to list index a[0] = 5
+                parser_eat(p, TOKEN_ASSIGN);
+                Ast* value = parse_logic_or(p);
+                return ast_new_assign_index(base, index, value);
             }
-
-            parser_eat(p, TOKEN_ASSIGN);
-            // Assignment to list index a[0] = 5
-            Ast* value = parse_logic_or(p);
-            return ast_new_assign_index(base, index, value);
+            
+            // Index access a[0] or chained a[0][1]
+            base = ast_new_index(base, index);
         }
 
         return base;

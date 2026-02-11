@@ -97,8 +97,11 @@ Token lexer_next(Lexer* l) {
             l->indent_stack[++l->indent_top] = spaces;
             l->pending_indents++;
         } else if (spaces < l->indent_stack[l->indent_top]) {
-            l->indent_top--;
-            l->pending_dedents++;
+            // Handle multiple levels of dedentation
+            while (l->indent_top > 0 && spaces < l->indent_stack[l->indent_top]) {
+                l->indent_top--;
+                l->pending_dedents++;
+            }
         }
 
         tok.type = TOKEN_NEWLINE;

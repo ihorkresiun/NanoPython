@@ -416,7 +416,7 @@ static Ast* parse_block(Parser* p) {
     int count = 0;
 
     TokenType op = p->current.type;
-    while (op != TOKEN_DEDENT && op != TOKEN_EOF) {
+    while (op != TOKEN_DEDENT && op != TOKEN_EOF && op != TOKEN_ELSE) {
         if (p->current.type == TOKEN_NEWLINE) {
             parser_eat(p, TOKEN_NEWLINE);
             op = p->current.type;
@@ -428,7 +428,8 @@ static Ast* parse_block(Parser* p) {
         op = p->current.type;
     }
 
-    if (op != TOKEN_EOF) {
+    // Only eat DEDENT if we stopped because of DEDENT (not ELSE or EOF)
+    if (op == TOKEN_DEDENT) {
         parser_eat(p, TOKEN_DEDENT);
     }
 

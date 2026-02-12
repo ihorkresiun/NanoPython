@@ -40,7 +40,7 @@ typedef struct {
     const char* name;
 } OpcodeInfo;
 
-static OpcodeInfo opcode_info[] = {
+static const OpcodeInfo opcode_info[] = {
     {OP_NOP, "NOP"},
     {OP_LOAD, "LOAD"},
     {OP_STORE, "STORE"},
@@ -70,12 +70,21 @@ static OpcodeInfo opcode_info[] = {
     {OP_HALT, "HALT"}
 };
 
+const char* get_opcode_name(Opcode opcode) {
+    for (int i = 0; i < sizeof(opcode_info) / sizeof(OpcodeInfo); i++) {
+        if (opcode_info[i].opcode == opcode) {
+            return opcode_info[i].name;
+        }
+    }
+    return "<unknown opcode>";
+}
+
 void vm_run(VM* vm) 
 {
     while (1) {
         Instruction instr = vm->bytecode->instructions[vm->ip++];
         if (VM_DEBUG > 1) {
-            printf("Executing instruction at ip=%d: %s %d\n", vm->ip - 1, opcode_info[instr.opcode].name, instr.operand);
+            printf("Executing instruction at ip=%d: %s %d\n", vm->ip - 1, get_opcode_name(instr.opcode), instr.operand);
         }
         switch (instr.opcode) {
             case OP_CONST: op_const_to_stack(vm, instr.operand); break;

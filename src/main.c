@@ -176,11 +176,16 @@ static int mode_file(const char* source_file) {
         bytecode_disasm(bytecode, "bytecode.txt");
     }
 
+    ast_free(tree);
+    free(source);
+
     VM vm;
     vm_init(&vm, bytecode);
     register_native_functions(&vm);
+
     vm_run(&vm);
-    free(source);
+
+    compiler_free(&compiler);
 
     return 0;
 }

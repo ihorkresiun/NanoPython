@@ -111,3 +111,17 @@ void hash_print(HashMap* map) {
         }
     }
 }
+
+void hash_free(HashMap* map) {
+    for (int i = 0; i < map->capacity; i++) {
+        HashNode* node = &map->nodes[i];
+        while (node != NULL) {
+            HashNode* next = node->next;
+            if (node != &map->nodes[i]) {
+                free(node);
+            }
+            node = next;
+        }
+    }
+    free(map->nodes);
+}

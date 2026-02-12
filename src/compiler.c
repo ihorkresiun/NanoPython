@@ -661,6 +661,16 @@ static void compile_node(Compiler* compiler, Ast* node) {
             break;
     }
 }
+void compiler_free(Compiler* compiler) {
+    free(compiler->bytecode->instructions);
+    free(compiler->bytecode->constants);
+    free(compiler->bytecode);
+    compiler->bytecode = NULL;
+    hash_free(&compiler->imported_modules);
+    compiler->imported_modules.nodes = NULL;
+    hash_free(&compiler->string_constants);
+    compiler->string_constants.nodes = NULL;
+}
 
 Bytecode* compile(Compiler* compiler, Ast* node) 
 {

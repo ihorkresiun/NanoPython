@@ -24,5 +24,6 @@ typedef struct {
 
 void compiler_init(Compiler* compiler);
 Bytecode* compile(Compiler* compiler, Ast* node);
+void compiler_free(Compiler* compiler);
 
 #endif // INC_COMPILER_H

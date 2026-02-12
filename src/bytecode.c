@@ -14,29 +14,60 @@ static void bytecode_init(Bytecode* bytecode) {
 }
 
 static int serialize_value(char* data, Value val) {
+    int offset = 0;
     data[0] = val.type;
-    
+    offset += 1;
+
     switch(val.type) {
         case VAL_NONE:
         case VAL_BOOL:
         case VAL_INT:
         case VAL_FLOAT:
-            memcpy(data + 1, &val.as, sizeof(val.as));
-            return 1 + sizeof(val.as);
+            memcpy(data + offset, &val.as, sizeof(val.as));
+            return offset + sizeof(val.as);
             break;
             
         case VAL_OBJ: {
             Obj* obj = val.as.object;
-            memcpy(data + 1, &obj->type, sizeof(ObjectType));
+            memcpy(data + offset, &obj->type, sizeof(ObjectType));
+            offset += sizeof(ObjectType);
             
             switch(obj->type) {
                 case OBJ_STRING: {
                     ObjString* str = (ObjString*)obj;
-                    memcpy(data + 1 + sizeof(ObjectType), &str->length, sizeof(int));
-                    memcpy(data + 1 + sizeof(ObjectType) + sizeof(int), str->chars, str->length);
-                    return 1 + sizeof(ObjectType) + sizeof(int) + str->length;
+                    memcpy(data + offset, &str->length, sizeof(int));
+                    offset += sizeof(int);
+                    memcpy(data + offset, str->chars, str->length);
+                    offset += str->length;
+                    return offset;
                 }
                 
+                case OBJ_FUNCTION: {
+                    ObjFunction* fn = (ObjFunction*)obj;
+                    memcpy(data + offset, &fn->addr, sizeof(int));
+                    offset += sizeof(int);
+
+                    int name_len = strlen(fn->name);
+                    memcpy(data + offset, &name_len, sizeof(int));
+                    offset += sizeof(int);
+                    memcpy(data + offset, fn->name, name_len);
+                    offset += name_len;
+
+                    memcpy(data + offset, &fn->param_count, sizeof(int));
+                    offset += sizeof(int);
+
+                    // For simplicity, we won't serialize the function body or closure scope
+                    // Just serialize the function address and parameter count, along with parameter names
+                    for (int i = 0; i < fn->param_count; i++) {
+                        int param_len = strlen(fn->params[i]); // Include null terminator
+                        memcpy(data + offset, &param_len, sizeof(int));
+                        offset += sizeof(int);
+                        memcpy(data + offset, fn->params[i], param_len);
+                        offset += param_len;
+                    }
+
+                    return offset;
+                }
                 // No other object types compiled in constants for now
             }
             break;
@@ -47,27 +78,33 @@ static int serialize_value(char* data, Value val) {
 }
 
 static int deserialize_value(char* data, Value* val) {
+    int offset = 0;
     val->type = data[0];
+    offset += 1;
     
     switch(val->type) {
         case VAL_NONE:
         case VAL_BOOL:
         case VAL_INT:
         case VAL_FLOAT:
-            memcpy(&val->as, data + 1, sizeof(val->as));
-            return 1 + sizeof(val->as);
+            memcpy(&val->as, data + offset, sizeof(val->as));
+            offset += sizeof(val->as);
+            return offset;
             break;
             
         case VAL_OBJ: {
             ObjectType obj_type;
-            memcpy(&obj_type, data + 1, sizeof(ObjectType));
+            memcpy(&obj_type, data + offset, sizeof(ObjectType));
+            offset += sizeof(ObjectType);
             
             switch(obj_type) {
                 case OBJ_STRING: {
                     int length;
-                    memcpy(&length, data + 1 + sizeof(ObjectType), sizeof(int));
+                    memcpy(&length, data + offset, sizeof(int));
+                    offset += sizeof(int);
                     char* chars = malloc(length + 1);
-                    memcpy(chars, data + 1 + sizeof(ObjectType) + sizeof(int), length);
+                    memcpy(chars, data + offset, length);
+                    offset += length;
                     chars[length] = '\0';
                     
                     ObjString* str = malloc(sizeof(ObjString));
@@ -76,8 +113,45 @@ static int deserialize_value(char* data, Value* val) {
                     str->chars = chars;
                     
                     val->as.object = (Obj*)str;
-                    return 1 + sizeof(ObjectType) + sizeof(int) + length;
+                    return offset;
                     break;
+                }
+
+                case OBJ_FUNCTION: {
+                    ObjFunction* fn = malloc(sizeof(ObjFunction));
+                    memcpy(&fn->addr, data + offset, sizeof(int));
+                    offset += sizeof(int);
+
+                    int name_len;
+                    memcpy(&name_len, data + offset, sizeof(int));
+                    offset += sizeof(int);
+                    char* name = malloc(name_len + 1);
+                    memcpy(name, data + offset, name_len);
+                    offset += name_len;
+                    name[name_len] = '\0';
+                    fn->name = name;
+
+                    memcpy(&fn->param_count, data + offset, sizeof(int));
+                    offset += sizeof(int);
+
+                    // For simplicity, we won't deserialize the function body or closure scope
+                    // Just deserialize the function address and parameter count, along with parameter names
+                    fn->params = malloc(sizeof(char*) * fn->param_count);
+                    for (int i = 0; i < fn->param_count; i++) {
+                        int param_len;
+                        memcpy(&param_len, data + offset, sizeof(int));
+                        offset += sizeof(int);
+                        char* param_name = malloc(param_len + 1);
+                        memcpy(param_name, data + offset, param_len);
+                        offset += param_len;
+                        param_name[param_len] = '\0';
+                        fn->params[i] = param_name;
+                    }
+
+                    fn->obj.type = OBJ_FUNCTION;
+                    fn->scope = NULL; // Closure scope will be set during execution
+                    val->as.object = (Obj*)fn;
+                    return offset;
                 }
                 
                 // No other object types compiled in constants for now
@@ -130,8 +204,44 @@ Bytecode* bytecode_deserialize(const char* filename) {
     return bytecode;
 }
 
+static int get_constants_size(Bytecode* bytecode) {
+    int size = 0;
+    for (int i = 0; i < bytecode->const_count; i++) {
+        Value val = bytecode->constants[i];
+        switch(val.type) {
+            case VAL_NONE:
+            case VAL_BOOL:
+            case VAL_INT:
+            case VAL_FLOAT:
+                size += 1 + sizeof(val.as);
+                break;
+            case VAL_OBJ:
+                size += 1 + sizeof(ObjectType);
+                if (val.as.object->type == OBJ_STRING) {
+                    ObjString* str = (ObjString*)val.as.object;
+                    size += sizeof(int) + str->length;
+                }
+                else if (val.as.object->type == OBJ_FUNCTION) {
+                    ObjFunction* fn = (ObjFunction*)val.as.object;
+                    size += sizeof(int);
+                    int name_len = strlen(fn->name);
+                    size += sizeof(int) + name_len;
+                    size += sizeof(int);
+                    for (int j = 0; j < fn->param_count; j++) {
+                        size += sizeof(int) + strlen(fn->params[j]);
+                    }
+                }
+               
+                // No other object types compiled in constants for now
+                break;
+        }
+    }
+    return size;
+}
+
 int bytecode_serialize(Bytecode* bytecode, const char* filename) {
-    int data_size = sizeof(int) * 2 + sizeof(Instruction) * bytecode->count + sizeof(Value) * bytecode->const_count;
+    int constants_size = get_constants_size(bytecode);
+    int data_size = sizeof(int) * 2 + sizeof(Instruction) * bytecode->count + constants_size;
     char* data = malloc(data_size);
     int offset = 0;
 
@@ -142,7 +252,6 @@ int bytecode_serialize(Bytecode* bytecode, const char* filename) {
 
     memcpy(data + offset, bytecode->instructions, sizeof(Instruction) * bytecode->count);
     offset += sizeof(Instruction) * bytecode->count;
-
 
     for (int i = 0; i < bytecode->const_count; i++) {
         offset += serialize_value(data + offset, bytecode->constants[i]);
@@ -178,10 +287,36 @@ int bytecode_disasm(Bytecode* bytecode, const char* filename) {
         }
     }
 
+    uint8_t* functions = malloc(sizeof(uint8_t) * bytecode->count);
+    memset(functions, 0, sizeof(uint8_t) * bytecode->count);
+    for (int i = 0; i < bytecode->const_count; i++) {
+        Value constant = bytecode->constants[i];
+        if (constant.type == VAL_OBJ && constant.as.object->type == OBJ_FUNCTION) {
+            ObjFunction* fn = (ObjFunction*)constant.as.object;
+            if (fn->addr >= 0 && fn->addr < bytecode->count) {
+                functions[fn->addr] = i;
+            }
+        }
+    }
+
     for (int i = 0; i < bytecode->count; i++) {
         Instruction instr = bytecode->instructions[i];
         if (jump_addresses[i]) {
             fprintf(file, "LABEL_%04d:\n", i);
+        }
+        if (functions[i]) {
+            Value constant = bytecode->constants[functions[i]];
+            if (constant.type == VAL_OBJ && constant.as.object->type == OBJ_FUNCTION) {
+                ObjFunction* fn = (ObjFunction*)constant.as.object;
+                fprintf(file, "FUNC_%04d %s(", i, fn->name);
+                if (fn->param_count > 0) {
+                    for (int j = 0; j < fn->param_count - 1; j++) {
+                        fprintf(file, "%s, ", fn->params[j]);
+                    }
+                    fprintf(file, "%s", fn->params[fn->param_count - 1]);
+                }
+                fprintf(file, "):\n");
+            }
         }
         fprintf(file, "\t%04d ", i);
         switch (instr.opcode) {
@@ -200,7 +335,7 @@ int bytecode_disasm(Bytecode* bytecode, const char* filename) {
                 if (constant.type == VAL_INT) {
                     fprintf(file, "CONST [%d]=(INT)%d\n", instr.operand, (int)constant.as.integer);
                 } else if (constant.type == VAL_FLOAT) {
-                    fprintf(file, "CONST [%d]=(FLT)%f\n", instr.operand, constant.as.floating);
+                    fprintf(file, "CONST [%d]=(FLOAT)%f\n", instr.operand, constant.as.floating);
                 } else if (constant.type == VAL_BOOL) {
                     fprintf(file, "CONST [%d]=(BOOL)%s\n", instr.operand, constant.as.boolean ? "True" : "False");
                 } else if (constant.type == VAL_NONE) {
@@ -208,11 +343,17 @@ int bytecode_disasm(Bytecode* bytecode, const char* filename) {
                 } else if (constant.type == VAL_OBJ) {
                     fprintf(file, "CONST [%d]=(OBJ->", instr.operand);
                     if (constant.as.object->type == OBJ_FUNCTION) {
-                        fprintf(file, "Func)\n");
+                        ObjFunction* fn = (ObjFunction*)constant.as.object;
+                        fprintf(file, "Func@%04d) %s(", fn->addr, fn->name);
+                        if (fn->param_count > 0) {
+                            for (int j = 0; j < fn->param_count - 1; j++) {
+                                fprintf(file, "%s, ", fn->params[j]);
+                            }
+                            fprintf(file, "%s", fn->params[fn->param_count - 1]);
+                        }
+                        fprintf(file, ")\n");
                     } else if (constant.as.object->type == OBJ_STRING) {
-                        fprintf(file, "Str)\"%s\"\n", ((ObjString*)constant.as.object)->chars);
-                    } else if (constant.as.object->type == OBJ_LIST) {
-                        fprintf(file, "List)\n");
+                        fprintf(file, "Str) \"%s\"\n", ((ObjString*)constant.as.object)->chars);
                     } else {
                         fprintf(file, "->Unknown Object Type %d\n", constant.as.object->type);
                     }
@@ -301,7 +442,8 @@ int bytecode_disasm(Bytecode* bytecode, const char* filename) {
         } else if (constant.type == VAL_OBJ) {
             fprintf(file, "OBJ ");;
             if (constant.as.object->type == OBJ_FUNCTION) {
-                fprintf(file, "Function\n");
+                int addr = ((ObjFunction*)constant.as.object)->addr;
+                fprintf(file, "Function@%04d\n", addr);
             } else if (constant.as.object->type == OBJ_STRING) {
                 fprintf(file, "String: \"%s\"\n", ((ObjString*)constant.as.object)->chars);
             } else if (constant.as.object->type == OBJ_LIST) {

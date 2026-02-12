@@ -74,8 +74,10 @@ fi
 echo
 
 # Exit with appropriate code
-if [ $failed -gt 0 ]; then
-    exit 1
-else
+if [ $failed -eq 0 ]; then
+    echo -e "${GREEN}All tests passed!${NC}"
     exit 0
+else
+    echo -e "${RED}Some tests failed${NC}"
+    exit 1
 fi

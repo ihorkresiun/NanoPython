@@ -17,15 +17,35 @@ This directory contains general test cases for the NanoPython compiler and VM.
 
 ## Running Tests
 
-### Run All Tests
+### Run All Tests (Integrated)
+
+Use the integrated NanoPython executable that compiles and runs in one step:
 
 ```bash
 cd test
 ./run_tests.sh
 ```
 
+### Run All Tests (Split - Compiler + VM)
+
+Test the bytecode serialization/deserialization pipeline using separate compiler and VM:
+
+```bash
+cd test
+./run_tests_split.sh
+```
+
+**Note:** Some tests may fail in split mode due to bytecode serialization bugs (unrelated to language features).
+
 ### Run Individual Test
 
+With integrated executable:
+```bash
+cd build
+./NanoPython ../test/test_arithmetic.py
+```
+
+With separate compiler and VM:
 ```bash
 cd build
 ./NanoPythonCompiler ../test/test_arithmetic.py test.bcd

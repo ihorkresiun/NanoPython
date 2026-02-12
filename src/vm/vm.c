@@ -24,6 +24,7 @@ static void op_less_than(VM* vm);
 static void op_greater_than(VM* vm);
 static void op_less_equal(VM* vm);
 static void op_greater_equal(VM* vm);
+static void op_not_equal(VM* vm);
 static void op_call(VM* vm, int operand);
 static void op_return(VM* vm);
 static void op_index_get(VM* vm);
@@ -52,6 +53,7 @@ static OpcodeInfo opcode_info[] = {
     {OP_GT, "GT"},
     {OP_GE, "GE"},
     {OP_LE, "LE"},
+    {OP_NE, "NE"},
     {OP_JUMP, "JUMP"},
     {OP_JUMP_IF_ZERO, "JUMP_IF_ZERO"},
     {OP_CONST, "CONST"},
@@ -90,6 +92,7 @@ void vm_run(VM* vm)
             case OP_GT: op_greater_than(vm); break;
             case OP_LE: op_less_equal(vm); break;
             case OP_GE: op_greater_equal(vm); break;
+            case OP_NE: op_not_equal(vm); break;
             case OP_JUMP: vm->ip = instr.operand; break;
             case OP_NOP: break;
             case OP_CALL: op_call(vm, instr.operand); break;
@@ -347,6 +350,13 @@ static void op_greater_equal(VM* vm)
     Value b = vm_pop(vm);
     Value a = vm_pop(vm);
     Value result = make_bool(a.as.floating >= b.as.floating);
+    vm_push(vm, result);
+}
+
+static void op_not_equal(VM* vm){
+    Value b = vm_pop(vm);
+    Value a = vm_pop(vm);
+    Value result = make_bool(a.as.floating != b.as.floating);
     vm_push(vm, result);
 }
 

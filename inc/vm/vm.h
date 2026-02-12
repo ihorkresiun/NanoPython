@@ -22,6 +22,7 @@ typedef enum {
     OP_GT,
     OP_GE,
     OP_LE,
+    OP_NE,
 
     OP_JUMP,
     OP_JUMP_IF_ZERO,

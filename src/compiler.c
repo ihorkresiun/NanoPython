@@ -239,6 +239,9 @@ static void compile_node(Compiler* compiler, Ast* node) {
                 case TOKEN_GE:
                     emit(compiler, OP_GE, 0);
                     break;
+                case TOKEN_NE:
+                    emit(compiler, OP_NE, 0);
+                    break;
                 default:
                     printf("Unsupported binary operator in compiler: %d\n", node->Binary.op);
                     exit(1);
@@ -661,6 +664,21 @@ static void compile_node(Compiler* compiler, Ast* node) {
             break;
     }
 }
+
+void print_bytecode(Bytecode* bytecode) {
+    printf("Bytecode Instructions:\n");
+    for (int i = 0; i < bytecode->count; i++) {
+        Instruction instr = bytecode->instructions[i];
+        printf("%04d: %d %d\n", i, instr.opcode, instr.operand);
+    }
+    printf("Constants:\n");
+    for (int i = 0; i < bytecode->const_count; i++) {
+        printf("%04d: ", i);
+        print_value(bytecode->constants[i]);
+        printf("\n");
+    }
+}
+
 void compiler_free(Compiler* compiler) {
     free(compiler->bytecode->instructions);
     free(compiler->bytecode->constants);
